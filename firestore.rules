@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { 
+      return request.resource.data; 
+    }
+    
+    function isValidCache(data) {
+      return data.keys().hasAll(['data', 'updatedAt']) && 
+             data.keys().size() == 2 && 
+             data.updatedAt is string; // ISO string representing update time
+    }
+
+    // Cache Collection
+    match /cache/{cacheId} {
+      allow read: if true;
+      allow create, update: if isValidId(cacheId) && isValidCache(incoming());
+      allow delete: if false; // Prevention of cache tampering
+    }
+
+    function isValidUserDoc(data) {
+      return data.keys().hasOnly(['favoriteTeams', 'fcmTokens', 'notificationPrefs', 'updatedAt']) &&
+             data.favoriteTeams is list && data.favoriteTeams.size() <= 50 &&
+             data.fcmTokens is list && data.fcmTokens.size() <= 10 &&
+             data.updatedAt is string;
+    }
+
+    // Per-user favorites/preferences — unlike /cache, no public read: only the
+    // matching authenticated UID may read or write its own document.
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+                          && request.auth.uid == userId
+                          && isValidUserDoc(incoming());
+    }
+  }
+}

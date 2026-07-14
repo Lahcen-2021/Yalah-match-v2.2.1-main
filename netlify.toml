@@ -1,0 +1,38 @@
+[build]
+  functions = "netlify/functions"
+
+# Security headers on every response (improves Lighthouse "Best Practices" and
+# hardens against clickjacking / protocol-downgrade). img/media/connect/frame stay
+# permissive because streams, team crests and news images come from many hosts;
+# script-src is locked to self + the on-demand video-player CDNs.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vjs.zencdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://vjs.zencdn.net; font-src 'self' https://fonts.gstatic.com data:; img-src * data: blob:; media-src * blob:; connect-src *; frame-src *; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+
+# Vite emits hashed filenames under /assets, so they can be cached forever.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/hero.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://yallamatch.pages.dev/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

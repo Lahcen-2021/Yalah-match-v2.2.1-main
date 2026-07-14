@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <title>يلا ماتش | مباريات اليوم بث مباشر - Yalla Match</title>
+    <meta name="description" content="يلا ماتش (Yalla Match) يقدم لك جدول مباريات اليوم، القنوات الناقلة، البث المباشر، ونتائج المباريات للدوريات العالمية والمحلية. تابع كورة لايف عبر www.yallamatch.online." />
+    <meta name="keywords" content="يلا ماتش, yalla match, مباريات اليوم, بث مباشر, كورة, يلا شوت, يلاماتش, جدول المباريات, القنوات الناقلة, الدوري السعودي, الدوري الانجليزي, دوري ابطال اوروبا" />
+    <meta name="author" content="Yalla Match" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.yallamatch.online" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#059669" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ar_MA" />
+    <meta property="og:site_name" content="يلا ماتش - Yalla Match" />
+    <meta property="og:url" content="https://www.yallamatch.online/" />
+    <meta property="og:title" content="يلا ماتش | مباريات اليوم بث مباشر" />
+    <meta property="og:description" content="تابع أهم مباريات اليوم بث مباشر ونتائج حية على يلا ماتش. المصدر الأول لأخبار الكرة العربية والعالمية." />
+    <!-- og-image.jpg: 1200x630 export of the hero artwork (see public/hero.webp) -->
+    <meta property="og:image" content="https://www.yallamatch.online/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://www.yallamatch.online/" />
+    <meta property="twitter:title" content="يلا ماتش | مباريات اليوم بث مباشر" />
+    <meta property="twitter:description" content="تابع أهم مباريات اليوم بث مباشر ونتائج حية على يلا ماتش." />
+    <meta property="twitter:image" content="https://www.yallamatch.online/og-image.jpg" />
+
+    <!-- Structured data: helps Google show the site name, search box and org logo -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://www.yallamatch.online/#website",
+          "url": "https://www.yallamatch.online/",
+          "name": "يلا ماتش - Yalla Match",
+          "alternateName": ["Yalla Match", "يلاماتش"],
+          "description": "جدول مباريات اليوم، القنوات الناقلة، النتائج المباشرة، ترتيب الدوريات وأخبار كرة القدم",
+          "inLanguage": "ar"
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://www.yallamatch.online/#organization",
+          "name": "Yalla Match",
+          "url": "https://www.yallamatch.online/",
+          "logo": "https://cdn-icons-png.flaticon.com/128/53/53283.png"
+        }
+      ]
+    }
+    </script>
+
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/128/53/53283.png" type="image/png" />
+    
+    <!-- Performance Optimizations: Preconnect to important origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://wsrv.nl">
+    <link rel="preconnect" href="https://imagecache.365scores.com">
+    <link rel="dns-prefetch" href="https://imagecache.365scores.com">
+
+    <!--
+      Note: we intentionally do NOT <link rel="preload"> a specific Tajawal .woff2 file.
+      Google Fonts serves hashed filenames that rotate over time, so a pinned URL 404s and
+      triggers a "preloaded but not used" warning. The font is delivered by the Google Fonts
+      stylesheet below, and the fonts.gstatic.com preconnect above already warms the connection.
+    -->
+
+    <!--
+      hls.js, video.js and video-js.css are loaded on demand by components/Players.tsx the first
+      time a stream player mounts (see loadVideoLibs()) instead of eagerly here — they are ~540 KB
+      that the match list never needs, so keeping them off the initial load speeds up first paint.
+    -->
+
+    <!-- Non-blocking loading of CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    
+    <link rel="stylesheet" href="/index.css">
+  </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

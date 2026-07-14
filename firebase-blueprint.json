@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "CacheEntry": {
+      "title": "CacheEntry",
+      "description": "Stores cached API data for matches, details, and kooora schedules",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "description": "The cached data document"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO string or server timestamp representing cache update time"
+        }
+      },
+      "required": ["data", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/cache/{cacheId}": {
+      "schema": "CacheEntry",
+      "description": "Stores cached data indexed by cache key (e.g. matches_YYYY-MM-DD or details_ID)"
+    }
+  }
+}

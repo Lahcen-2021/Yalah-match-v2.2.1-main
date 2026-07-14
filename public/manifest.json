@@ -1,0 +1,22 @@
+{
+  "name": "يلا ماتش - Yalla Match",
+  "short_name": "Yalla Match",
+  "description": "مباريات اليوم بث مباشر ونتائج حية",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#059669",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/128/53/53283.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

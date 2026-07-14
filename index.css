@@ -1,0 +1,326 @@
+@import "tailwindcss";
+
+@theme {
+  --font-tajawal: "Tajawal", sans-serif;
+}
+
+body {
+  font-family: 'Tajawal', sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Performance: Content Visibility for long lists */
+.match-list-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 1000px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  opacity: 0; /* Start hidden */
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Smooth Expand Transition using Grid */
+.expand-section {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.5;
+  visibility: hidden;
+}
+
+.expand-section.expanded {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+
+.expand-inner {
+  overflow: hidden;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.75;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Yellow Flash Animation - Optimized with Opacity */
+@keyframes yellow-flash-opacity {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-yellow-flash {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-yellow-flash::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: #facc15; /* yellow-400 */
+  animation: yellow-flash-opacity 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes score-flash-optimized {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.05); filter: brightness(1.1); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.score-update-flash {
+  animation: score-flash-optimized 1s ease-out;
+  display: inline-block;
+  will-change: transform, filter;
+}
+
+@keyframes status-flash {
+  0% { background-color: white; }
+  50% { background-color: #d1fae5; /* green-100 */ }
+  100% { background-color: white; }
+}
+
+.status-update-flash {
+  animation: status-flash 1s ease-out;
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    --tw-ring-opacity: 0.4;
+  }
+  50% {
+    --tw-ring-opacity: 1;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #e2e8f0; /* gray-200 */
+}
+
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer-slide 1.5s infinite;
+}
+
+/* Styles for MatchDetailView stats */
+.stat-bar {
+  transition: width 0.5s ease-in-out;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background-color: #e5e7eb; /* gray-200 */
+}
+
+.timeline-item-icon-wrapper {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+/* New styles for the Rosters View redesign */
+.formation-pitch {
+  background-color: #267a50; /* Darker, more refined green */
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 50px 50px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pitch-line {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.center-circle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20%;
+  padding-bottom: 20%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.pitch-player {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+}
+
+.pitch-player-jersey {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  background-image: url('https://i.imgur.com/3Rk8y7g.png'); /* T-shirt icon */
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.pitch-player-jersey span {
+   color: #fff;
+   text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+.pitch-player-name {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.formation-text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Styles for Tournaments View */
+.competition-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.competition-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.competition-card.active {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  --tw-ring-color: rgb(22 163 74); /* green-600 */
+}
+
+/* Styles for Standings View Form Indicators */
+.form-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem; /* w-5 */
+  height: 1.25rem; /* h-5 */
+  border-radius: 9999px; /* rounded-full */
+  color: white;
+  font-size: 0.75rem; /* text-xs */
+  font-weight: bold;
+}
+
+.form-W { background-color: #16a34a; } /* green-600 */
+.form-D { background-color: #6b7280; } /* gray-500 */
+.form-L { background-color: #dc2626; } /* red-600 */
+
+/* User Requested Styles */
+div#root:nth-of-type(1) > div:nth-of-type(1) {
+
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1) > svg {
+  transform: translate(1px, -1px);
+}
+
+@media (min-width: 640px) {
+  div#root:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1) > svg {
+    transform: translate(2px, -2px);
+  }
+}

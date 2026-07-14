@@ -1,0 +1,848 @@
+[
+  {
+    "name": "أي إي ك أثينا ضد سيليي NK",
+    "startDate": "2026-03-19T17:45:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports XTRA 2",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/G95-D7Q0IidSVAU-TLFQt.png",
+        "url": "https://connect.bein.com/live/104"
+      },
+      {
+        "name": "arena sport 1",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/YaYyIeQCIZGSqeh6qGXItkPicCaYW6OBChCx0dYx.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      }
+    ]
+  },
+  {
+    "name": "ماينتس ضد سيجما أولوموك",
+    "startDate": "2026-03-19T17:45:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports XTRA 1",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/Nnn52AyKSxy65VG7f_m4W.png",
+        "url": "https://connect.bein.com/live/103"
+      },
+      {
+        "name": "TOD TV",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/3wgLZhks6UOCpHmoDJ8qi.png",
+        "url": "https://www.tod.tv/ar/sports"
+      }
+    ]
+  },
+  {
+    "name": "راكوف ضد فيورنتينا",
+    "startDate": "2026-03-19T17:45:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 5",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/ER4v9bo7dNL95x8ax16KW.png",
+        "url": "https://connect.bein.com/live/68"
+      },
+      {
+        "name": "arena sport 6",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/Earcj9ETMa7RuyO0YzQ6FsqYx9eK4zkh0uTSXyEn.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      },
+      {
+        "name": "TOD TV",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/3wgLZhks6UOCpHmoDJ8qi.png",
+        "url": "https://www.tod.tv/ar/sports"
+      }
+    ]
+  },
+  {
+    "name": "لارناكا ضد كريستال بالاس",
+    "startDate": "2026-03-19T17:45:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports XTRA 2",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/G95-D7Q0IidSVAU-TLFQt.png",
+        "url": "https://connect.bein.com/live/104"
+      },
+      {
+        "name": "arena sport 1",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/YaYyIeQCIZGSqeh6qGXItkPicCaYW6OBChCx0dYx.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      }
+    ]
+  },
+  {
+    "name": "سبارتا براج ضد أي زد ألكمار",
+    "startDate": "2026-03-19T20:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 5",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/ER4v9bo7dNL95x8ax16KW.png",
+        "url": "https://connect.bein.com/live/68"
+      },
+      {
+        "name": "TNT Sports 7",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/ZYF0aw9yLSe4Lk3pQy-rW.jpg",
+        "url": "https://www.tntsports.co.uk/"
+      },
+      {
+        "name": "arena sport 7",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/x16ehBnUOch0qtK8Ir1mj26cjd0iie0CSCjzoyQt.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      },
+      {
+        "name": "Dazn 4 Portugal",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/Ht_K6n3P5bbSKFk-unKBc.png",
+        "url": "https://www.dazn.com/"
+      }
+    ]
+  },
+  {
+    "name": "شاختار دونيتسك ضد ليك بوزنان",
+    "startDate": "2026-03-19T20:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports XTRA 1",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/Nnn52AyKSxy65VG7f_m4W.png",
+        "url": "https://connect.bein.com/live/103"
+      },
+      {
+        "name": "arena sport 9",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/BjQnQmgaHnJQqJGIYSsLhmf4hb6IasdkkBEacA3e.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      }
+    ]
+  },
+  {
+    "name": "رايو فاليكانو ضد سامسونسبور",
+    "startDate": "2026-03-19T20:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports XTRA 3",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/uEgi76GgDGnlEfyoEgQC-.png",
+        "url": "https://connect.bein.com/live/72"
+      },
+      {
+        "name": "M+ Liga de Campeones 2",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/ODAtpnnGW1DbOz9qa10N04A5CUNgJb8V3NuVEIRw.png",
+        "url": "https://www.movistarplus.es"
+      }
+    ]
+  },
+  {
+    "name": "ستراسبورج ضد رايكا",
+    "startDate": "2026-03-19T20:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 8",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/paPG39fLrmobdkH3I3GEP.png",
+        "url": "https://connect.bein.com/live/71"
+      },
+      {
+        "name": "arena sport 1",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/YaYyIeQCIZGSqeh6qGXItkPicCaYW6OBChCx0dYx.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      }
+    ]
+  },
+  {
+    "name": "ليون ضد سيلتا فيجو",
+    "startDate": "2026-03-19T17:45:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 2",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/LTA60H5gtxbvApKo7mr_l.png",
+        "url": "https://connect.bein.com/live/66"
+      },
+      {
+        "name": "Liga de Campeones por M+",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/mCQT7jnvXM7AKaNQUbSwcwmI3YgAvaKmT1GWsc0E.png",
+        "url": "https://www.movistarplus.es"
+      },
+      {
+        "name": "TNT Sports 4",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/zo9x4RQtge6VItjlhYoYd.jpg",
+        "url": "https://www.tntsports.co.uk/"
+      },
+      {
+        "name": "Arena 3 premium",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/wqKLzmxUXkpxWTeaETX53HciwPrjNBq7VTKg3Ys4.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      },
+      {
+        "name": "DAZN 2 Portugal",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/5lJWSCp3iEVQKCEQoDNRz.png",
+        "url": "https://www.dazn.com/"
+      }
+    ]
+  },
+  {
+    "name": "ميتييلاند ضد نوتنجهام فوريست",
+    "startDate": "2026-03-19T17:45:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 3",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/PyMZVVF6KAk0uCaEBvL0C.png",
+        "url": "https://connect.bein.com/live/67"
+      },
+      {
+        "name": "M+ Liga de Campeones 5",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/E9lnlM8jj5aoEtO3QiIwFARz8kaAu8Cc6AIqrzIz.png",
+        "url": "https://www.movistarplus.es/"
+      },
+      {
+        "name": "TNT Sports 2",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/qyidyZbj3YorpTvhE7TbP.jpg",
+        "url": "https://www.tntsports.co.uk/"
+      },
+      {
+        "name": "Arena 1 Premium",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/H84V7IZvbYj2ymIPafk7IRE3Zb5ccxvFkMlU2dGV.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      },
+      {
+        "name": "DAZN 1 Portugal",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/zOryVVjGmFU6ueJVPvJKB.png",
+        "url": "https://www.dazn.com/"
+      }
+    ]
+  },
+  {
+    "name": "فرايبورج ضد جينك",
+    "startDate": "2026-03-19T17:45:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 8",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/paPG39fLrmobdkH3I3GEP.png",
+        "url": "https://connect.bein.com/live/71"
+      },
+      {
+        "name": "M+ Liga de Campeones 6",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/Pp889OUjOMG0DC7oFbhogLJvmeZhyR9mj6rEessR.png",
+        "url": "https://www.movistarplus.es/"
+      },
+      {
+        "name": "TNT Sports 7",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/ZYF0aw9yLSe4Lk3pQy-rW.jpg",
+        "url": "https://www.tntsports.co.uk/"
+      },
+      {
+        "name": "arena sport 2",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/YIB7hkPNCtSIaYr3u7Dbl8Trw5eMkQ0G9HWdQEQC.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      },
+      {
+        "name": "Dazn 3 Portugal",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/Z5lwnj1dP-OB1WFxceiVa.png",
+        "url": "https://www.dazn.com/"
+      }
+    ]
+  },
+  {
+    "name": "بورتو ضد شتوتجارت",
+    "startDate": "2026-03-19T20:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 3",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/PyMZVVF6KAk0uCaEBvL0C.png",
+        "url": "https://connect.bein.com/live/67"
+      },
+      {
+        "name": "M+ Liga de Campeones 5",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/E9lnlM8jj5aoEtO3QiIwFARz8kaAu8Cc6AIqrzIz.png",
+        "url": "https://www.movistarplus.es/"
+      },
+      {
+        "name": "Sport TV 5",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/zmVO-vLbLvT8DyPGz5koJ.png",
+        "url": "https://www.sporttv.pt/"
+      },
+      {
+        "name": "SuperSport MáXimo 1 HD",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/DcFDz6V3jcsz0vOZKjiOBhLuXWQHpi5DdjOu68P9.png",
+        "url": "https://supersport.com/"
+      },
+      {
+        "name": "TNT Sports 3",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/G5jFHpilpnhDCBNNVsFsX.jpg",
+        "url": "https://www.tntsports.co.uk/"
+      },
+      {
+        "name": "arena sport 2",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/YIB7hkPNCtSIaYr3u7Dbl8Trw5eMkQ0G9HWdQEQC.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      }
+    ]
+  },
+  {
+    "name": "أستون فيلا ضد ليل",
+    "startDate": "2026-03-19T20:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 1",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/IlXAlJRwHjQgSyY1L5O4a.png",
+        "url": "https://connect.bein.com/live/65"
+      },
+      {
+        "name": "TNT Sports 1",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/rdtHihz1M-lr7tmcp-v7w.jpg",
+        "url": "https://www.tntsports.co.uk/"
+      },
+      {
+        "name": "Canal+ Live 1",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/dn6qeH5yACLYm90cVGovGlighTtVbgwuy7LUXM0D.svg",
+        "url": "https://www.canalplus.com/"
+      },
+      {
+        "name": "DAZN 1 Portugal",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/zOryVVjGmFU6ueJVPvJKB.png",
+        "url": "https://www.dazn.com/"
+      },
+      {
+        "name": "Supersport Premiere League",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/mT_vd3P_z5U_i9LGy27Ed.jpg",
+        "url": "https://supersport.com/"
+      }
+    ]
+  },
+  {
+    "name": "ريال بيتيس ضد باناثينايكوس",
+    "startDate": "2026-03-19T20:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 4",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/vSKlM172dkwkGI1vhqxw-.png",
+        "url": "https://connect.bein.com/live/70"
+      },
+      {
+        "name": "M+ Liga de Campeones 3",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/gz1Ps1fVuXe66L7HyOTntv8NO9L01iW0WjfXzIrH.png",
+        "url": "https://www.movistarplus.es/"
+      },
+      {
+        "name": "TNT Sports 4",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/zo9x4RQtge6VItjlhYoYd.jpg",
+        "url": "https://www.tntsports.co.uk/"
+      },
+      {
+        "name": "arena sport 3",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/TqnQcwFKQSthIydfKfxpFDoJ6bdcron7kgnm22Xf.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      },
+      {
+        "name": "DAZN 2 Portugal",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/5lJWSCp3iEVQKCEQoDNRz.png",
+        "url": "https://www.dazn.com/"
+      }
+    ]
+  },
+  {
+    "name": "روما ضد بولونيا",
+    "startDate": "2026-03-19T20:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": [
+      {
+        "name": "beIN Sports Mena 2",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/LTA60H5gtxbvApKo7mr_l.png",
+        "url": "https://connect.bein.com/live/66"
+      },
+      {
+        "name": "M+ Liga de Campeones 6",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/Pp889OUjOMG0DC7oFbhogLJvmeZhyR9mj6rEessR.png",
+        "url": "https://www.movistarplus.es/"
+      },
+      {
+        "name": "Canal+ Sport",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/XTPmcn8l8aXZqNylsIOUamUlwJCiA0yMxpN04438.svg",
+        "url": "https://www.canalplus.com/"
+      },
+      {
+        "name": "Arena 3 premium",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/wqKLzmxUXkpxWTeaETX53HciwPrjNBq7VTKg3Ys4.png",
+        "url": "https://www.tvarenasport.com/tv-scheme"
+      },
+      {
+        "name": "Dazn 3 Portugal",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/Z5lwnj1dP-OB1WFxceiVa.png",
+        "url": "https://www.dazn.com/"
+      },
+      {
+        "name": "TOD TV",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/3wgLZhks6UOCpHmoDJ8qi.png",
+        "url": "https://www.tod.tv/ar/sports"
+      },
+      {
+        "name": "Supersport Football",
+        "logo": "https://cdn.sportfeeds.io/tv-schedule/channel/images/y27LepP0CxKDKWOpLsvPd.jpg",
+        "url": "https://supersport.com/"
+      }
+    ]
+  },
+  {
+    "name": "كايزيريسبور ضد فاتح كاراجومروك",
+    "startDate": "2026-03-19T13:00:00.000Z",
+    "status": "LIVE",
+    "channels": []
+  },
+  {
+    "name": "بيشكتاش ضد كاسيمباسا",
+    "startDate": "2026-03-19T17:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "كونياسبور ضد جينسليربيرليجي",
+    "startDate": "2026-03-19T17:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "كارفان إيفلاك ضد زيره",
+    "startDate": "2026-03-19T11:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "صباح ضد سومقايت",
+    "startDate": "2026-03-19T15:15:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "أتليتيكو جويانيينسي ضد بونتي بريتا",
+    "startDate": "2026-03-18T23:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "سي آر بي ضد فيجورينسي",
+    "startDate": "2026-03-19T00:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "جاكوبينس ضد نوفوريزونتينو",
+    "startDate": "2026-03-19T00:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "جوفينتود ضد آجويا دي مارابا",
+    "startDate": "2026-03-19T22:30:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "Maringa FC ضد جوياس",
+    "startDate": "2026-03-19T22:30:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "أتليتيكو مينيرو ضد ساو باولو",
+    "startDate": "2026-03-18T23:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "ميراسول ضد كوريتيبا",
+    "startDate": "2026-03-18T23:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "سانتوس إف سي ضد إنترناسيونال",
+    "startDate": "2026-03-19T00:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "فاسكو دا جاما ضد فلومينينسي",
+    "startDate": "2026-03-19T00:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "جريميو ضد فيتوريا",
+    "startDate": "2026-03-19T22:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "سبارتاك فارنا ضد لودوجوريتس رازجراد",
+    "startDate": "2026-03-19T16:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "لا إيكويداد ضد ديبورتيفو بيريرا",
+    "startDate": "2026-03-18T23:20:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "بوكارامانجا ضد أونسي كالداس",
+    "startDate": "2026-03-19T00:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "ديبورتيفو كالي ضد سانتا في",
+    "startDate": "2026-03-19T01:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "أي. بيتروليرا ضد خاخواريس CD",
+    "startDate": "2026-03-19T21:10:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "أتليتيكو ليبرتاد ضد برشلونة جواياكويل",
+    "startDate": "2026-03-19T00:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "آوكاس ضد تيكنيكو يونيفيرسيتاريو",
+    "startDate": "2026-03-19T19:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "أورينس ضد موشيوس رونا",
+    "startDate": "2026-03-19T21:30:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "أليانزا إف سي ضد كاكاهيعتيق",
+    "startDate": "2026-03-19T01:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "مونيسيبال ضد بلاتينيز",
+    "startDate": "2026-03-19T01:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "سي دي فاس ضد أونسي ميونيسيبال",
+    "startDate": "2026-03-19T01:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "ألفريتون ضد هيرفورد",
+    "startDate": "2026-03-19T19:45:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "كويفيلي ضد ديون",
+    "startDate": "2026-03-19T18:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "ديبورتيفو ميكتلان ضد ديبورتيفو مالاكاتيكو",
+    "startDate": "2026-03-19T00:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "ديبورتيفو ماركوينسي ضد كوبان إمبيريال",
+    "startDate": "2026-03-19T02:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "Aurora FC ضد غواستاتويا",
+    "startDate": "2026-03-19T21:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "سي دي أولمبيا ضد أولانشو",
+    "startDate": "2026-03-18T23:15:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "ريال إيسبانيا ضد ديبورتيفو جينيسيس",
+    "startDate": "2026-03-19T01:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "ديبورتيفو بلاتينسي ضد سي دي موتاغوا",
+    "startDate": "2026-03-19T21:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "تشانماري ضد لاجونغ",
+    "startDate": "2026-03-19T10:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "سرينيدى ديكان ضد نامداري",
+    "startDate": "2026-03-19T13:00:00.000Z",
+    "status": "LIVE",
+    "channels": []
+  },
+  {
+    "name": "حيدرأباد ضد جامشيدبور",
+    "startDate": "2026-03-19T14:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "إنتر ميامي ضد ناشفيل",
+    "startDate": "2026-03-18T23:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "كلوب أميركا ضد فيلادلفيا يونيون",
+    "startDate": "2026-03-19T01:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "سياتل ساوندرز ضد فانكوفر وايت كابس",
+    "startDate": "2026-03-19T03:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "تولوكا ضد سان دييجو",
+    "startDate": "2026-03-19T03:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "أوزبكستان ضد الفليبين",
+    "startDate": "2026-03-19T03:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "تايوان ضد كوريا الشمالية",
+    "startDate": "2026-03-19T09:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "تلاخاكالا ضد أتلانتي",
+    "startDate": "2026-03-19T01:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "جايبوس تامبيكو ماديرو ضد كوريكامينوس دي لا يو أي تي",
+    "startDate": "2026-03-19T02:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "جوادالاخارا ضد كلوب ليون",
+    "startDate": "2026-03-19T02:07:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "نيجر تورنادوس ضد ريفرز يونايتد",
+    "startDate": "2026-03-19T15:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "ك إف يو إم ضد فريدريكستاد",
+    "startDate": "2026-03-19T17:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "براين ضد بران",
+    "startDate": "2026-03-19T19:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "جواراني ضد ريكوليتا",
+    "startDate": "2026-03-18T23:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "ليبيرتاد ضد ناسيونال",
+    "startDate": "2026-03-18T23:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "دينامو بوخارست ضد يونيفيرسيتاتيا كرايوفا",
+    "startDate": "2026-03-19T18:30:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "مشوعا ضد آزام يونايتد",
+    "startDate": "2026-03-19T13:00:00.000Z",
+    "status": "LIVE",
+    "channels": []
+  },
+  {
+    "name": "بامبا ضد سيمبا",
+    "startDate": "2026-03-19T13:00:00.000Z",
+    "status": "LIVE",
+    "channels": []
+  },
+  {
+    "name": "أوليكساندريا ضد دينامو كييف",
+    "startDate": "2026-03-19T11:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "إف سي ميتاليست 1925 خاركيف ضد اس سي بولتافا",
+    "startDate": "2026-03-19T16:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "موتاون ضد هارتفورد أثليتيك",
+    "startDate": "2026-03-18T23:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "FC Naples ضد ريد فورس",
+    "startDate": "2026-03-18T23:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "لويفيل سيتي ضد Southern Indiana",
+    "startDate": "2026-03-18T23:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "Vistula Garfield ضد ون نوكسفيل",
+    "startDate": "2026-03-18T23:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "BOHFS St. Louis ضد يونيون اوماها",
+    "startDate": "2026-03-19T00:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "Little Rock Rangers ضد تولسا",
+    "startDate": "2026-03-19T00:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "سان أنطونتو ضد ASC New Stars",
+    "startDate": "2026-03-19T00:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "نيو مكسيكو يونايتد ضد Cruizers",
+    "startDate": "2026-03-19T01:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "ساكرامينتو ريببلك ضد إلفاروليتو",
+    "startDate": "2026-03-19T02:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "AV Alta ضد Valley 559",
+    "startDate": "2026-03-19T02:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "أورانج كاونتي ضد Laguna United",
+    "startDate": "2026-03-19T02:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "فينتورا كونتي ضد Spokane Velocity FC",
+    "startDate": "2026-03-19T02:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "Carolina Core FC ضد Virginia Dream",
+    "startDate": "2026-03-19T22:00:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "شارلوت انديبندنس ضد Ristozi",
+    "startDate": "2026-03-19T22:30:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "Flint City Bucks ضد فوروارد ماديسون",
+    "startDate": "2026-03-19T22:30:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "تامبا بي صن ضد بروكلين",
+    "startDate": "2026-03-18T23:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "دالاس ترينتي ضد ليكسينجتون",
+    "startDate": "2026-03-19T00:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "أنديخون ضد ماشال",
+    "startDate": "2026-03-19T11:00:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  },
+  {
+    "name": "بوكسورو ضد دينامو سمرقند",
+    "startDate": "2026-03-19T13:15:00.000Z",
+    "status": "FIXTURE",
+    "channels": []
+  },
+  {
+    "name": "ميتروبليتانوس ضد موناغاس إس سي",
+    "startDate": "2026-03-18T23:30:00.000Z",
+    "status": "RESULT",
+    "channels": []
+  }
+]

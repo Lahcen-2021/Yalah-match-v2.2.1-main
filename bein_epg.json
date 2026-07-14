@@ -1,0 +1,3106 @@
+[
+  {
+    "id": "slider_1",
+    "name": "beIN SPORTS 1",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS1_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS1",
+    "programs": [
+      {
+        "time": "00:00 - 00:30",
+        "title": "EPL Stories - Unai Emery - 2025/2026"
+      },
+      {
+        "time": "00:30 - 03:25",
+        "title": "Brighton & Hove Albion vs Liverpool - English Premier League"
+      },
+      {
+        "time": "03:25 - 05:40",
+        "title": "Fulham vs Burnley - English Premier League"
+      },
+      {
+        "time": "05:40 - 08:27",
+        "title": "Everton vs Chelsea - English Premier League"
+      },
+      {
+        "time": "08:27 - 11:00",
+        "title": "Nice vs Paris Saint-Germain - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "Paris Fc Derby in Paris"
+      },
+      {
+        "time": "12:00 - 12:30",
+        "title": "Brighton & Hove Albion vs Liverpool - English Premier League"
+      },
+      {
+        "time": "12:30 - 13:00",
+        "title": "Everton vs Chelsea - English Premier League"
+      },
+      {
+        "time": "13:00 - 13:30",
+        "title": "UEFA UCL Magazine 2025/2026 - MD 12 Review"
+      },
+      {
+        "time": "13:30 - 17:00",
+        "title": "Barcelona vs Rayo Vallecano - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "17:00 - 20:15",
+        "title": "Arsenal vs Manchester City - Carabao Cup 2025 -2026 -  Final"
+      },
+      {
+        "time": "20:15 - 23:30",
+        "title": "Real Madrid vs Atletico Madrid - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "23:30 - 23:58",
+        "title": "UEFA UCL Magazine 2025/2026 - MD 12 Review"
+      },
+      {
+        "time": "23:58 - 00:30",
+        "title": "A.F.C. Bournemouth vs Manchester United - English Premier League"
+      }
+    ]
+  },
+  {
+    "id": "slider_2",
+    "name": "beIN SPORTS 2",
+    "logo": "https://assets.bein.com/mena/sites/4/2021/02/beIN_SPORTS2_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS2",
+    "programs": [
+      {
+        "time": "22:30 - 00:30",
+        "title": "Ipswich Town vs Millwall - EFL - English Football League  SkyBet - Championship 2025/2026"
+      },
+      {
+        "time": "00:30 - 03:17",
+        "title": "Pyramids FC (EGY) vs AS FAR (MAR) - CAF Champions League 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "03:17 - 06:30",
+        "title": "Al Ahly FC (EGY) vs EST (TUN) - CAF Champions League 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "06:30 - 08:45",
+        "title": "Ipswich Town vs Millwall - EFL - English Football League  SkyBet - Championship 2025/2026"
+      },
+      {
+        "time": "08:45 - 10:38",
+        "title": "Pyramids FC (EGY) vs AS FAR (MAR) - CAF Champions League 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "10:38 - 12:30",
+        "title": "Al Ahly FC (EGY) vs EST (TUN) - CAF Champions League 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "12:30 - 15:13",
+        "title": "Newcastle United vs Sunderland - English Premier League"
+      },
+      {
+        "time": "15:13 - 17:30",
+        "title": "Tottenham Hotspur vs Nottingham Forest - English Premier League"
+      },
+      {
+        "time": "17:30 - 18:20",
+        "title": "UEFA UCL Magazine 2025/2026 - MD 12 Review"
+      },
+      {
+        "time": "18:20 - 20:45",
+        "title": "Athletic Bilbao vs  Real Betis - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "20:45 - 21:30",
+        "title": "A.F.C. Bournemouth vs Manchester United - English Premier League"
+      },
+      {
+        "time": "21:30 - 22:00",
+        "title": "Brighton & Hove Albion vs Liverpool - English Premier League"
+      },
+      {
+        "time": "22:00 - 00:30",
+        "title": "Newcastle United vs Sunderland - English Premier League"
+      }
+    ]
+  },
+  {
+    "id": "slider_3",
+    "name": "beIN SPORTS 3",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS3_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS3",
+    "programs": [
+      {
+        "time": "23:30 - 01:30",
+        "title": "Villarreal vs Real Sociedad - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "01:30 - 03:30",
+        "title": "Elche vs Mallorca - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "03:30 - 05:40",
+        "title": "Espanyol vs Getafe - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "05:40 - 07:30",
+        "title": "Osasuna vs Girona - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "07:30 - 09:30",
+        "title": "Sevilla vs Valencia - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "09:30 - 11:30",
+        "title": "Leeds United vs Brentford - English Premier League"
+      },
+      {
+        "time": "11:30 - 11:56",
+        "title": "Mexico City - Stories From the City"
+      },
+      {
+        "time": "11:56 - 13:45",
+        "title": "Villarreal vs Real Sociedad - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "13:45 - 14:00",
+        "title": "World Cup 2026 Amazing Facts - Group A (#1)"
+      },
+      {
+        "time": "14:00 - 14:30",
+        "title": "Ligue 1 Show - 2025/2026 - EP 27"
+      },
+      {
+        "time": "14:30 - 15:15",
+        "title": "EPL Netbusters 2025/2026"
+      },
+      {
+        "time": "15:15 - 16:15",
+        "title": "Paris Fc Derby in Paris"
+      },
+      {
+        "time": "16:15 - 19:30",
+        "title": "Zamalek SC (EGY) vs AS Otohô (CGO) - CAF Confederation Cup 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "19:30 - 22:30",
+        "title": "Wydad AC (MAR) vs OCS (MAR) - CAF Confederation Cup 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "22:30 - 23:30",
+        "title": "Highlights - CAF Confederation Cup 2025/26"
+      },
+      {
+        "time": "23:30 - 00:00",
+        "title": "Ligue 1 Show - 2025/2026 - EP 27"
+      }
+    ]
+  },
+  {
+    "id": "slider_4",
+    "name": "beIN SPORTS 4",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS4_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS4",
+    "programs": [
+      {
+        "time": "23:30 - 01:18",
+        "title": "Sheffield United vs Wrexham - EFL - English Football League  SkyBet - Championship 2025/2026"
+      },
+      {
+        "time": "01:18 - 03:13",
+        "title": "Levante vs Real Oviedo - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "03:13 - 03:43",
+        "title": "Ligue 1 Show - 2025/2026 - EP 27"
+      },
+      {
+        "time": "03:43 - 05:40",
+        "title": "Sevilla vs Valencia - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "05:40 - 07:28",
+        "title": "Lens vs Angers SCO - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "07:28 - 09:27",
+        "title": "Toulouse vs Lorient - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "09:27 - 11:15",
+        "title": "Auxerre vs Brest - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "11:15 - 13:03",
+        "title": "Lens vs Angers SCO - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "13:03 - 14:50",
+        "title": "Nice vs Paris Saint-Germain - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "14:50 - 17:05",
+        "title": "Olympique Lyonnais vs Monaco - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "17:05 - 19:15",
+        "title": "Olympique Marseille vs Lille - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "19:15 - 19:45",
+        "title": "Ligue 1: Iconic Players Best of Blanc , Ibrahimovic and Niang in Ligue 1"
+      },
+      {
+        "time": "19:45 - 20:13",
+        "title": "Ligue 1 Weekly Review - 2025/2026"
+      },
+      {
+        "time": "20:13 - 20:35",
+        "title": "MA Super Ligue 1"
+      },
+      {
+        "time": "20:35 - 22:45",
+        "title": "Nantes vs Strasbourg - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "22:45 - 23:00",
+        "title": "Ligue 1 legends (Barthez + Nasri) MARSEILLE PREVIOUS STARS Barthez + Nasri"
+      },
+      {
+        "time": "23:00 - 00:45",
+        "title": "Olympique Lyonnais vs Monaco - French Ligue 1 2025/2026 Week 27"
+      }
+    ]
+  },
+  {
+    "id": "slider_5",
+    "name": "beIN SPORTS 5",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS5_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS5",
+    "programs": [
+      {
+        "time": "22:00 - 00:20",
+        "title": "Japan (JPN) vs Australia (AUS) - AFC Women's Asian Cup Australia 2026 - Final"
+      },
+      {
+        "time": "00:20 - 02:15",
+        "title": "Troyes vs Dunkerque - French Ligue 2 - 2025/2026"
+      },
+      {
+        "time": "02:15 - 04:15",
+        "title": "Toulouse vs Lorient - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "04:15 - 06:10",
+        "title": "Auxerre vs Brest - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "06:10 - 08:35",
+        "title": "Ratchaburi FC (THA) vs Gamba Osaka (JPN) - AFC Champions League Two 2025/2026 - QF 2ed Leg"
+      },
+      {
+        "time": "08:35 - 10:25",
+        "title": "Tampines Rovers FC (SGP) vs Bangkok United (THA) - AFC Champions League Two 2025/2026 - QF 2ed Leg"
+      },
+      {
+        "time": "10:25 - 12:45",
+        "title": "Japan (JPN) vs Australia (AUS) - AFC Women's Asian Cup Australia 2026 - Final"
+      },
+      {
+        "time": "12:45 - 14:35",
+        "title": "Troyes vs Dunkerque - French Ligue 2 - 2025/2026"
+      },
+      {
+        "time": "14:35 - 16:50",
+        "title": "Toulouse vs Lorient - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "16:50 - 19:15",
+        "title": "Al Hilal SC (SUD) vs RS Berkane (MAR) - CAF Champions League 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "19:15 - 19:50",
+        "title": "EPL Stories - Unai Emery - 2025/2026"
+      },
+      {
+        "time": "19:50 - 22:00",
+        "title": "USMA (ALG) vs AS Maniema Union (RDC) - CAF Confederation Cup 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "22:00 - 00:25",
+        "title": "Portland vs Denver - NBA Season 2025–2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_6",
+    "name": "beIN SPORTS 6",
+    "logo": "https://assets.bein.com/mena/sites/4/2021/02/beIN_SPORTS6_DIGITAL_Mono-d-1.png",
+    "href": "https://beinconnect.app/beINSPORTS6",
+    "programs": [
+      {
+        "time": "00:00 - 02:00",
+        "title": "Marta Ortega Gallego Esp Martina Calvo Esp vs Paula Josemaria Martin Esp Beatriz Gonzalez Fernandez"
+      },
+      {
+        "time": "02:00 - 04:00",
+        "title": "Juan Lebron Esp Leandro Roman Augsburger Arg vs Carlos Daniel Gutierrez Arg Gonzalo Gabriel Alfonso"
+      },
+      {
+        "time": "04:00 - 05:15",
+        "title": "Agustin Tapia Arg Arturo Coello Esp vs Leonel Daniel Aguirre Arg Alejandro Arroyo Esp -  - Men - Can"
+      },
+      {
+        "time": "05:15 - 05:45",
+        "title": "ATP Tour - Magazine 2026"
+      },
+      {
+        "time": "05:45 - 07:45",
+        "title": "CR Belouizdad (ALG) vs Al Masry SC (EGY) - CAF Confederation Cup 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "07:45 - 08:30",
+        "title": "Houston - Stories From the City"
+      },
+      {
+        "time": "08:30 - 10:29",
+        "title": "Gemma Triay Pons Esp Delfina Brea Senesi Arg vs Marina Guinart España Esp Veronica Virseda Esp - Wom"
+      },
+      {
+        "time": "10:29 - 12:30",
+        "title": "Marta Ortega Gallego Esp Martina Calvo Esp vs Paula Josemaria Martin Esp Beatriz Gonzalez Fernandez"
+      },
+      {
+        "time": "12:30 - 14:00",
+        "title": "Juan Lebron Esp Leandro Roman Augsburger Arg vs Carlos Daniel Gutierrez Arg Gonzalo Gabriel Alfonso"
+      },
+      {
+        "time": "14:00 - 14:30",
+        "title": "Houston - Stories From the City"
+      },
+      {
+        "time": "14:30 - 15:05",
+        "title": "UEFA UCL Magazine 2025/2026 - MD 12 Review"
+      },
+      {
+        "time": "15:05 - 17:05",
+        "title": "Aston Villa vs West Ham United - English Premier League"
+      },
+      {
+        "time": "17:05 - 19:15",
+        "title": "Paris FC vs Le Havre - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "19:15 - 20:00",
+        "title": "ATP Tour - Magazine 2026"
+      },
+      {
+        "time": "20:00 - 20:30",
+        "title": "Houston - Stories From the City"
+      },
+      {
+        "time": "20:30 - 22:00",
+        "title": "Agustin Tapia Arg Arturo Coello Esp vs Leonel Daniel Aguirre Arg Alejandro Arroyo Esp -  - Men - Can"
+      },
+      {
+        "time": "22:00 - 22:30",
+        "title": "Philadelphia - Stories From the City"
+      },
+      {
+        "time": "22:30 - 23:00",
+        "title": "Seattle - Stories From the City"
+      },
+      {
+        "time": "23:00 - 01:00",
+        "title": "Gemma TRIAY PONS (ESP) Delfina BREA SENESI (ARG) vs Paula JOSEMARIA MARTIN (ESP) Beatriz GONZALEZ FE"
+      }
+    ]
+  },
+  {
+    "id": "slider_7",
+    "name": "beIN SPORTS 7",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS7_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS7",
+    "programs": [
+      {
+        "time": "00:00 - 02:00",
+        "title": "Ben SHELTON (USA) vs Alexander SHEVCHENKO (KAZ) - Day 4 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "02:00 - 04:00",
+        "title": "Martin Damm (Usa) vs Alexander Zverev (Ger) - Day 4 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "04:00 - 05:58",
+        "title": "Kamil Majchrzak (Pol) vs Learner Tien (Usa) - Day 4 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "05:58 - 07:37",
+        "title": "Felix Auger-aliassime (Can) vs Marton Fucsovics (Hun) - Day 4 - ATP 1000 Miami Open presented by Ita"
+      },
+      {
+        "time": "07:37 - 10:00",
+        "title": "Kamil Majchrzak (Pol) vs Learner Tien (Usa) - Day 4 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "10:00 - 11:33",
+        "title": "Alex Michelsen (Usa) vs Cameron Norrie (Gbr) - Day 4 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "11:33 - 13:42",
+        "title": "Ben SHELTON (USA) vs Alexander SHEVCHENKO (KAZ) - Day 4 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "13:42 - 14:33",
+        "title": "Martin Damm (Usa) vs Alexander Zverev (Ger) - Day 4 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "14:33 - 16:00",
+        "title": "Felix Auger-aliassime (Can) vs Marton Fucsovics (Hun) - Day 4 - ATP 1000 Miami Open presented by Ita"
+      },
+      {
+        "time": "16:00 - 18:00",
+        "title": "Ethan Quinn (USA) vs Jiri Lehecka (CZE) - Day 5 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "18:00 - 20:00",
+        "title": "M2 - Day 5 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "20:00 - 22:00",
+        "title": "Reilly OPELKA (USA) vs Taylor FRITZ (USA) - Day 5 - ATP 1000 Miami Open presented by Itaú"
+      },
+      {
+        "time": "22:00 - 00:00",
+        "title": "Carlos Alcaraz (ESP) vs Sebastian Korda (USA) - Day 5 - ATP 1000 Miami Open presented by Itaú"
+      }
+    ]
+  },
+  {
+    "id": "slider_8",
+    "name": "beIN SPORTS 8",
+    "logo": "https://assets.bein.com/mena/sites/4/2023/09/logos-_beINSPORTS8.png",
+    "href": "https://beinconnect.app/beINSPORTS8",
+    "programs": [
+      {
+        "time": "22:00 - 00:30",
+        "title": "Oklahoma City vs Washington - NBA Season 2025–2026"
+      },
+      {
+        "time": "00:30 - 01:00",
+        "title": "NBA Action 2025/2026"
+      },
+      {
+        "time": "01:00 - 01:30",
+        "title": "ATP Tour - Magazine 2026"
+      },
+      {
+        "time": "01:30 - 04:00",
+        "title": "LA Clippers vs Dallas - NBA Season 2025–2026"
+      },
+      {
+        "time": "04:00 - 08:17",
+        "title": "Morning Session - World Athletics Indoor Champions 2026"
+      },
+      {
+        "time": "08:17 - 09:00",
+        "title": "Hail Baja - Rally Highlights 2026"
+      },
+      {
+        "time": "09:00 - 09:50",
+        "title": "NBA Action 2025/2026"
+      },
+      {
+        "time": "09:50 - 14:30",
+        "title": "Morning Session - World Athletics Indoor Champions 2026"
+      },
+      {
+        "time": "14:30 - 15:00",
+        "title": "ATP Tour - Magazine 2026"
+      },
+      {
+        "time": "15:00 - 17:00",
+        "title": "Oklahoma City vs Washington - NBA Season 2025–2026"
+      },
+      {
+        "time": "17:00 - 17:30",
+        "title": "NBA Action 2025/2026"
+      },
+      {
+        "time": "17:30 - 22:35",
+        "title": "Evening Session - World Athletics Indoor Champions 2026"
+      },
+      {
+        "time": "22:35 - 00:15",
+        "title": "Al Hilal SC (SUD) vs RS Berkane (MAR) - CAF Champions League 2025/26 - R16 2ND LEG"
+      }
+    ]
+  },
+  {
+    "id": "slider_9",
+    "name": "beIN SPORTS 9",
+    "logo": "https://assets.bein.com/mena/sites/4/2023/09/logos-_beINSPORTS9.png",
+    "href": "https://beinconnect.app/beINSPORTS9",
+    "programs": [
+      {
+        "time": "23:41 - 03:30",
+        "title": "Day 4 – CSI3* - Grand Prix – Jump Off - 1.50m - CHI AL SHAQAB Presented by Longines 2026"
+      },
+      {
+        "time": "03:30 - 06:00",
+        "title": "Day 1 - Two phases - Equestrian - H.H. The Amir’s Sword 2026 – Jumping"
+      },
+      {
+        "time": "06:00 - 07:45",
+        "title": "Day 1 - Faults & Time - Equestrian - H.H. The Amir’s Sword 2026 – Jumping"
+      },
+      {
+        "time": "07:45 - 09:15",
+        "title": "Day 2 - Faults & Time - Equestrian - H.H. The Amir’s Sword 2026 – Jumping"
+      },
+      {
+        "time": "09:15 - 11:30",
+        "title": "Day 2 - Prix Hermes seller - Equestrian - H.H. The Amir’s Sword 2026 – Jumping"
+      },
+      {
+        "time": "11:30 - 12:30",
+        "title": "Sprint Race - MotoGP - Brazil GP 2026"
+      },
+      {
+        "time": "12:30 - 13:40",
+        "title": "Qualifying - Moto 3 Brazil Round 2026"
+      },
+      {
+        "time": "13:40 - 14:30",
+        "title": "Qualifying - Moto 2 Brazil Round 2026"
+      },
+      {
+        "time": "14:30 - 15:00",
+        "title": "HL H.H.the Father Amirs prix 2026 – Accumulator 1.40 meters – Week 3"
+      },
+      {
+        "time": "15:00 - 16:03",
+        "title": "Against the clock with a Jump-Off – Week 1"
+      },
+      {
+        "time": "16:03 - 18:30",
+        "title": "Celta Vigo vs Deportivo Alaves - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "18:30 - 19:00",
+        "title": "HL Al Shaqab International League 2026 – Jumping competition against the clock"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "Main Race - MotoGP - Brazil GP 2026"
+      },
+      {
+        "time": "20:00 - 23:15",
+        "title": "Day 3 - Grand Prix – Tow Rounds + Jump Off - Equestrian - H.H. The Amir’s Sword 2026 – Jumping"
+      },
+      {
+        "time": "23:15 - 00:34",
+        "title": "Day 4 - 150 cm LR D –  Faults & Time - Equestrian - H.H. The Amir’s Sword 2026 – Jumping"
+      }
+    ]
+  },
+  {
+    "id": "slider_10",
+    "name": "beIN SPORTS News",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/NEWS_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTSNews",
+    "programs": [
+      {
+        "time": "00:00 - 00:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "00:30 - 01:00",
+        "title": "Al Hassila   - 22/03/26"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "The Issue of The Day"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "Al Hassad"
+      },
+      {
+        "time": "03:00 - 03:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "03:30 - 04:00",
+        "title": "ATP Tour - Magazine 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "Al Hassad"
+      },
+      {
+        "time": "05:00 - 05:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "05:30 - 06:00",
+        "title": "Special Interview  - 21/03/26"
+      },
+      {
+        "time": "06:00 - 06:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "06:30 - 06:45",
+        "title": "Discover Mexico Host City FIFA World Cup 2026"
+      },
+      {
+        "time": "06:45 - 07:00",
+        "title": "beIN Experiments - News"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "The Issue of The Day"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "Al Hassad"
+      },
+      {
+        "time": "09:00 - 09:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "09:30 - 10:00",
+        "title": "ATP Tour - Magazine 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "The Issue of The Day"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "Al Hassad"
+      },
+      {
+        "time": "12:00 - 12:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "12:30 - 13:00",
+        "title": "Al Hassila   - 22/03/26"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "The Issue of The Day"
+      },
+      {
+        "time": "14:00 - 14:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "14:30 - 14:45",
+        "title": "Special Interview  - 22/03/26"
+      },
+      {
+        "time": "14:45 - 15:00",
+        "title": "Special Report - 22/03/26"
+      },
+      {
+        "time": "15:00 - 15:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "15:30 - 15:45",
+        "title": "The summary 1 - 22/03/26"
+      },
+      {
+        "time": "15:45 - 16:00",
+        "title": "Discover Mexico Host City FIFA World Cup 2026"
+      },
+      {
+        "time": "16:00 - 17:00",
+        "title": "Six O'Clock bulletin"
+      },
+      {
+        "time": "17:00 - 17:15",
+        "title": "Al Jawla  - Live Studio"
+      },
+      {
+        "time": "17:15 - 17:30",
+        "title": "Football Legends - News"
+      },
+      {
+        "time": "17:30 - 17:45",
+        "title": "Special Interview  - 22/03/26"
+      },
+      {
+        "time": "17:45 - 18:00",
+        "title": "Special Report - 22/03/26"
+      },
+      {
+        "time": "18:00 - 18:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "18:30 - 19:00",
+        "title": "Al Hassila   - 22/03/26"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "Nine O'Clock bulletin"
+      },
+      {
+        "time": "20:00 - 20:15",
+        "title": "Al Jawla"
+      },
+      {
+        "time": "20:15 - 20:30",
+        "title": "The summary 1 - 22/03/26"
+      },
+      {
+        "time": "20:30 - 20:45",
+        "title": "Special Interview  - 22/03/26"
+      },
+      {
+        "time": "20:45 - 21:00",
+        "title": "Special Report - 22/03/26"
+      },
+      {
+        "time": "21:00 - 21:30",
+        "title": "News Bulletin"
+      },
+      {
+        "time": "21:30 - 22:00",
+        "title": "MA Super Ligue 1"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "The Issue of The Day"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "Al Hassad"
+      }
+    ]
+  },
+  {
+    "id": "slider_11",
+    "name": "beIN SPORTS",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/bein_SPORTS_FTA_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS",
+    "programs": [
+      {
+        "time": "23:45 - 01:02",
+        "title": "Tremblay vs Nimes - LNH Division 1 - French Handball Starligue"
+      },
+      {
+        "time": "01:02 - 03:00",
+        "title": "Qatar SC vs Al Gharafa - Qatar Stars League 2025/26 - W18"
+      },
+      {
+        "time": "03:00 - 05:00",
+        "title": "Al Ahli vs Al Arabi - Qatar Stars League 2025/26 - W18"
+      },
+      {
+        "time": "05:00 - 06:45",
+        "title": "Al Rayyan vs Al Shahania - Qatar Stars League 2025/26 - W18"
+      },
+      {
+        "time": "06:45 - 08:15",
+        "title": "Nimes vs Limoges - LNH Division 1 - French Handball Starligue"
+      },
+      {
+        "time": "08:15 - 09:32",
+        "title": "Tremblay vs Nimes - LNH Division 1 - French Handball Starligue"
+      },
+      {
+        "time": "09:32 - 11:30",
+        "title": "Al Sadd vs Umm Salal - Qatar Stars League 2025/26 - W18"
+      },
+      {
+        "time": "11:30 - 13:30",
+        "title": "Al Sailiya vs Al Duhail - Qatar Stars League 2025/26 - W18"
+      },
+      {
+        "time": "13:30 - 15:20",
+        "title": "Al Wakrah vs Al Shamal - Qatar Stars League 2025/26 - W18"
+      },
+      {
+        "time": "15:20 - 16:45",
+        "title": "Nimes vs Limoges - LNH Division 1 - French Handball Starligue"
+      },
+      {
+        "time": "16:45 - 18:02",
+        "title": "Tremblay vs Nimes - LNH Division 1 - French Handball Starligue"
+      },
+      {
+        "time": "18:02 - 18:30",
+        "title": "NBA Action 2025/2026"
+      },
+      {
+        "time": "18:30 - 20:30",
+        "title": "Qatar SC vs Al Gharafa - Qatar Stars League 2025/26 - W18"
+      },
+      {
+        "time": "20:30 - 22:30",
+        "title": "Al Ahli vs Al Arabi - Qatar Stars League 2025/26 - W18"
+      },
+      {
+        "time": "22:30 - 00:02",
+        "title": "Saint-Raphael vs Cesson-Rennes - LNH Division 1 - French Handball Starligue"
+      }
+    ]
+  },
+  {
+    "id": "slider_12",
+    "name": "beIN SPORTS 1EN",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS1_ENGLISH_Digital_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS1EN",
+    "programs": [
+      {
+        "time": "00:00 - 00:30",
+        "title": "Manchester City vs Real Madrid - UEFA Champions League 2025/26 - Round of 16 - 2nd leg"
+      },
+      {
+        "time": "00:30 - 01:00",
+        "title": "Chelsea vs Paris Saint-Germain - UEFA Champions League 2025/26 - Round of 16 - 2nd leg"
+      },
+      {
+        "time": "01:00 - 01:30",
+        "title": "This is Paris 2025/26 Ep.29"
+      },
+      {
+        "time": "01:30 - 04:00",
+        "title": "LA Clippers vs Dallas - NBA Season 2025–2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "EN EPL The Art Of.. | E2 - Goalkeeping"
+      },
+      {
+        "time": "05:00 - 08:06",
+        "title": "Brighton & Hove Albion vs Liverpool - English Premier League"
+      },
+      {
+        "time": "08:06 - 10:30",
+        "title": "Fulham vs Burnley - English Premier League"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "This is Paris 2025/26 Ep.29"
+      },
+      {
+        "time": "11:00 - 11:30",
+        "title": "EN EPL The Big Interview 2025/26 | E32"
+      },
+      {
+        "time": "11:30 - 12:00",
+        "title": "EN UCL Magazine 2025/26 | E25"
+      },
+      {
+        "time": "12:00 - 14:50",
+        "title": "Newcastle United vs Sunderland - English Premier League"
+      },
+      {
+        "time": "14:50 - 17:30",
+        "title": "Tottenham Hotspur vs Nottingham Forest - English Premier League"
+      },
+      {
+        "time": "17:30 - 20:50",
+        "title": "Arsenal vs Manchester City - Carabao Cup 2025 -2026 -  Final"
+      },
+      {
+        "time": "20:50 - 23:00",
+        "title": "Real Madrid vs Atletico Madrid - Spanish LaLiga 2025/26 - Week 29"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "EN EPL The Art Of.. | E2 - Goalkeeping"
+      }
+    ]
+  },
+  {
+    "id": "slider_13",
+    "name": "beIN SPORTS 2EN",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS2_ENGLISH_Digital_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS2EN",
+    "programs": [
+      {
+        "time": "00:00 - 02:00",
+        "title": "Marta Ortega Gallego Esp Martina Calvo Esp vs Paula Josemaria Martin Esp Beatriz Gonzalez Fernandez"
+      },
+      {
+        "time": "02:00 - 04:00",
+        "title": "Juan Lebron Esp Leandro Roman Augsburger Arg vs Carlos Daniel Gutierrez Arg Gonzalo Gabriel Alfonso"
+      },
+      {
+        "time": "04:00 - 06:00",
+        "title": "Agustin Tapia Arg Arturo Coello Esp vs Leonel Daniel Aguirre Arg Alejandro Arroyo Esp -  - Men - Can"
+      },
+      {
+        "time": "06:00 - 08:35",
+        "title": "Everton vs Chelsea - English Premier League"
+      },
+      {
+        "time": "08:35 - 11:02",
+        "title": "Leeds United vs Brentford - English Premier League"
+      },
+      {
+        "time": "11:02 - 12:42",
+        "title": "Gemma Triay Pons Esp Delfina Brea Senesi Arg vs Marina Guinart España Esp Veronica Virseda Esp - Wom"
+      },
+      {
+        "time": "12:42 - 14:30",
+        "title": "Marta Ortega Gallego Esp Martina Calvo Esp vs Paula Josemaria Martin Esp Beatriz Gonzalez Fernandez"
+      },
+      {
+        "time": "14:30 - 16:00",
+        "title": "T100 2025 Highlights - Qatar"
+      },
+      {
+        "time": "16:00 - 16:30",
+        "title": "EN ATP Tour: This Week 2026 Ep.10"
+      },
+      {
+        "time": "16:30 - 17:00",
+        "title": "EN One Weekly 2026 - Ep 12"
+      },
+      {
+        "time": "17:00 - 17:30",
+        "title": "FIFA World Cup 2026 Stories From The Cities | E3 Vancouver"
+      },
+      {
+        "time": "17:30 - 18:00",
+        "title": "EN NBA Action 25/26 Ep.23"
+      },
+      {
+        "time": "18:00 - 20:00",
+        "title": "Juan Lebron Esp Leandro Roman Augsburger Arg vs Carlos Daniel Gutierrez Arg Gonzalo Gabriel Alfonso"
+      },
+      {
+        "time": "20:00 - 22:00",
+        "title": "Agustin Tapia Arg Arturo Coello Esp vs Leonel Daniel Aguirre Arg Alejandro Arroyo Esp -  - Men - Can"
+      },
+      {
+        "time": "22:00 - 22:30",
+        "title": "EN ATP Tour: This Week 2026 Ep.10"
+      },
+      {
+        "time": "22:30 - 23:00",
+        "title": "EN One Weekly 2026 - Ep 12"
+      },
+      {
+        "time": "23:00 - 01:00",
+        "title": "Gemma TRIAY PONS (ESP) Delfina BREA SENESI (ARG) vs Paula JOSEMARIA MARTIN (ESP) Beatriz GONZALEZ FE"
+      }
+    ]
+  },
+  {
+    "id": "slider_14",
+    "name": "beIN SPORTS 1FR",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS1_FRENCH_Digital_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS1FR",
+    "programs": [
+      {
+        "time": "00:00 - 00:45",
+        "title": "Ep 29 Inside Fra - This is Paris - Football 2025-2026"
+      },
+      {
+        "time": "00:45 - 06:00",
+        "title": "NBA Extra - Magazine 2025-2026"
+      },
+      {
+        "time": "06:00 - 08:00",
+        "title": "Séville vs Valence - Liga - J29 - Football 2025-2026"
+      },
+      {
+        "time": "08:00 - 09:15",
+        "title": "Doc Grandir Par Le Sport - Documentaire"
+      },
+      {
+        "time": "09:15 - 11:00",
+        "title": "Atlanta Dream Hawks vs Houston Rockets - NBA - Basketball 2025-2026"
+      },
+      {
+        "time": "11:00 - 12:45",
+        "title": "Los Angeles Sparks Clippers vs Dallas Wings MAVERICKS - NBA - Basketball 2025-2026"
+      },
+      {
+        "time": "12:45 - 14:00",
+        "title": "NBA Extra - Magazine 2025-2026"
+      },
+      {
+        "time": "14:00 - 14:55",
+        "title": "Avant Match Lyon OU Monaco - Ligue 1 - Football 2025-2026"
+      },
+      {
+        "time": "14:55 - 17:05",
+        "title": "Lyon OU vs Monaco - Ligue 1 - J27 - Football 2025-2026"
+      },
+      {
+        "time": "17:05 - 17:25",
+        "title": "P01 - Europe Arena - Magazine 2025-2026"
+      },
+      {
+        "time": "17:25 - 19:30",
+        "title": "Man City vs Arsenal - Coupe de la Ligue Anglaise - F - Football 2025-2026"
+      },
+      {
+        "time": "19:30 - 20:00",
+        "title": "P02 - Europe Arena - Magazine 2025-2026"
+      },
+      {
+        "time": "20:00 - 20:30",
+        "title": "Ep 29 Inside Fra - This is Paris - Football 2025-2026"
+      },
+      {
+        "time": "20:30 - 20:55",
+        "title": "P03 - Europe Arena -"
+      },
+      {
+        "time": "20:55 - 23:00",
+        "title": "Real Madrid vs Atlético Madrid - Liga - J29 - Football 2025-2026"
+      },
+      {
+        "time": "23:00 - 23:15",
+        "title": "P04 - Europe Arena -"
+      },
+      {
+        "time": "23:15 - 00:15",
+        "title": "Terrains D'espoirs - Football - Documentaire"
+      }
+    ]
+  },
+  {
+    "id": "slider_15",
+    "name": "beIN SPORTS 2FR",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS2_FRENCH_Digital_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTS2FR",
+    "programs": [
+      {
+        "time": "23:00 - 06:00",
+        "title": "Chelsea vs PSG - Champions League - 8EME DE FINALE RETOUR - Football 2025-2026"
+      },
+      {
+        "time": "06:00 - 06:30",
+        "title": "Gardien Ou Rien Du Tout - Football - Documentaire"
+      },
+      {
+        "time": "06:30 - 07:00",
+        "title": "Salon VIP - Magazine 2025-2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "Passion Sous Pression - Magazine - Magazine Football 2023-2024"
+      },
+      {
+        "time": "08:00 - 10:00",
+        "title": "Barcelonne vs Newcastle - Champions League - 8EME DE FINALE RETOUR - Football 2025-2026"
+      },
+      {
+        "time": "10:00 - 12:00",
+        "title": "Nice vs PSG - Ligue 1 - J27 - Football 2025-2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "Ep 29 Inside Fra - This is Paris - Football 2025-2026"
+      },
+      {
+        "time": "13:00 - 13:25",
+        "title": "Avant Match Aurore De Taupont Cs Josselinais - Football 2025-2026"
+      },
+      {
+        "time": "13:25 - 15:30",
+        "title": "Aurore De Taupont vs Cs Josselinais - Football 2025-2026"
+      },
+      {
+        "time": "15:30 - 16:00",
+        "title": "Apres Match Aurore De Taupont Cs Josselinais - Football 2025-2026"
+      },
+      {
+        "time": "16:00 - 16:10",
+        "title": "Chelsea vs PSG - Champions League - 8EME DE FINALE RETOUR - Football 2025-2026"
+      },
+      {
+        "time": "16:10 - 18:40",
+        "title": "Salon VIP - Magazine 2025-2026"
+      },
+      {
+        "time": "18:40 - 21:45",
+        "title": "Doc 2023 Pourquoi Moi - Magazine - Documentaire"
+      },
+      {
+        "time": "21:45 - 22:00",
+        "title": "P02 - NBA Extra - Magazine 2025-2026"
+      },
+      {
+        "time": "22:00 - 00:30",
+        "title": "Portland Blazers vs Denver Nuggets - NBA - Basketball 2025-2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_16",
+    "name": "4K",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/4k_DIGITAL_Mono.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "23:22 - 01:26",
+        "title": "Race - F1 China Grand Prix - 2026 - FIA Formula 1 World Championship 2026"
+      },
+      {
+        "time": "01:26 - 03:15",
+        "title": "A.F.C. Bournemouth vs. Manchester United - English Premier League 2026/2027"
+      },
+      {
+        "time": "03:15 - 05:00",
+        "title": "Liverpool vs. Tottenham Hotspur - English Premier League 2026/2027"
+      },
+      {
+        "time": "05:00 - 07:05",
+        "title": "Race - F1 China Grand Prix - 2026 - FIA Formula 1 World Championship 2026"
+      },
+      {
+        "time": "07:05 - 08:54",
+        "title": "A.F.C. Bournemouth vs. Manchester United - English Premier League 2026/2027"
+      },
+      {
+        "time": "08:54 - 10:39",
+        "title": "Liverpool vs. Tottenham Hotspur - English Premier League 2026/2027"
+      },
+      {
+        "time": "10:39 - 12:30",
+        "title": "A.F.C. Bournemouth vs. Manchester United - English Premier League 2026/2027"
+      },
+      {
+        "time": "12:30 - 15:01",
+        "title": "Newcastle United vs. Sunderland - English Premier League 2026/2027"
+      },
+      {
+        "time": "15:01 - 16:48",
+        "title": "Brighton & Hove Albion vs. Liverpool - English Premier League 2026/2027"
+      },
+      {
+        "time": "16:48 - 18:37",
+        "title": "A.F.C. Bournemouth vs. Manchester United - English Premier League 2026/2027"
+      },
+      {
+        "time": "18:37 - 20:42",
+        "title": "Race - F1 China Grand Prix - 2026 - FIA Formula 1 World Championship 2026"
+      },
+      {
+        "time": "20:42 - 22:29",
+        "title": "Newcastle United vs. Sunderland - English Premier League 2026/2027"
+      },
+      {
+        "time": "22:29 - 00:16",
+        "title": "Brighton & Hove Albion vs. Liverpool - English Premier League 2026/2027"
+      }
+    ]
+  },
+  {
+    "id": "slider_17",
+    "name": "beIN SPORTS XTRA1",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS_XTRA1_Digital_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTSXTRA1",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 17:05",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "17:05 - 19:20",
+        "title": "Rennes vs Metz - French Ligue 1 2025/2026 Week 27"
+      },
+      {
+        "time": "19:20 - 19:30",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:30 - 19:40",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:40 - 19:50",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:50 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_18",
+    "name": "beIN SPORTS XTRA2",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS_XTRA2_Digital_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTSXTRA2",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 16:10",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:10 - 16:20",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:20 - 16:30",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:30 - 16:50",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:50 - 19:00",
+        "title": "Stade Malien (MLI) vs Mamelodi Sundowns FC (RSA) - CAF Champions League 2025/26 - R16 2ND LEG"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_19",
+    "name": "beIN SPORTS XTRA3",
+    "logo": "https://assets.bein.com/mena/sites/4/2023/09/logos-_beINSPORTSXTRA3.png",
+    "href": "https://beinconnect.app/beINSPORTSXTRA3",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 15:10",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:10 - 15:20",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:20 - 15:30",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:30 - 15:40",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:40 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 17:15",
+        "title": "Main Race - Moto 3 Brazil Round 2026"
+      },
+      {
+        "time": "17:15 - 18:10",
+        "title": "Main Race - Moto 2 Brazil Round 2026"
+      },
+      {
+        "time": "18:10 - 18:20",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:20 - 18:30",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:30 - 18:40",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:40 - 18:50",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:50 - 19:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_20",
+    "name": "BEIN SPORTS XTRA 04 BEIN.COM",
+    "logo": "https://assets.bein.com/mena/sites/4/2025/01/beIN_SPORTS_XTRA_04_bein.com_.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 17:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "17:00 - 18:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:00 - 19:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_21",
+    "name": "BEIN SPORTS XTRA 05 BEIN.COM",
+    "logo": "https://assets.bein.com/mena/sites/4/2025/01/beIN_SPORTS_XTRA_05_bein.com_.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 17:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "17:00 - 18:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:00 - 19:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_22",
+    "name": "BEIN SPORTS XTRA 06 BEIN.COM",
+    "logo": "https://assets.bein.com/mena/sites/4/2025/01/beIN_SPORTS_XTRA_06_bein.com_.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 17:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "17:00 - 18:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:00 - 19:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_23",
+    "name": "BEIN SPORTS XTRA 07 BEIN.COM",
+    "logo": "https://assets.bein.com/mena/sites/4/2025/01/beIN_SPORTS_XTRA_07_bein.com_.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 17:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "17:00 - 18:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:00 - 19:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_24",
+    "name": "BEIN SPORTS XTRA 08 BEIN.COM",
+    "logo": "https://assets.bein.com/mena/sites/4/2025/01/beIN_SPORTS_XTRA_08_Bein.com_.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 17:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "17:00 - 18:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:00 - 19:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_25",
+    "name": "BEIN SPORTS XTRA DIGITAL 09 BEIN.COM",
+    "logo": "https://assets.bein.com/mena/sites/4/2025/01/beIN_SPORTS_XTRA_Digital_09_Bein.com_.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "00:00 - 01:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "01:00 - 02:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "02:00 - 03:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "04:00 - 05:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "05:00 - 06:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "08:00 - 09:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "10:00 - 11:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "11:00 - 12:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "12:00 - 13:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "13:00 - 14:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "14:00 - 15:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "15:00 - 16:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "16:00 - 17:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "17:00 - 18:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "18:00 - 19:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "21:00 - 22:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "22:00 - 23:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      },
+      {
+        "time": "23:00 - 00:00",
+        "title": "beIN SPORTS XTRA For Live And Exclusive Coverage of Premuim Sporting Events - MAR - 2026"
+      }
+    ]
+  },
+  {
+    "id": "slider_26",
+    "name": "beIN SPORTS MAX1",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS_MAX1_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTSMAX1",
+    "programs": [
+      {
+        "time": "00:00 - 02:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "02:00 - 04:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "04:00 - 06:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "06:00 - 08:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "08:00 - 10:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "10:00 - 12:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "12:00 - 14:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "14:00 - 16:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "16:00 - 18:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "18:00 - 20:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "20:00 - 22:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "22:00 - 00:00",
+        "title": "beIN Sports MAX"
+      }
+    ]
+  },
+  {
+    "id": "slider_27",
+    "name": "beIN SPORTS MAX2",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS_MAX2_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTSMAX2",
+    "programs": [
+      {
+        "time": "00:00 - 02:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "02:00 - 04:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "04:00 - 06:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "06:00 - 08:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "08:00 - 10:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "10:00 - 12:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "12:00 - 14:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "14:00 - 16:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "16:00 - 18:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "18:00 - 20:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "20:00 - 22:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "22:00 - 00:00",
+        "title": "beIN Sports MAX"
+      }
+    ]
+  },
+  {
+    "id": "slider_28",
+    "name": "beIN SPORTS MAX3",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS_MAX3_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTSMAX3",
+    "programs": [
+      {
+        "time": "00:00 - 02:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "02:00 - 04:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "04:00 - 06:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "06:00 - 08:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "08:00 - 10:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "10:00 - 12:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "12:00 - 14:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "14:00 - 16:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "16:00 - 18:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "18:00 - 20:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "20:00 - 22:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "22:00 - 00:00",
+        "title": "beIN Sports MAX"
+      }
+    ]
+  },
+  {
+    "id": "slider_29",
+    "name": "beIN SPORTS MAX4",
+    "logo": "https://assets.bein.com/mena/sites/4/2015/06/beIN_SPORTS_MAX4_DIGITAL_Mono.png",
+    "href": "https://beinconnect.app/beINSPORTSMAX4",
+    "programs": [
+      {
+        "time": "00:00 - 02:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "02:00 - 04:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "04:00 - 06:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "06:00 - 08:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "08:00 - 10:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "10:00 - 12:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "12:00 - 14:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "14:00 - 16:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "16:00 - 18:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "18:00 - 20:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "20:00 - 22:00",
+        "title": "beIN Sports MAX"
+      },
+      {
+        "time": "22:00 - 00:00",
+        "title": "beIN Sports MAX"
+      }
+    ]
+  },
+  {
+    "id": "slider_30",
+    "name": "ALKASS 1",
+    "logo": "https://assets.bein.com/mena/sites/4/2020/06/2023_Alkass_1.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "22:00 - 03:00",
+        "title": "نيوز"
+      },
+      {
+        "time": "03:00 - 03:30",
+        "title": "سبورت كونفدينشيال"
+      },
+      {
+        "time": "03:30 - 05:15",
+        "title": "ديربي تونس"
+      },
+      {
+        "time": "05:15 - 05:30",
+        "title": "أوتو مونديال"
+      },
+      {
+        "time": "05:30 - 06:00",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "06:00 - 06:30",
+        "title": "بطولة العالم لجمال الخيل العربية الأصيلة"
+      },
+      {
+        "time": "06:30 - 07:00",
+        "title": "جولمانيا"
+      },
+      {
+        "time": "07:00 - 09:30",
+        "title": "دوري الدرجة الثانية القطري"
+      },
+      {
+        "time": "09:30 - 10:00",
+        "title": "فيبا وورلد باسكت بول"
+      },
+      {
+        "time": "10:00 - 10:30",
+        "title": "نيوز"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "نيوز بيبر"
+      },
+      {
+        "time": "11:00 - 11:30",
+        "title": "كميونيكيشن"
+      },
+      {
+        "time": "11:30 - 12:00",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "12:00 - 12:30",
+        "title": "جولمانيا"
+      },
+      {
+        "time": "12:30 - 13:30",
+        "title": "تو أند هاف"
+      },
+      {
+        "time": "13:30 - 14:00",
+        "title": "ذي إنسايد لاين"
+      },
+      {
+        "time": "14:00 - 14:15",
+        "title": "نيوز"
+      },
+      {
+        "time": "14:15 - 14:30",
+        "title": "فوتبول آناليسيس إستوديو"
+      },
+      {
+        "time": "14:30 - 17:00",
+        "title": "كاتار ستارز ليج"
+      },
+      {
+        "time": "17:00 - 20:00",
+        "title": "كاتار ستارز ليج"
+      },
+      {
+        "time": "20:00 - 21:30",
+        "title": "ذا كاونسل"
+      },
+      {
+        "time": "21:30 - 01:30",
+        "title": "كميونيكيشن"
+      }
+    ]
+  },
+  {
+    "id": "slider_31",
+    "name": "ALKASS 2",
+    "logo": "https://assets.bein.com/mena/sites/4/2020/06/2023_Alkass_2.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "22:00 - 01:00",
+        "title": "نيوز"
+      },
+      {
+        "time": "01:00 - 01:30",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "01:30 - 03:30",
+        "title": "كاتار ستارز ليج"
+      },
+      {
+        "time": "03:30 - 04:00",
+        "title": "فيبا وورلد باسكت بول"
+      },
+      {
+        "time": "04:00 - 04:30",
+        "title": "نيوز"
+      },
+      {
+        "time": "04:30 - 06:00",
+        "title": "دوري الدرجة الثانية القطري"
+      },
+      {
+        "time": "06:00 - 06:30",
+        "title": "سبورت كونفدينشيال"
+      },
+      {
+        "time": "06:30 - 06:45",
+        "title": "جولز"
+      },
+      {
+        "time": "06:45 - 09:30",
+        "title": "هورسيس إستوديو"
+      },
+      {
+        "time": "09:30 - 10:00",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "10:00 - 10:30",
+        "title": "نيوز"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "نيوز بيبر"
+      },
+      {
+        "time": "11:00 - 11:30",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "11:30 - 12:00",
+        "title": "ذا فوتبول ريفيو"
+      },
+      {
+        "time": "12:00 - 14:00",
+        "title": "دوري الدرجة الثانية القطري"
+      },
+      {
+        "time": "14:00 - 14:15",
+        "title": "نيوز"
+      },
+      {
+        "time": "14:15 - 14:45",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "14:45 - 15:15",
+        "title": "سبورت كونفدينشيال"
+      },
+      {
+        "time": "15:15 - 17:00",
+        "title": "ديربي تونس"
+      },
+      {
+        "time": "17:00 - 20:00",
+        "title": "كاتار ستارز ليج"
+      },
+      {
+        "time": "20:00 - 20:30",
+        "title": "مارين ماجازين"
+      },
+      {
+        "time": "20:30 - 21:30",
+        "title": "سمري"
+      },
+      {
+        "time": "21:30 - 01:30",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      }
+    ]
+  },
+  {
+    "id": "slider_32",
+    "name": "ALKASS 3",
+    "logo": "https://assets.bein.com/mena/sites/4/2020/06/2023_Alkass_3.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "21:30 - 01:00",
+        "title": "تو أند هاف"
+      },
+      {
+        "time": "01:00 - 03:00",
+        "title": "ديربي تونس"
+      },
+      {
+        "time": "03:00 - 04:00",
+        "title": "ويست إيجان فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "04:00 - 04:30",
+        "title": "نيوز"
+      },
+      {
+        "time": "04:30 - 07:15",
+        "title": "دورات رمضان"
+      },
+      {
+        "time": "07:15 - 09:00",
+        "title": "ديربي العراق"
+      },
+      {
+        "time": "09:00 - 10:00",
+        "title": "تشي الشقب إنترناشيونال إكويستريان كومبيتيشن"
+      },
+      {
+        "time": "10:00 - 10:30",
+        "title": "نيوز"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "نيوز بيبر"
+      },
+      {
+        "time": "11:00 - 17:00",
+        "title": "بطولة الوصل لكرة السلة"
+      },
+      {
+        "time": "17:00 - 17:30",
+        "title": "ذا جريتس أوف أول تايم"
+      },
+      {
+        "time": "17:30 - 18:00",
+        "title": "ذا فوتبول ريفيو"
+      },
+      {
+        "time": "18:00 - 18:30",
+        "title": "ذي إنسايد لاين"
+      },
+      {
+        "time": "18:30 - 19:00",
+        "title": "كميونيكيشن"
+      },
+      {
+        "time": "19:00 - 19:30",
+        "title": "نيوز"
+      },
+      {
+        "time": "19:30 - 22:00",
+        "title": "دوري أبطال الخليج للأندية"
+      },
+      {
+        "time": "22:00 - 22:30",
+        "title": "نيوز"
+      },
+      {
+        "time": "22:30 - 00:30",
+        "title": "ديربي العراق"
+      }
+    ]
+  },
+  {
+    "id": "slider_33",
+    "name": "ALKASS 4",
+    "logo": "https://assets.bein.com/mena/sites/4/2020/06/2023_Alkass_4.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "22:00 - 03:00",
+        "title": "مهرجان قطر للإبل"
+      },
+      {
+        "time": "03:00 - 03:30",
+        "title": "سبورت كونفدينشيال"
+      },
+      {
+        "time": "03:30 - 05:15",
+        "title": "ديربي تونس"
+      },
+      {
+        "time": "05:15 - 05:30",
+        "title": "أوتو مونديال"
+      },
+      {
+        "time": "05:30 - 06:00",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "06:00 - 06:30",
+        "title": "بطولة العالم لجمال الخيل العربية الأصيلة"
+      },
+      {
+        "time": "06:30 - 07:00",
+        "title": "جولمانيا"
+      },
+      {
+        "time": "07:00 - 09:30",
+        "title": "دوري الدرجة الثانية القطري"
+      },
+      {
+        "time": "09:30 - 10:00",
+        "title": "فيبا وورلد باسكت بول"
+      },
+      {
+        "time": "10:00 - 10:30",
+        "title": "نيوز"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "نيوز بيبر"
+      },
+      {
+        "time": "11:00 - 11:30",
+        "title": "كميونيكيشن"
+      },
+      {
+        "time": "11:30 - 12:00",
+        "title": "كينج أوف ذا كورت بيتش فوليبول تشامبيونشيب"
+      },
+      {
+        "time": "12:00 - 14:00",
+        "title": "كينج أبدول أزيز كاميل فيستيفال"
+      },
+      {
+        "time": "14:00 - 14:20",
+        "title": "نيوز"
+      },
+      {
+        "time": "14:20 - 21:45",
+        "title": "بطولة قطر الدولية للخيل العربية الأصيلة"
+      },
+      {
+        "time": "21:45 - 01:30",
+        "title": "أوتو مونديال"
+      }
+    ]
+  },
+  {
+    "id": "slider_34",
+    "name": "ALKASS 5",
+    "logo": "https://assets.bein.com/mena/sites/4/2020/06/2023_Alkass_5.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "20:45 - 01:00",
+        "title": "QNB Stars League /  Qatar VS Al-Gharafa"
+      },
+      {
+        "time": "01:00 - 01:30",
+        "title": "بطولة ملك الملعب لكرة الطائرة الشاطئية"
+      },
+      {
+        "time": "01:30 - 03:30",
+        "title": "دوري نجوم قطر"
+      },
+      {
+        "time": "03:30 - 04:00",
+        "title": "كرة السلة العالمية"
+      },
+      {
+        "time": "04:00 - 04:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "04:30 - 06:00",
+        "title": "دوري الدرجة الثانية القطري"
+      },
+      {
+        "time": "06:00 - 06:30",
+        "title": "أسرار الرياضة"
+      },
+      {
+        "time": "06:30 - 06:45",
+        "title": "أهداف"
+      },
+      {
+        "time": "06:45 - 09:30",
+        "title": "إستوديو الخيل"
+      },
+      {
+        "time": "09:30 - 10:00",
+        "title": "بطولة ملك الملعب لكرة الطائرة الشاطئية"
+      },
+      {
+        "time": "10:00 - 10:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "جرايد"
+      },
+      {
+        "time": "11:00 - 11:30",
+        "title": "بطولة ملك الملعب لكرة الطائرة الشاطئية"
+      },
+      {
+        "time": "11:30 - 12:00",
+        "title": "حصيلة كرة القدم"
+      },
+      {
+        "time": "12:00 - 14:00",
+        "title": "دوري الدرجة الثانية القطري"
+      },
+      {
+        "time": "14:00 - 14:20",
+        "title": "أخبار"
+      },
+      {
+        "time": "14:20 - 14:50",
+        "title": "بطولة ملك الملعب لكرة الطائرة الشاطئية"
+      },
+      {
+        "time": "14:50 - 15:20",
+        "title": "أسرار الرياضة"
+      },
+      {
+        "time": "15:20 - 17:00",
+        "title": "ديربي تونس"
+      },
+      {
+        "time": "17:00 - 20:00",
+        "title": "دوري نجوم قطر"
+      },
+      {
+        "time": "20:00 - 20:30",
+        "title": "المجلة البحرية"
+      },
+      {
+        "time": "20:30 - 21:30",
+        "title": "الحصاد"
+      },
+      {
+        "time": "21:30 - 03:00",
+        "title": "بطولة ملك الملعب لكرة الطائرة الشاطئية"
+      }
+    ]
+  },
+  {
+    "id": "slider_35",
+    "name": "ALKASS 6",
+    "logo": "https://assets.bein.com/mena/sites/4/2020/06/2023_Alkass_6.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "21:30 - 01:00",
+        "title": "FIBA"
+      },
+      {
+        "time": "01:00 - 06:00",
+        "title": "رالي قطر الدولي"
+      },
+      {
+        "time": "06:00 - 08:00",
+        "title": "بطولة غرب آسيا للكرة الطائرة"
+      },
+      {
+        "time": "08:00 - 10:00",
+        "title": "دوري نجوم قطر"
+      },
+      {
+        "time": "10:00 - 10:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "جرايد"
+      },
+      {
+        "time": "11:00 - 13:00",
+        "title": "بطولة غرب آسيا للكرة الطائرة"
+      },
+      {
+        "time": "13:00 - 13:30",
+        "title": "أساطير الرياضة"
+      },
+      {
+        "time": "13:30 - 15:30",
+        "title": "بطولة غرب آسيا للكرة الطائرة"
+      },
+      {
+        "time": "15:30 - 16:00",
+        "title": "لا يقهر"
+      },
+      {
+        "time": "16:00 - 18:00",
+        "title": "بطولة غرب آسيا للكرة الطائرة"
+      },
+      {
+        "time": "18:00 - 18:30",
+        "title": "حصيلة كرة القدم"
+      },
+      {
+        "time": "18:30 - 19:00",
+        "title": "تواصل"
+      },
+      {
+        "time": "19:00 - 19:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "19:30 - 21:30",
+        "title": "ديربي العراق"
+      },
+      {
+        "time": "21:30 - 22:00",
+        "title": "أساطير الرياضة"
+      },
+      {
+        "time": "22:00 - 22:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "22:30 - 23:30",
+        "title": "فض فض"
+      },
+      {
+        "time": "23:30 - 00:30",
+        "title": "الحكم"
+      }
+    ]
+  },
+  {
+    "id": "slider_36",
+    "name": "ALKASS 7",
+    "logo": "https://assets.bein.com/mena/sites/4/2020/06/2023_Alkass_7.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "21:30 - 03:00",
+        "title": "Beach Volleyball Championship"
+      },
+      {
+        "time": "03:00 - 03:30",
+        "title": "المرأة"
+      },
+      {
+        "time": "03:30 - 06:00",
+        "title": "بطولة غرب آسيا للكرة الطائرة"
+      },
+      {
+        "time": "06:00 - 07:00",
+        "title": "ثنتين ونص"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "title": "الحكم"
+      },
+      {
+        "time": "08:00 - 10:00",
+        "title": "القلايل"
+      },
+      {
+        "time": "10:00 - 10:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "جرايد"
+      },
+      {
+        "time": "11:00 - 11:30",
+        "title": "حصيلة كرة القدم"
+      },
+      {
+        "time": "11:30 - 12:00",
+        "title": "عالم السرعة"
+      },
+      {
+        "time": "12:00 - 15:00",
+        "title": "بطولة الكويت الدولية لسباق الهجن"
+      },
+      {
+        "time": "15:00 - 15:30",
+        "title": "المرأة"
+      },
+      {
+        "time": "15:30 - 18:30",
+        "title": "دوري الدرجة الثانية القطري"
+      },
+      {
+        "time": "18:30 - 19:00",
+        "title": "تواصل"
+      },
+      {
+        "time": "19:00 - 21:00",
+        "title": "القلايل"
+      },
+      {
+        "time": "21:00 - 21:30",
+        "title": "لا يقهر"
+      },
+      {
+        "time": "21:30 - 22:00",
+        "title": "مجلة دوري نجوم قطر"
+      },
+      {
+        "time": "22:00 - 22:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "22:30 - 00:30",
+        "title": "مربط الفرس"
+      }
+    ]
+  },
+  {
+    "id": "slider_37",
+    "name": "ALKASS 8",
+    "logo": "https://assets.bein.com/mena/sites/4/2020/06/2023_Alkass_8.png",
+    "href": "",
+    "programs": [
+      {
+        "time": "21:00 - 03:00",
+        "title": "Hasad"
+      },
+      {
+        "time": "03:00 - 08:00",
+        "title": "مهرجان كتارا الدولي للخيل العربية"
+      },
+      {
+        "time": "08:00 - 10:00",
+        "title": "مربط الفرس"
+      },
+      {
+        "time": "10:00 - 10:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "10:30 - 11:00",
+        "title": "جرايد"
+      },
+      {
+        "time": "11:00 - 12:30",
+        "title": "تواصل"
+      },
+      {
+        "time": "12:30 - 13:30",
+        "title": "ثنتين ونص"
+      },
+      {
+        "time": "13:30 - 16:30",
+        "title": "الرابطة التونسية المحترفة الأولى"
+      },
+      {
+        "time": "16:30 - 18:00",
+        "title": "الحكم"
+      },
+      {
+        "time": "18:00 - 18:30",
+        "title": "مجلة دوري نجوم قطر"
+      },
+      {
+        "time": "18:30 - 19:00",
+        "title": "تواصل"
+      },
+      {
+        "time": "19:00 - 19:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "19:30 - 20:30",
+        "title": "90 دقيقة"
+      },
+      {
+        "time": "20:30 - 21:30",
+        "title": "الحصاد"
+      },
+      {
+        "time": "21:30 - 22:00",
+        "title": "المجلة البحرية"
+      },
+      {
+        "time": "22:00 - 22:30",
+        "title": "أخبار"
+      },
+      {
+        "time": "22:30 - 00:30",
+        "title": "القلايل"
+      }
+    ]
+  }
+]
