@@ -40,13 +40,16 @@ const StreamErrorPanel: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
 // auto-hide after N seconds. Cross-origin iframe ads can't be removed, but this
 // puts YOUR ad on top of everything.
 function OverlayAdBanner({ ad }: { ad: LiveOverlayAd }) {
+    // `closed` resets when the operator swaps the ad because the call site keys
+    // this component on imageUrl+closeAfterSec, remounting it. That replaces the
+    // old setClosed(false)-inside-the-effect, which was a redundant render pass
+    // and is flagged by react-hooks/set-state-in-effect.
     const [closed, setClosed] = useState(false);
     useEffect(() => {
-        setClosed(false);
         if (!ad.closeAfterSec || ad.closeAfterSec <= 0) return;
         const t = setTimeout(() => setClosed(true), ad.closeAfterSec * 1000);
         return () => clearTimeout(t);
-    }, [ad.closeAfterSec, ad.imageUrl]);
+    }, [ad.closeAfterSec]);
 
     if (closed || !ad.enabled || !ad.imageUrl) return null;
 
@@ -207,7 +210,9 @@ const LiveStreamHub: React.FC<Props> = ({ match, fallback }) => {
         load();
         const id = setInterval(() => { if (!document.hidden) load(); }, CONFIG_POLL_MS);
         return () => { cancelled = true; clearInterval(id); };
-    }, [match.id]);
+        // All four deps are primitives, so a re-created `match` object with the same
+        // values compares equal and the 60s poll is not restarted on every render.
+    }, [match.id, match.teamA?.name, match.teamB?.name, match.utcDate]);
 
     const servers = useMemo(() => (config?.enabled ? config.servers : []) || [], [config]);
 
@@ -334,7 +339,14 @@ const LiveStreamHub: React.FC<Props> = ({ match, fallback }) => {
                 ref={playerWrapRef}
                 className="yalla-live-player-wrap relative w-full bg-black h-[300px] sm:h-auto sm:aspect-video sm:rounded-2xl overflow-hidden sm:border sm:border-gray-100"
             >
-                {config?.overlayAd?.enabled && <OverlayAdBanner ad={config.overlayAd} />}
+                {config?.overlayAd?.enabled && (
+                    // Keyed so a new ad (or a changed auto-close delay) remounts the
+                    // banner and un-dismisses it, instead of resetting state in an effect.
+                    <OverlayAdBanner
+                        key={`${config.overlayAd.imageUrl}|${config.overlayAd.closeAfterSec ?? 0}`}
+                        ad={config.overlayAd}
+                    />
+                )}
                 {!(hlsFailed || adBlocked) && (
                     <BrandingOverlay {...brandingFor(activeServer.label)} />
                 )}

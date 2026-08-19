@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     fetchThreeDayMatches, setMatchOverride, removeMatchOverride, setLeagueHidden, setLeagueShown,
     saveCustomMatch, deleteCustomMatch,
@@ -35,7 +35,9 @@ const emptyCustom = (): CustomMatch => ({
 // Plain function, not React.FC<Props> — see OverviewTab.tsx comment.
 function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
     const [rows, setRows] = useState<DatedRawMatch[]>([]);
-    const [loading, setLoading] = useState(false);
+    // Starts true: the mount effect fetches immediately, and flipping the flag
+    // synchronously inside that effect would be a cascading render.
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [savedMsg, setSavedMsg] = useState('');
 
@@ -47,17 +49,28 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
     const [form, setForm] = useState<CustomMatch>(emptyCustom());
     const [editing, setEditing] = useState(false);
 
-    const loadFeed = () => {
+    // Declared before loadFeed: loadFeed calls it, and a `const` referenced
+    // before its declaration is a temporal-dead-zone throw, not a hoist.
+    const handleErr = useCallback((e: unknown, fallback: string) => {
+        if (e instanceof AdminApiError && e.status === 401) return onUnauthorized();
+        setError(e instanceof Error ? e.message : fallback);
+    }, [onUnauthorized]);
+
+    const loadFeed = useCallback(() => {
         let cancelled = false;
-        setLoading(true);
         fetchThreeDayMatches()
             .then(({ matches }) => { if (!cancelled) setRows(matches); })
             .catch(e => { if (!cancelled) handleErr(e, 'Failed to load matches'); })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
-    };
+    }, [handleErr]);
 
-    useEffect(() => loadFeed(), []);
+    // onUnauthorized is a stable useCallback in AdminApp, so handleErr and
+    // loadFeed are stable too and this effect still runs once per mount.
+    useEffect(() => loadFeed(), [loadFeed]);
+
+    // Manual Reload button: show the spinner again, then refetch.
+    const reloadFeed = useCallback(() => { setLoading(true); loadFeed(); }, [loadFeed]);
 
     const overrides = status?.settings.matchOverrides || {};
     const hiddenLeagues = status?.settings.hiddenLeagues || [];
@@ -80,11 +93,6 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
         !hiddenLeagues.includes(league) && (shownLeagues.includes(league) || isMajorLeague(league));
 
     const flash = (msg: string) => { setSavedMsg(msg); setError(''); setTimeout(() => setSavedMsg(''), 2500); };
-
-    const handleErr = (e: unknown, fallback: string) => {
-        if (e instanceof AdminApiError && e.status === 401) return onUnauthorized();
-        setError(e instanceof Error ? e.message : fallback);
-    };
 
     const apply = async (matchId: number | string, fields: Parameters<typeof setMatchOverride>[1]) => {
         try {
@@ -299,7 +307,7 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
                             <option value="all">All leagues ({leagueNames.length})</option>
                             {leagueNames.map(lg => <option key={lg} value={lg}>{lg}</option>)}
                         </select>
-                        <button onClick={() => loadFeed()} className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-3 py-2">Reload</button>
+                        <button onClick={reloadFeed} className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-3 py-2">Reload</button>
                     </div>
                 </div>
 
