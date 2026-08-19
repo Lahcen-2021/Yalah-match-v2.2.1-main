@@ -7,6 +7,7 @@
     "dev": "tsx server.ts",
     "start": "tsx server.ts",
     "build": "vite build",
+    "gen:team-map": "tsx scripts/gen-team-map.mts",
     "package:theme": "powershell -ExecutionPolicy Bypass -File ../wordpress-theme/build-theme.ps1",
     "package:theme:zip": "powershell -ExecutionPolicy Bypass -File ../wordpress-theme/build-theme.ps1 -SkipBuild",
     "preview": "vite preview",
