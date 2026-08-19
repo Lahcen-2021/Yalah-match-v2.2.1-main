@@ -2,6 +2,7 @@
 import { Match, MatchStatus, MatchDetails, GoalEvent, TimelineEvent, Standing, Player, MatchStatistic, GoalInfo, H2HMatch, MatchInfo, Scorer, StandingGroup, Coach, ChannelInfo, CompetitionBracket, NewsItem, NewsArticle, LeagueMatch, Broadcast, BeinGuideChannel } from '../types';
 import { translateLeague, translateTeam, isMajorLeague, isStandingLeague } from '../utils/translations';
 import { API_BASE } from './config';
+import { fetchJson } from './http';
 
 type DateString = 'yesterday' | 'today' | 'tomorrow';
 
@@ -2240,66 +2241,28 @@ export const fetchYanb8Leagues = async (): Promise<Yanb8League[]> => {
 // Standings/scorers are fetched server-side (GET /api/standings, /api/scorers) rather than
 // directly from ESPN/365Scores here, so the ESPN-then-365Scores fallback chain shares a single
 // circuit breaker instance across all clients instead of one that resets on every page reload.
-export const fetchYanb8Standings = async (leagueId: string): Promise<StandingGroup[]> => {
-    try {
-        const response = await fetch(`/api/standings?leagueId=${leagueId}`);
-        if (!response.ok) return [];
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch standings:', error);
-        return [];
-    }
-};
+export const fetchYanb8Standings = async (leagueId: string): Promise<StandingGroup[]> =>
+    fetchJson<StandingGroup[]>(`/api/standings?leagueId=${leagueId}`, []);
 
 // Knockout bracket for cup competitions; resolves to null for plain leagues
 // (or non-numeric ids like the ESPN slugs / the manual U-17 entry).
 export const fetchCompetitionBracket = async (leagueId: string): Promise<CompetitionBracket | null> => {
     if (!/^\d+$/.test(leagueId)) return null;
-    try {
-        const response = await fetch(`/api/bracket?leagueId=${leagueId}`);
-        if (!response.ok) return null;
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch bracket:', error);
-        return null;
-    }
+    return fetchJson<CompetitionBracket | null>(`/api/bracket?leagueId=${leagueId}`, null);
 };
 
-export const fetchLeagueTopScorers = async (leagueId: string): Promise<Scorer[]> => {
-    try {
-        const response = await fetch(`/api/scorers?leagueId=${leagueId}`);
-        if (!response.ok) return [];
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch scorers:', error);
-        return [];
-    }
-};
+export const fetchLeagueTopScorers = async (leagueId: string): Promise<Scorer[]> =>
+    fetchJson<Scorer[]>(`/api/scorers?leagueId=${leagueId}`, []);
 
 // Top assist providers ("صناع اللعب"). Reuses the Scorer shape (the `goals` field
 // carries the assist count).
-export const fetchLeagueAssists = async (leagueId: string): Promise<Scorer[]> => {
-    try {
-        const response = await fetch(`/api/assists?leagueId=${leagueId}`);
-        if (!response.ok) return [];
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch assists:', error);
-        return [];
-    }
-};
+export const fetchLeagueAssists = async (leagueId: string): Promise<Scorer[]> =>
+    fetchJson<Scorer[]>(`/api/assists?leagueId=${leagueId}`, []);
 
 // A competition's recent + upcoming fixtures for the standings match tabs.
 export const fetchLeagueMatchList = async (leagueId: string): Promise<LeagueMatch[]> => {
     if (!/^\d+$/.test(leagueId)) return [];
-    try {
-        const response = await fetch(`/api/league-matches?leagueId=${leagueId}`);
-        if (!response.ok) return [];
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch league matches:', error);
-        return [];
-    }
+    return fetchJson<LeagueMatch[]>(`/api/league-matches?leagueId=${leagueId}`, []);
 };
 
 // Strips LiveOnSat's trailing annotations like " ($/geo/R)" or " [app]" from a channel name.
@@ -2310,9 +2273,7 @@ const cleanChannelName = (name: string): string =>
 export const fetchTodayBroadcasts = async (): Promise<Broadcast[]> => {
     try {
         const date = getMoroccanDateString(0);
-        const response = await fetch(`/api/liveonsat/channels?date=${date}`);
-        if (!response.ok) return [];
-        const data = await response.json();
+        const data = await fetchJson<any>(`/api/liveonsat/channels?date=${date}`, null);
         const matches = Array.isArray(data?.matches) ? data.matches : [];
         return matches.map((m: any): Broadcast => {
             const [a, b] = String(m.match || '').split(/\s+v\s+/i);
@@ -2330,38 +2291,14 @@ export const fetchTodayBroadcasts = async (): Promise<Broadcast[]> => {
 };
 
 // beIN Sports channel guide (now/next per channel).
-export const fetchBeinGuide = async (): Promise<BeinGuideChannel[]> => {
-    try {
-        const response = await fetch('/api/bein-guide');
-        if (!response.ok) return [];
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch beIN guide:', error);
-        return [];
-    }
-};
+export const fetchBeinGuide = async (): Promise<BeinGuideChannel[]> =>
+    fetchJson<BeinGuideChannel[]>('/api/bein-guide', []);
 
-export const fetchNewsArticle = async (id: string): Promise<NewsArticle | null> => {
-    try {
-        const response = await fetch(`/api/news/article?id=${encodeURIComponent(id)}`);
-        if (!response.ok) return null;
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch article:', error);
-        return null;
-    }
-};
+export const fetchNewsArticle = async (id: string): Promise<NewsArticle | null> =>
+    fetchJson<NewsArticle | null>(`/api/news/article?id=${encodeURIComponent(id)}`, null);
 
-export const fetchFootballNews = async (): Promise<NewsItem[]> => {
-    try {
-        const response = await fetch('/api/news');
-        if (!response.ok) return [];
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch news:', error);
-        return [];
-    }
-};
+export const fetchFootballNews = async (): Promise<NewsItem[]> =>
+    fetchJson<NewsItem[]>('/api/news', []);
 
 export const fetchLeagueMatches = async (leagueId: string): Promise<Match[]> => {
     try {
