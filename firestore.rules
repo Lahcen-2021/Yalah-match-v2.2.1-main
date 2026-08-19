@@ -42,5 +42,27 @@ service cloud.firestore {
                           && request.auth.uid == userId
                           && isValidUserDoc(incoming());
     }
+
+    function isNewVote(d) {
+      return d.keys().hasAll(['a','draw','b','updatedAt']) && d.keys().size() == 4
+          && d.a is int && d.draw is int && d.b is int && d.updatedAt is string
+          && d.a >= 0 && d.draw >= 0 && d.b >= 0
+          && (d.a + d.draw + d.b) == 1;
+    }
+    function isVoteIncrement(prev, next) {
+      return next.keys().hasAll(['a','draw','b','updatedAt']) && next.keys().size() == 4
+          && next.updatedAt is string
+          && next.a >= prev.a && next.draw >= prev.draw && next.b >= prev.b
+          && (next.a + next.draw + next.b) == (prev.a + prev.draw + prev.b) + 1;
+    }
+
+    // Anonymous match-winner voting. Public read; writes may only create a
+    // single vote or increment exactly one counter by one. No deletes.
+    match /votes/{matchId} {
+      allow read: if true;
+      allow create: if isValidId(matchId) && isNewVote(incoming());
+      allow update: if isValidId(matchId) && isVoteIncrement(resource.data, incoming());
+      allow delete: if false;
+    }
   }
 }

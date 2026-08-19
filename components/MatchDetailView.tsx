@@ -3,14 +3,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react';
 import { fetchMatchDetails, USER_TIMEZONE, parseUtcDate, fetchKoooraEvents, fetchMatchChannel, getServerNow } from '../services/api';
 import { Match, MatchDetails, Player, TimelineEvent, Standing, MatchStatistic, MatchStatus, ChannelInfo } from '../types';
-import { getLeagueLogo, translateTeam, getChannelLogo } from '../utils/translations';
+import { getLeagueLogo, translateTeam, getChannelLogo, translateLeague } from '../utils/translations';
 import OptimizedImage from './OptimizedImage';
+import H2HInsights from './H2HInsights';
 import SoccerLineup, { VisualPlayer } from './SoccerLineup';
 import MatchHighlights from './MatchHighlights';
 import MatchTimelineSummary from './MatchTimelineSummary';
 import { useCache } from '../context/CacheContext';
 import { InlinePlayer, VideoJSPlayer, PlyrPlayer } from './Players';
+import { useWrapperFullscreen } from '../utils/useWrapperFullscreen';
+import { PlayerControls } from './PlayerControls';
 import { CHANNELS } from '../constants/channels';
+import LiveStreamHub from './LiveStreamHub';
+import headerWaves from '../assets/match-header-waves.jpg';
 
 interface MatchDetailViewProps {
   match: Match;
@@ -46,6 +51,20 @@ const SoccerBallIcon = ({ className = "w-4 h-4" }) => (
         <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 4C13.24 4 14.41 4.33 15.42 4.9L13.5 8.23L9.67 8.23L7.75 4.9C8.76 4.33 9.93 4 11.17 4H12ZM5.17 6.42L7.09 9.75L5.17 13.08C4.42 11.83 4 10.37 4 8.83C4 7.95 4.14 7.11 4.4 6.32L5.17 6.42ZM12 20C10.76 20 9.59 19.67 8.58 19.1L10.5 15.77H14.33L16.25 19.1C15.24 19.67 14.07 20 12.83 20H12ZM18.83 17.58L16.91 14.25L18.83 10.92C19.58 12.17 20 13.63 20 15.17C20 16.05 19.86 16.89 19.6 17.68L18.83 17.58ZM12 13.5L10.25 10.5H13.75L12 13.5Z" />
     </svg>
 );
+const CalendarIcon = ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="5" width="18" height="16" rx="3" />
+        <path d="M8 3v4M16 3v4M3 10h18" />
+    </svg>
+);
+
+const PinIcon = ({ className = "w-4 h-4" }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z" />
+        <circle cx="12" cy="10" r="3" />
+    </svg>
+);
+
 const TrophyIcon = ({ className = "w-4 h-4" }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -327,13 +346,13 @@ const DetailsTabView: React.FC<{ match: Match, details: MatchDetails | null }> =
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                     <SectionCard title="بطاقة المباراة" colorClass="bg-emerald-600">
-                        <InfoRow 
+                        <InfoRow
                             isFirst
-                            label="البطولة" 
-                            value={match.league} 
-                            icon={<OptimizedImage src={match.leagueLogoUrl || getLeagueLogo(match.league) || null} alt="" width={32} className="w-full h-full object-contain drop-shadow-[0_0_2px_rgba(0,0,0,0.4)]" fallbackElement={<TrophyIcon className="w-4 h-4 text-gray-300" />} />} 
+                            label="البطولة"
+                            value={translateLeague(match.league)}
+                            icon={<OptimizedImage src={match.leagueLogoUrl || getLeagueLogo(match.league) || null} alt="" width={32} className="w-full h-full object-contain drop-shadow-[0_0_2px_rgba(0,0,0,0.4)]" fallbackElement={<TrophyIcon className="w-4 h-4 text-gray-300" />} />}
                         />
-                        <InfoRow label="الجولة" value={round} />
+                        <InfoRow label="الجولة" value={translateLeague(round)} />
                         <InfoRow label="التاريخ" value={matchDate} />
                         <InfoRow label="الوقت" value={matchTimeLocal} />
                     </SectionCard>
@@ -542,98 +561,12 @@ const DetailsTabView: React.FC<{ match: Match, details: MatchDetails | null }> =
                     </div>
                 )}
 
-                <div>
-                    <h3 className="text-gray-800 font-black text-lg mb-4 flex items-center gap-3 px-1">
-                        <div className="w-1.5 h-5 bg-orange-600 rounded-full"></div>
-                        أخر المواجهات المباشرة
-                    </h3>
-
-                    {h2hStats && (
-                        <div className="grid grid-cols-3 gap-3 mb-6">
-                            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 text-center flex flex-col items-center justify-center gap-1">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 mb-1">
-                                    <OptimizedImage src={match.teamA.logoUrl} alt={match.teamA.name} width={32} className="w-full h-full object-contain" />
-                                </div>
-                                <div className="text-emerald-600 font-black text-xl leading-none">{h2hStats.teamAWins}</div>
-                                <div className="text-emerald-700/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate w-full">فوز {match.teamA.name}</div>
-                            </div>
-                            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-3 text-center flex flex-col items-center justify-center gap-1">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 mb-1 flex items-center justify-center text-gray-400">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h8m-8 4h8m-8 4h4" />
-                                    </svg>
-                                </div>
-                                <div className="text-gray-600 font-black text-xl leading-none">{h2hStats.draws}</div>
-                                <div className="text-gray-500/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">تعادل</div>
-                            </div>
-                            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3 text-center flex flex-col items-center justify-center gap-1">
-                                <div className="w-6 h-6 sm:w-8 sm:h-8 mb-1">
-                                    <OptimizedImage src={match.teamB.logoUrl} alt={match.teamB.name} width={32} className="w-full h-full object-contain" />
-                                </div>
-                                <div className="text-blue-600 font-black text-xl leading-none">{h2hStats.teamBWins}</div>
-                                <div className="text-blue-700/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate w-full">فوز {match.teamB.name}</div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="space-y-3">
-                        {h2h.length > 0 ? h2h.map((m, i) => (
-                            <div key={`h2h-${i}-${m.date}`} className="flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-white hover:shadow-md transition-all gap-4 group">
-                                <div className="flex-1 flex flex-col gap-1.5 w-full sm:w-auto">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
-                                            <OptimizedImage
-                                                src={m.leagueLogo || getLeagueLogo(m.league) || null}
-                                                alt={m.league}
-                                                width={20}
-                                                className="w-full h-full object-contain drop-shadow-[0_0_2px_rgba(0,0,0,0.4)]"
-                                                fallbackElement={<TrophyIcon className="w-3 h-3 text-gray-300" />}
-                                            />
-                                        </div>
-                                        <span className="text-gray-800 font-black text-[11px] sm:text-xs leading-tight">{m.league}</span>
-                                    </div>
-                                    <span className="text-gray-400 font-bold text-[9px] sm:text-[10px] mr-7 sm:mr-0">{m.date}</span>
-                                </div>
-                                <div className="flex-[3] flex items-center justify-center gap-3 sm:gap-8 w-full">
-                                    {/* Swapped Home/Away for correct RTL order: Home (Right) - Score - Away (Left) */}
-                                    <div className="flex-1 flex flex-col items-center gap-2 min-w-0">
-                                        <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 bg-white rounded-full p-1 shadow-sm border border-gray-100 flex items-center justify-center relative overflow-hidden">
-                                            <OptimizedImage
-                                                src={m.homeLogo || null}
-                                                alt={m.homeTeam}
-                                                width={32}
-                                                className="w-full h-full object-contain"
-                                                fallbackElement={<SoccerBallIcon className="w-5 h-5 text-gray-200" />}
-                                            />
-                                        </div>
-                                        <span className={`font-bold text-[10px] sm:text-xs text-center leading-tight truncate w-full ${m.homeScore > m.awayScore ? 'text-emerald-600' : 'text-gray-900'}`}>{translateTeam(m.homeTeam)}</span>
-                                    </div>
-                                    
-                                    <div className="bg-white px-3 py-1.5 sm:px-5 sm:py-2 rounded-xl border border-gray-200 flex items-center justify-center min-w-[70px] sm:min-w-[90px] shadow-sm group-hover:border-orange-300 transition-colors shrink-0">
-                                        <span className="text-orange-600 font-black text-base sm:text-lg tracking-tighter tabular-nums" dir="ltr">{m.awayScore} - {m.homeScore}</span>
-                                    </div>
-
-                                    <div className="flex-1 flex flex-col items-center gap-2 min-w-0">
-                                        <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 bg-white rounded-full p-1 shadow-sm border border-gray-100 flex items-center justify-center relative overflow-hidden">
-                                            <OptimizedImage
-                                                src={m.awayLogo || null}
-                                                alt={m.awayTeam}
-                                                width={32}
-                                                className="w-full h-full object-contain"
-                                                fallbackElement={<SoccerBallIcon className="w-5 h-5 text-gray-200" />}
-                                            />
-                                        </div>
-                                        <span className={`font-bold text-[10px] sm:text-xs text-center leading-tight truncate w-full ${m.awayScore > m.homeScore ? 'text-emerald-600' : 'text-gray-900'}`}>{translateTeam(m.awayTeam)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )) : (
-                            <div className="p-8 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                                <p className="text-gray-400 font-bold text-sm">لا توجد بيانات سابقة متاحة</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <H2HInsights
+                    match={match}
+                    h2h={h2h}
+                    recentA={details?.recentMatchesA || []}
+                    recentB={details?.recentMatchesB || []}
+                />
             </div>
         </div>
     );
@@ -641,38 +574,105 @@ const DetailsTabView: React.FC<{ match: Match, details: MatchDetails | null }> =
 
 // --- ADDITIONAL COMPONENTS ---
 
-const StatisticsView: React.FC<{ details: MatchDetails }> = React.memo(({ details }) => {
-    if (!details.statistics || details.statistics.length === 0) return <div className="p-8 text-center text-gray-500 font-bold">لا تتوفر إحصائيات لهذه المباراة</div>;
-    
+// Brand palette for the two sides — home is emerald, away is blue.
+const STAT_HOME = '#10b981';
+const STAT_AWAY = '#3b82f6';
+const statNum = (v: string) => parseFloat((v ?? '').toString().replace(/[^0-9.]/g, '')) || 0;
+
+// One comparison row: value on each side (home right, away left) with two bars
+// growing inward from the edges over a shared grey track, scaled to the larger side.
+const StatRow: React.FC<{ stat: MatchStatistic }> = ({ stat }) => {
+    const h = statNum(stat.homeValue);
+    const a = statNum(stat.awayValue);
+    const max = Math.max(h, a, 1);
+    const hW = (h / max) * 100;
+    const aW = (a / max) * 100;
     return (
-        <div className="p-4 sm:p-6 space-y-4">
-            {details.statistics.map((stat, idx) => {
-                const homeVal = parseFloat(stat.homeValue) || 0;
-                const awayVal = parseFloat(stat.awayValue) || 0;
-                const total = homeVal + awayVal;
-                // Avoid division by zero
-                const homePercent = total > 0 ? (homeVal / total) * 100 : 50;
-                const awayPercent = total > 0 ? (awayVal / total) * 100 : 50;
-                
-                return (
-                    <div key={`stat-${idx}-${stat.type}`} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                        <div className="flex justify-between items-end mb-2 px-1">
-                            <span className="font-black text-emerald-600 text-base">{stat.homeValue}</span>
-                            <span className="font-bold text-gray-500 text-xs uppercase tracking-wide">{stat.type}</span>
-                            <span className="font-black text-blue-600 text-base">{stat.awayValue}</span>
-                        </div>
-                        <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 gap-1">
-                            <div className="bg-emerald-500 h-full rounded-r-full" style={{ width: `${homePercent}%` }}></div>
-                            <div className="bg-blue-500 h-full rounded-l-full" style={{ width: `${awayPercent}%` }}></div>
-                        </div>
-                    </div>
-                );
-            })}
+        <div className="py-2.5">
+            <div className="flex items-center justify-between mb-1.5" dir="ltr">
+                <span className="font-black text-gray-900 text-sm tabular-nums w-12 text-left">{stat.awayValue}</span>
+                <span className="font-bold text-gray-500 text-[11px] sm:text-xs text-center flex-1 px-2 truncate">{stat.type}</span>
+                <span className="font-black text-gray-900 text-sm tabular-nums w-12 text-right">{stat.homeValue}</span>
+            </div>
+            <div className="flex items-center gap-1.5" dir="ltr">
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden flex justify-start">
+                    <div className="h-full rounded-full" style={{ width: `${aW}%`, backgroundColor: STAT_AWAY }} />
+                </div>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden flex justify-end">
+                    <div className="h-full rounded-full" style={{ width: `${hW}%`, backgroundColor: STAT_HOME }} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const StatSection: React.FC<{ title: string, items: MatchStatistic[], children?: React.ReactNode }> = ({ title, items, children }) => {
+    if (items.length === 0 && !children) return null;
+    return (
+        <div className="mb-6">
+            <h4 className="text-emerald-600 font-black text-sm mb-2 text-right px-1">{title}</h4>
+            <div className="bg-white rounded-[20px] border border-gray-100 shadow-sm px-5 py-3">
+                {children}
+                {items.map((s, i) => <StatRow key={`${s.type}-${i}`} stat={s} />)}
+            </div>
+        </div>
+    );
+};
+
+const PossessionDonut: React.FC<{ stat: MatchStatistic }> = ({ stat }) => {
+    const h = statNum(stat.homeValue);
+    const a = statNum(stat.awayValue);
+    const total = h + a || 1;
+    const hFrac = h / total;
+    const C = 2 * Math.PI * 40;
+    return (
+        <div className="flex items-center justify-center gap-6 sm:gap-10 py-4 border-b border-gray-50 mb-2" dir="ltr">
+            <span className="font-black text-lg tabular-nums" style={{ color: STAT_AWAY }}>{stat.awayValue}{/%/.test(stat.awayValue) ? '' : '%'}</span>
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="13" />
+                    <circle cx="50" cy="50" r="40" fill="none" stroke={STAT_AWAY} strokeWidth="13" strokeDasharray={`${(1 - hFrac) * C} ${C}`} strokeDashoffset={`${-hFrac * C}`} />
+                    <circle cx="50" cy="50" r="40" fill="none" stroke={STAT_HOME} strokeWidth="13" strokeDasharray={`${hFrac * C} ${C}`} strokeLinecap="round" />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-gray-400">{stat.type}</span>
+            </div>
+            <span className="font-black text-lg tabular-nums" style={{ color: STAT_HOME }}>{stat.homeValue}{/%/.test(stat.homeValue) ? '' : '%'}</span>
+        </div>
+    );
+};
+
+const StatisticsView: React.FC<{ details: MatchDetails }> = React.memo(({ details }) => {
+    const stats = details.statistics || [];
+    if (stats.length === 0) return <div className="p-8 text-center text-gray-500 font-bold">لا تتوفر إحصائيات لهذه المباراة</div>;
+
+    const possession = stats.find(s => /استحواذ|possession/i.test(s.type));
+    const rest = stats.filter(s => s !== possession);
+
+    const groupOf = (type: string): 'attack' | 'defense' | 'cards' => {
+        const t = type || '';
+        if (/بطاق|إنذار|طرد|card/i.test(t)) return 'cards';
+        if (/مخالف|تصد|حارس|تدخل|قطع|إنقاذ|foul|save|tackle|clearance|block/i.test(t)) return 'defense';
+        return 'attack';
+    };
+    const groups: Record<'attack' | 'defense' | 'cards', MatchStatistic[]> = { attack: [], defense: [], cards: [] };
+    rest.forEach(s => groups[groupOf(s.type)].push(s));
+
+    return (
+        <div className="p-4 sm:p-6" dir="rtl">
+            <StatSection title="الهجوم" items={groups.attack}>
+                {possession && <PossessionDonut stat={possession} />}
+            </StatSection>
+            <StatSection title="الدفاع" items={groups.defense} />
+            <StatSection title="البطاقات" items={groups.cards} />
         </div>
     );
 });
 
-const LiveStreamView: React.FC<{ channel: (string | ChannelInfo)[] | string | undefined }> = React.memo(({ channel }) => {
+const LiveStreamView: React.FC<{
+    channel: (string | ChannelInfo)[] | string | undefined;
+    // Called with the channel the viewer picked — logo placement is per-channel.
+    branding?: (channelName: string) => React.ReactNode;
+}> = React.memo(({ channel, branding }) => {
     // We will use this in the next step to render the choices.
     const channelNames = useMemo(() => {
         if (!channel) return [];
@@ -774,7 +774,10 @@ const LiveStreamView: React.FC<{ channel: (string | ChannelInfo)[] | string | un
     }, [selectedChannelName]);
 
     const [playerType, setPlayerType] = useState<'plyr' | 'default' | 'videojs'>('plyr');
-    
+
+    // Fullscreen the wrapper, not the video, so the branding overlays come along.
+    const { ref: playerWrapRef, isFullscreen, toggle: toggleFullscreen } = useWrapperFullscreen<HTMLDivElement>();
+
     // Track manually selected server URL, null means default to selectedChannelData's first server/URL
     const [manualActiveUrl, setManualActiveUrl] = useState<string | null>(null);
 
@@ -921,21 +924,73 @@ const LiveStreamView: React.FC<{ channel: (string | ChannelInfo)[] | string | un
                 </div>
              </div>
              
-             {/* Player */}
-             <div className="w-full bg-black h-[300px] sm:h-auto sm:aspect-video">
+             {/* Player — relative so the operator branding overlay anchors to the video box.
+                 Fullscreen targets THIS wrapper (video + overlays), and each player's own
+                 fullscreen button is disabled: the native one fullscreens only the video
+                 element, which drops the branding overlays sitting beside it. */}
+             <div ref={playerWrapRef} className="yalla-live-player-wrap relative w-full bg-black h-[300px] sm:h-auto sm:aspect-video">
                 {playerType === 'plyr' ? (
-                    <PlyrPlayer key={`plyr-${activeUrl}`} src={activeUrl} className="w-full h-full" />
+                    <PlyrPlayer key={`plyr-${activeUrl}`} src={activeUrl} className="w-full h-full" disableFullscreen />
                 ) : playerType === 'default' ? (
-                    <InlinePlayer key={`inline-${activeUrl}`} src={activeUrl} className="w-full h-full" />
+                    <InlinePlayer key={`inline-${activeUrl}`} src={activeUrl} className="w-full h-full" hideNativeFullscreen />
                 ) : (
-                    <VideoJSPlayer key={`vjs-${activeUrl}`} src={activeUrl} className="w-full h-full" />
+                    <VideoJSPlayer key={`vjs-${activeUrl}`} src={activeUrl} className="w-full h-full" disableFullscreen />
                 )}
+                {branding?.(selectedChannelName)}
+                <PlayerControls wrapRef={playerWrapRef} isFullscreen={isFullscreen} onToggleFullscreen={toggleFullscreen} />
              </div>
         </div>
     );
 });
 
 const RostersView: React.FC<{ details: MatchDetails, match: Match }> = React.memo(({ details, match }) => {
+    // Real per-player goal/assist counts derived from the match timeline, used when
+    // the lineup feed carries no stats. Name matching is containment-based because
+    // event names ("م. صلاح") and lineup names ("محمد صلاح") often differ in form.
+    const normName = (s: string) => (s || '').trim().toLowerCase();
+    const namesMatch = (a: string, b: string) => {
+        const x = normName(a); const y = normName(b);
+        return !!x && !!y && (x === y || x.includes(y) || y.includes(x));
+    };
+    const timeline = details.timeline || [];
+    const goalsFromEvents = (name: string) =>
+        timeline.filter(e => e.type === 'goal' && !e.isOwnGoal && !e.isPenaltyShootout && namesMatch(e.playerIn, name)).length;
+    const assistsFromEvents = (name: string) =>
+        timeline.filter(e => e.type === 'goal' && !!e.assist && namesMatch(e.assist!, name)).length;
+
+    // Merge feed stats with event-derived counts. Ratings are shown only when the
+    // data source provides one — no fabricated defaults.
+    const realStats = (p: Player) => ({
+        goals: p.stats?.goals || goalsFromEvents(p.name),
+        assists: p.stats?.assists || assistsFromEvents(p.name),
+        rating: p.stats?.rating || 0,
+    });
+
+    // Event decorations (broadcast-style icons): substitution in/out with minute,
+    // and yellow/red cards — all read from the real timeline.
+    const eventMinute = (e: typeof timeline[number]) => e.minute + (e.extraTime || 0);
+    const subOffFor = (name: string) => {
+        const e = timeline.find(ev => ev.type === 'substitution' && !!ev.playerOut && namesMatch(ev.playerOut!, name));
+        return e ? { minute: eventMinute(e) } : undefined;
+    };
+    const subOnFor = (name: string) => {
+        const e = timeline.find(ev => ev.type === 'substitution' && namesMatch(ev.playerIn, name));
+        return e ? { minute: eventMinute(e), forName: e.playerOut || '' } : undefined;
+    };
+    const cardsFor = (name: string) => {
+        const yellow = timeline.filter(ev => ev.type === 'yellow-card' && namesMatch(ev.playerIn, name)).length;
+        const red = timeline.filter(ev => ev.type === 'red-card' && namesMatch(ev.playerIn, name)).length;
+        return yellow || red ? { yellow, red } : undefined;
+    };
+    // One decorated copy of a player, shared by pitch, list and bench rendering.
+    const decorate = (p: Player): Player => ({
+        ...p,
+        stats: realStats(p),
+        subOff: subOffFor(p.name),
+        subOn: subOnFor(p.name),
+        cards: cardsFor(p.name),
+    });
+
     // Helper to position players based on formation (Simplified)
     // Returns VisualPlayer[]
     const getVisualPlayers = (players: Player[], formation: string = "4-3-3", isHome: boolean): VisualPlayer[] => {
@@ -960,7 +1015,8 @@ const RostersView: React.FC<{ details: MatchDetails, match: Match }> = React.mem
         const gk = sortedPlayers[0];
         if (gk) {
             // Updated: GK at top (y=12) instead of bottom
-            visuals.push({ ...gk, x: 50, y: 12, rating: gk.stats?.rating || 6.5 });
+            const gkDecorated = decorate(gk);
+            visuals.push({ ...gkDecorated, x: 50, y: 12, rating: gkDecorated.stats?.rating || 0 });
         }
 
         let playerIndex = 1;
@@ -986,7 +1042,8 @@ const RostersView: React.FC<{ details: MatchDetails, match: Match }> = React.mem
                     x = (100 / (count + 1)) * (i + 1);
                 }
                 
-                visuals.push({ ...p, x, y, rating: p.stats?.rating || 6.0 });
+                const pDecorated = decorate(p);
+                visuals.push({ ...pDecorated, x, y, rating: pDecorated.stats?.rating || 0 });
                 playerIndex++;
             }
         });
@@ -1006,19 +1063,19 @@ const RostersView: React.FC<{ details: MatchDetails, match: Match }> = React.mem
 
     return (
         <SoccerLineup 
-            homeTeam={{ 
-                name: match.teamA.name, 
-                logoUrl: match.teamA.logoUrl, 
-                players: homeVisuals, 
-                substitutes: details.benchHome,
+            homeTeam={{
+                name: match.teamA.name,
+                logoUrl: match.teamA.logoUrl,
+                players: homeVisuals,
+                substitutes: (details.benchHome || []).map(decorate),
                 formation: details.formationHome,
                 coach: details.homeCoach
             }}
-            awayTeam={{ 
-                name: match.teamB.name, 
-                logoUrl: match.teamB.logoUrl, 
-                players: awayVisuals, 
-                substitutes: details.benchAway,
+            awayTeam={{
+                name: match.teamB.name,
+                logoUrl: match.teamB.logoUrl,
+                players: awayVisuals,
+                substitutes: (details.benchAway || []).map(decorate),
                 formation: details.formationAway,
                 coach: details.awayCoach
             }}
@@ -1042,7 +1099,9 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
   const isLive = match.status === MatchStatus.LIVE || match.status === MatchStatus.HALF_TIME;
   const isRecentlyFinished = match.status === MatchStatus.FINISHED && minutesToStart > -140;
 
-  const isStreamAvailable = isLive || isStartsSoon || isRecentlyFinished;
+  // Dev-only: always show the Live tab so the player can be tested without waiting
+  // for a real live/starts-soon/recently-finished match.
+  const isStreamAvailable = import.meta.env.DEV || isLive || isStartsSoon || isRecentlyFinished;
 
   // Set default tab to liveStream if available, otherwise details
   const [activeTab, setActiveTab] = useState(isStreamAvailable ? 'liveStream' : 'details');
@@ -1127,7 +1186,15 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
             } else if (match.league.includes('كأس ملك إسبانيا') || match.league.includes('Copa del Rey')) {
                 channelName = 'MBC Masr 2';
             }
-            return <LiveStreamView key={Array.isArray(channelName) ? channelName.join(',') : channelName} channel={channelName} />;
+            // Admin-configured servers (Fabor-style watch section) take priority; the
+            // legacy channel-matching player renders as its fallback when none are set.
+            return (
+                <LiveStreamHub
+                    key={`hub-${match.id}`}
+                    match={match}
+                    fallback={<LiveStreamView key={Array.isArray(channelName) ? channelName.join(',') : channelName} channel={channelName} />}
+                />
+            );
         }
         case 'details': return <DetailsTabView match={match} details={details} />;
         case 'rosters': return <RostersView details={details} match={match}/>;
@@ -1146,64 +1213,176 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
   const displayScoreA = details?.scoreA !== undefined ? details.scoreA : match.scoreA;
   const displayScoreB = details?.scoreB !== undefined ? details.scoreB : match.scoreB;
   const displayStatusText = details?.statusText || match.statusText;
+  // Goal scorers shown right under the score — home on the home side, away on the
+  // away side, each with the scorer's name and the minute it went in.
+  const headerHomeGoals = details?.homeGoals || [];
+  const headerAwayGoals = details?.awayGoals || [];
+
+  // Header state lives entirely in the centre ring: it holds kick-off time
+  // before the whistle, the running period while the match is live, and the
+  // final marker once it's over. The card stays paper in every state.
+  const isLiveState = isLive;
+  const isFinished = match.status === MatchStatus.FINISHED;
+  const hasKickedOff = isLiveState || isFinished;
+  const kickoffClock = useMemo(() => {
+      try {
+          return new Intl.DateTimeFormat('en-GB', { timeZone: USER_TIMEZONE, hour: '2-digit', minute: '2-digit', hour12: false })
+              .format(parseUtcDate(match.utcDate));
+      } catch { return match.time || ''; }
+  }, [match.utcDate, match.time]);
+  const kickoffStamp = useMemo(() => {
+      try {
+          const d = parseUtcDate(match.utcDate);
+          const day = new Intl.DateTimeFormat('ar-EG-u-nu-latn', { timeZone: USER_TIMEZONE, day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+          return `${day} - ${kickoffClock}`;
+      } catch { return ''; }
+  }, [match.utcDate, kickoffClock]);
+  const stadiumName = details?.matchInfo?.stadium || match.stadium || '';
+  const roundName = details?.matchInfo?.round || match.round || '';
+  // Shoot-out result, when a tie actually went to penalties — the only score
+  // that outranks the 90-minute one, so it gets its own line under the numerals.
+  const penalties = isFinished
+      && details?.penaltyScoreA !== undefined && details?.penaltyScoreB !== undefined
+      && (details.penaltyScoreA > 0 || details.penaltyScoreB > 0)
+      ? `${details.penaltyScoreA} - ${details.penaltyScoreB}`
+      : '';
+  // Ring label. The ring is small, so a live match shows the minute when the
+  // feed gives one ("63'") and a two-character period token when it doesn't.
+  const liveRingLabel = useMemo(() => {
+      const text = displayStatusText || '';
+      const minute = text.match(/\d+/)?.[0];
+      if (minute) return `${minute}'`;
+      if (text.includes('الأول')) return 'ش1';
+      if (text.includes('الثاني')) return 'ش2';
+      if (text.includes('استراحة') || text.includes('الشوطين')) return 'راحة';
+      return 'مباشر';
+  }, [displayStatusText]);
+  const ringLabel = isLiveState ? liveRingLabel : isFinished ? 'انتهت' : kickoffClock;
 
   return (
-    <div className="py-0 sm:py-4 animate-fadeInUp w-full sm:mx-auto max-w-[1280px]">
-       <div className="rounded-none sm:rounded-[40px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] text-white overflow-hidden relative py-3 px-2 sm:p-5 bg-emerald-800 mb-2 w-full">
-          <div className="relative z-10 flex flex-col items-center">
-              <div className="flex flex-col items-center mb-1 sm:mb-3">
-                <div className="w-8 h-8 sm:w-14 sm:h-14 mb-0.5 flex items-center justify-center overflow-hidden p-1.5 sm:p-2">
-                    <OptimizedImage 
-                        src={leagueLogo} 
-                        alt={match.league} 
-                        width={80} 
-                        className="w-full h-full object-contain drop-shadow-[0_0_2px_rgba(0,0,0,0.4)]" 
-                        fallbackElement={<TrophyIcon className="w-5 h-5 sm:w-8 sm:h-8 text-white/40" />}
-                    />
-                </div>
-                <p className="font-black text-[10px] sm:text-lg text-center tracking-tight text-white/90">{match.league}</p>
+    <div className="py-0 sm:py-4 animate-fadeInUp w-full sm:mx-auto max-w-[1280px] relative match-detail-canvas">
+       {/* Match header.
+           One paper surface in every state — the centre ring is what carries the
+           clock: kick-off time before the whistle, the running period while the
+           match is live, "انتهت" once it's over. The leading side's numeral is the
+           only coloured number, so the result reads before the text does. */}
+       <div className="rounded-none sm:rounded-[28px] overflow-hidden relative mb-2 w-full border border-gray-100 bg-[#f5f6f7] text-gray-900 shadow-[0_10px_34px_rgba(15,23,42,0.07)]">
+          {/* Silk wave field */}
+          <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
+              style={{ backgroundImage: `url(${headerWaves})` }}
+          />
+          <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-6 px-3 py-4 sm:px-6 sm:py-7">
+
+              {/* Competition — league and round joined in a single pill */}
+              <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 max-w-full bg-white/90 backdrop-blur-sm border border-white shadow-[0_4px_14px_rgba(15,23,42,0.06)]">
+                  <span className="font-black text-[11px] sm:text-sm leading-none text-center truncate">
+                      {roundName ? `${translateLeague(match.league)} | ${translateLeague(roundName)}` : translateLeague(match.league)}
+                  </span>
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shrink-0">
+                      <OptimizedImage
+                          src={leagueLogo}
+                          alt={match.league}
+                          width={24}
+                          className="w-full h-full object-contain"
+                          fallbackElement={<TrophyIcon className="w-3.5 h-3.5 text-amber-400" />}
+                      />
+                  </span>
               </div>
-              
-              <div className="flex items-center justify-between w-full gap-1 sm:gap-10 max-w-5xl px-2">
-                  <div className="flex-1 flex flex-col items-center gap-1 sm:gap-2">
-                      <div className="bg-white/15 p-1.5 sm:p-3 rounded-2xl sm:rounded-[24px] backdrop-blur-xl border border-white/10 shadow-inner group hover:scale-105 transition-transform">
-                        <OptimizedImage src={match.teamA.logoUrl} alt={match.teamA.name} width={100} className="w-8 h-8 sm:w-16 sm:h-16 object-contain" />
-                      </div>
-                      <div className="flex items-center justify-center gap-1">
-                          <h2 className="font-black text-[10px] sm:text-lg text-center leading-tight tracking-tight">{match.teamA.name}</h2>
-                      </div>
-                  </div>
-                  
-                    <div className="flex flex-col items-center gap-1 sm:gap-4">
-                      <div className={`flex flex-col items-center bg-black/20 backdrop-blur-2xl px-3 py-1 sm:px-8 sm:py-3 rounded-xl sm:rounded-[28px] border border-white/10 shadow-2xl transition-all duration-300 ${scoreChanged ? 'bg-green-500/20 scale-110 border-green-400/50' : ''}`}>
-                        <div className="text-xl sm:text-5xl font-black tracking-tighter tabular-nums" dir="ltr">
-                            {displayScoreB} - {displayScoreA}
-                        </div>
-                        {details && (details.penaltyScoreA !== undefined || details.penaltyScoreB !== undefined) && (details.penaltyScoreA! > 0 || details.penaltyScoreB! > 0) && (
-                            <div className="text-[10px] sm:text-sm font-bold text-white/70 mt-1" dir="ltr">
-                                ركلات الترجيح: ({details.penaltyScoreB} - {details.penaltyScoreA})
-                            </div>
-                        )}
-                      </div>
-                      <span className={`px-2 py-0.5 rounded-md sm:rounded-full text-[9px] sm:text-xs font-black uppercase tracking-widest backdrop-blur-md border border-white/10 flex items-center gap-1.5 ${match.status === MatchStatus.LIVE || match.status === MatchStatus.HALF_TIME ? 'bg-red-500/30 text-white' : 'bg-white/20 text-white/90'}`}>
-                          {(match.status === MatchStatus.LIVE || match.status === MatchStatus.HALF_TIME) && (
-                              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
-                          )}
-                          {displayStatusText}
+
+              {/* Teams either side, scores flanking the status/clock ring */}
+              <div className="w-full max-w-3xl flex items-start justify-between gap-2 sm:gap-4" dir="rtl">
+                  {/* Team A (home) — right side: logo on top, name below */}
+                  <div className="flex-1 flex flex-col items-center justify-start gap-2 min-w-0">
+                      <span className="w-11 h-11 sm:w-16 sm:h-16 shrink-0 rounded-2xl grid place-items-center p-1.5 sm:p-2 bg-white border border-white shadow-[0_6px_18px_rgba(15,23,42,0.08)]">
+                          <OptimizedImage src={match.teamA.logoUrl} alt={match.teamA.name} width={64} loading="eager" className="w-full h-full object-contain" />
                       </span>
-                    </div>
-                  
-                  <div className="flex-1 flex flex-col items-center gap-1 sm:gap-2">
-                       <div className="bg-white/15 p-1.5 sm:p-3 rounded-2xl sm:rounded-[24px] backdrop-blur-xl border border-white/10 shadow-inner group hover:scale-105 transition-transform">
-                        <OptimizedImage src={match.teamB.logoUrl} alt={match.teamB.name} width={100} className="w-8 h-8 sm:w-16 sm:h-16 object-contain" />
-                       </div>
-                       <div className="flex items-center justify-center gap-1">
-                           <h2 className="font-black text-[10px] sm:text-lg text-center leading-tight tracking-tight">{match.teamB.name}</h2>
-                       </div>
+                      <span className="font-black text-[11px] sm:text-base leading-tight text-center line-clamp-2 min-w-0 w-full">{match.teamA.name}</span>
+                  </div>
+
+                  {/* Centre: scoreA · ring · scoreB */}
+                  <div className="flex items-center justify-center gap-2 sm:gap-3 shrink-0">
+                      <span className="font-black text-3xl sm:text-4xl tabular-nums leading-none text-gray-900">{displayScoreA}</span>
+                      <span className={`relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full grid place-items-center border-[3px] bg-white px-1 ${
+                            isFinished
+                              ? 'border-gray-300 shadow-[0_4px_14px_rgba(15,23,42,0.08)]'
+                              : 'border-emerald-500 shadow-[0_4px_14px_rgba(16,185,129,0.18)]'
+                          }`}>
+                          {isLiveState && (
+                              <span aria-hidden="true" className="absolute -inset-1 rounded-full border-2 border-emerald-400/40 animate-pulse motion-reduce:animate-none" />
+                          )}
+                          <span className="flex flex-col items-center gap-0.5 leading-none">
+                              <span className={`font-black text-[9px] sm:text-[11px] text-center leading-tight ${isLiveState ? 'text-emerald-600' : 'text-gray-800'}`} dir={isLiveState ? 'rtl' : 'ltr'}>
+                                  {isLiveState ? (displayStatusText || 'مباشر') : isFinished ? 'انتهت' : kickoffClock}
+                              </span>
+                              {isLiveState && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse motion-reduce:animate-none" />
+                              )}
+                          </span>
+                      </span>
+                      <span className="font-black text-3xl sm:text-4xl tabular-nums leading-none text-gray-900">{displayScoreB}</span>
+                  </div>
+
+                  {/* Team B (away) — left side: logo on top, name below */}
+                  <div className="flex-1 flex flex-col items-center justify-start gap-2 min-w-0">
+                      <span className="w-11 h-11 sm:w-16 sm:h-16 shrink-0 rounded-2xl grid place-items-center p-1.5 sm:p-2 bg-white border border-white shadow-[0_6px_18px_rgba(15,23,42,0.08)]">
+                          <OptimizedImage src={match.teamB.logoUrl} alt={match.teamB.name} width={64} loading="eager" className="w-full h-full object-contain" />
+                      </span>
+                      <span className="font-black text-[11px] sm:text-base leading-tight text-center line-clamp-2 min-w-0 w-full">{match.teamB.name}</span>
                   </div>
               </div>
+
+              {/* Goal scorers — name + minute, home on the right, away on the left */}
+              {(headerHomeGoals.length > 0 || headerAwayGoals.length > 0) && (
+                  <div className="w-full max-w-3xl flex items-start justify-between gap-3 sm:gap-4" dir="rtl">
+                      <div className="flex-1 flex flex-col items-end gap-1 min-w-0">
+                          {headerHomeGoals.map((g, i) => (
+                              <span key={`hg-${i}-${g.minute}`} className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-gray-800 max-w-full">
+                                  <span className="truncate">{g.scorerName}</span>
+                                  <span className="text-emerald-600 tabular-nums shrink-0" dir="ltr">{g.minute}'</span>
+                              </span>
+                          ))}
+                      </div>
+                      <SoccerBallIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 shrink-0 mt-0.5" />
+                      <div className="flex-1 flex flex-col items-start gap-1 min-w-0">
+                          {headerAwayGoals.map((g, i) => (
+                              <span key={`ag-${i}-${g.minute}`} className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-gray-800 max-w-full">
+                                  <span className="text-emerald-600 tabular-nums shrink-0" dir="ltr">{g.minute}'</span>
+                                  <span className="truncate">{g.scorerName}</span>
+                              </span>
+                          ))}
+                      </div>
+                  </div>
+              )}
+
+              {penalties && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 border border-white px-2.5 py-1 shadow-[0_4px_14px_rgba(15,23,42,0.06)]">
+                      <span className="text-[9px] sm:text-[10px] font-bold text-gray-500">ركلات الترجيح</span>
+                      <span className="text-[10px] sm:text-xs font-black text-gray-900 tabular-nums" dir="ltr">{penalties}</span>
+                  </span>
+              )}
+
+              {/* Where and when — stadium + date in a single pill */}
+              {(stadiumName || kickoffStamp) && (
+                  <div className="inline-flex items-center gap-2 sm:gap-3 rounded-full px-3.5 py-1.5 max-w-full bg-white/90 backdrop-blur-sm border border-white shadow-[0_4px_14px_rgba(15,23,42,0.06)] text-black" dir="rtl">
+                      {stadiumName && (
+                          <span className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold min-w-0">
+                              <PinIcon className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                              <span className="truncate">{stadiumName}</span>
+                          </span>
+                      )}
+                      {stadiumName && kickoffStamp && <span className="w-px h-3.5 bg-gray-300 shrink-0" />}
+                      {kickoffStamp && (
+                          <span className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold shrink-0">
+                              <CalendarIcon className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                              <span dir="rtl">{kickoffStamp}</span>
+                          </span>
+                      )}
+                  </div>
+              )}
           </div>
-      </div>
+       </div>
 
        <div className="bg-white shadow-[0_15px_40px_rgba(0,0,0,0.03)] overflow-hidden border-t sm:border border-gray-100 w-full">
             <div className="border-b flex bg-gray-50/30 overflow-x-auto no-scrollbar">
@@ -1220,9 +1399,9 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
                         key={tab.id} 
                         onClick={() => setActiveTab(tab.id)} 
                         className={`flex-none sm:flex-1 px-4 sm:px-0 py-3 sm:py-5 text-xs sm:text-sm font-black transition-all duration-400 border-b-[3px] whitespace-nowrap ${
-                            activeTab === tab.id 
-                            ? 'border-emerald-600 text-emerald-700 bg-white' 
-                            : 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-white/50'
+                            activeTab === tab.id
+                            ? 'border-emerald-600 text-black bg-white'
+                            : 'border-transparent text-black hover:bg-white/50'
                         }`}
                     >
                         {tab.label}

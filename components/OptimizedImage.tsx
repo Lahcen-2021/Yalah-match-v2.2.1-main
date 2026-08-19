@@ -24,13 +24,18 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({ src, alt = '', width, h
     const optimized = useMemo(() => {
         if (!isValidSrc || !src) return null;
         if (src.startsWith('data:') || src.startsWith('blob:')) return src;
-        
+
         // Clean up common issues
         const cleanSrc = src.replace(/&amp;/g, '&');
-        
+
         // If it's already using wsrv.nl, don't wrap it again
         if (cleanSrc.includes('wsrv.nl')) return cleanSrc;
-        
+
+        // Hosts that refuse the wsrv.nl fetcher (hotlink protection → 403, which the
+        // proxy surfaces as a 404). They serve fine straight to the browser, so load
+        // them directly instead of losing the image. Channel logos live here.
+        if (/^https?:\/\/[^/]*\bassets\.winwin\.com\//i.test(cleanSrc)) return cleanSrc;
+
         let url = `https://wsrv.nl/?url=${encodeURIComponent(cleanSrc)}&output=webp&q=80`;
         if (width) url += `&w=${width}`;
         if (height) url += `&h=${height}`;
@@ -88,6 +93,9 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({ src, alt = '', width, h
             onError={handleError}
             loading={props.loading || "lazy"}
             decoding="async"
+            // Intrinsic dimensions (when known) reserve space and cut layout shift (CLS).
+            width={width}
+            height={height}
             className={combinedClasses}
             {...props}
         />

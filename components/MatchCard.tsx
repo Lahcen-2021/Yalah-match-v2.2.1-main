@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Match, MatchStatus } from '../types';
 import { generateMatchSlug, getShortLeagueName, getChannelLogo, getLeagueLogo, isMajorLeague } from '../utils/translations';
 import OptimizedImage from './OptimizedImage';
-import { fetchMatchChannel, fetchMatchesByDate, USER_TIMEZONE, parseUtcDate, getServerNow } from '../services/api';
+import { fetchMatchChannel, fetchWinwinChannelForMatch, sortChannelsArabicFirst, fetchMatchesByDate, USER_TIMEZONE, parseUtcDate, getServerNow } from '../services/api';
 import { useCache } from '../context/CacheContext';
 
 interface MatchCardProps {
@@ -12,6 +12,7 @@ interface MatchCardProps {
   onClick?: (match: Match) => void;
   isTomorrow?: boolean;
 }
+
 
 // Resolves once the page has finished its initial load. Per-card channel lookups wait on this so
 // their (heavy, multi-source) network fan-out never competes with the eager LCP team logo — letting
@@ -117,30 +118,51 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, index, onClick, isTomorrow
     const isFinished = match.status === MatchStatus.FINISHED;
     const isUpcoming = match.status === MatchStatus.UPCOMING;
     
-    const [displayChannel, setDisplayChannel] = useState<any>(() => {
+    // Async channel upgrade (winwin / legacy scrape); null until it resolves.
+    const [fetchedChannel, setFetchedChannel] = useState<any>(null);
+
+    // The channel shown on the card, derived so the day's channel list arriving
+    // after first paint flows through without a prop-sync effect. Priority:
+    // competition overrides > async upgrade > server-resolved list > flat string.
+    const displayChannel = useMemo(() => {
         const isAFCONU17 = match.league === 'كأس أمم إفريقيا تحت 17' || match.league.includes('إفريقيا تحت 17') || match.league.includes('امم افريقيا تحت 17');
         const isThroneCup = match.league === 'كأس العرش المغربي' || match.league.includes('كأس العرش');
-        
+
         if (isThroneCup) return ["ARRYADIA TNT HD", "ALAOULA TNT HD", "2M TNT HD", "TAMAZIGHT HD", "AL MAGHRIBIA HD"];
-        return isAFCONU17 ? ["beIN Sports 5", "ARRYADIA TNT HD"] : (match.channel || null);
-    });
+        if (isAFCONU17) return ["beIN Sports 5", "ARRYADIA TNT HD"];
+        // Broadcasters resolved server-side for the whole day (/api/winwin/channels)
+        // come through as objects with logos — prefer them over the flat string.
+        if (fetchedChannel) return fetchedChannel;
+        if (match.channels && match.channels.length > 0) return match.channels;
+        return match.channel || null;
+    }, [match.league, match.channels, match.channel, fetchedChannel]);
 
     useEffect(() => {
         const isAFCONU17 = match.league === 'كأس أمم إفريقيا تحت 17' || match.league.includes('إفريقيا تحت 17') || match.league.includes('امم افريقيا تحت 17');
         const isThroneCup = match.league === 'كأس العرش المغربي' || match.league.includes('كأس العرش');
-        
+
         if (isAFCONU17 || isThroneCup) return;
+        // Already resolved for every match of the day in one request — skip this
+        // card's four-source fan-out entirely (fewer requests, and the primary
+        // winwin data isn't overwritten by a weaker per-card guess).
+        if (match.channels && match.channels.length > 0) return;
 
         let isMounted = true;
         const getChannel = async () => {
              try {
                  const detailedChannel = await fetchWithCache(
                      `channel-${match.id}`,
-                     () => fetchMatchChannel(match.id, match.teamA.name, match.teamB.name, match.utcDate),
+                     async () => {
+                         // winwin first (one shared request per date, with logos);
+                         // the legacy multi-source scrape only runs if it has nothing.
+                         const winwin = await fetchWinwinChannelForMatch(match.id, match.utcDate);
+                         if (winwin) return winwin;
+                         return fetchMatchChannel(match.id, match.teamA.name, match.teamB.name, match.utcDate);
+                     },
                      3600000
                  );
                  if (isMounted && detailedChannel) {
-                     setDisplayChannel(detailedChannel);
+                     setFetchedChannel(detailedChannel);
                  }
              } catch (error) {
                  console.warn("Failed to fetch channel info", error);
@@ -168,7 +190,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, index, onClick, isTomorrow
             if (ric && cic) cic(idleHandle);
             else clearTimeout(idleHandle);
         };
-    }, [match.id, match.teamA.name, match.teamB.name, match.utcDate, match.league, fetchWithCache]);
+    }, [match.id, match.teamA.name, match.teamB.name, match.utcDate, match.league, match.channels, fetchWithCache]);
 
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -256,11 +278,41 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, index, onClick, isTomorrow
     };
 
     const firstChannel = Array.isArray(displayChannel) ? displayChannel[0] : displayChannel;
-    const firstChannelName = getChannelName(firstChannel);
-    
-    const channelLogo = (typeof firstChannel === 'object' && firstChannel?.logo) 
-        ? firstChannel.logo 
-        : getChannelLogo(firstChannelName);
+    // Treat empty / "N/A" / "غير محدد" as "no channel" so the placeholder text is never shown.
+    const isPlaceholderChannel = (name: string) => {
+        const n = (name || '').trim();
+        return !n || n === 'غير محدد' || n.toUpperCase() === 'N/A';
+    };
+
+    // Flat, de-duplicated broadcaster list backing the header chip and the
+    // expanded list. Sources hand us either objects (winwin: name + logo) or a
+    // single string that may pack several channels ("beIN 1 - SSC 2" / "a|b").
+    const channelList = useMemo(() => {
+        const raw = Array.isArray(displayChannel) ? displayChannel : (displayChannel ? [displayChannel] : []);
+        const flat: { name: string; logo?: string; url?: string }[] = [];
+        for (const c of raw) {
+            if (typeof c === 'string') {
+                for (const part of c.split(/\s*\|\s*|\s+-\s+/)) {
+                    const name = part.trim();
+                    if (name) flat.push({ name });
+                }
+            } else if (c && typeof c === 'object') {
+                const name = String(c.name || '').trim();
+                if (name) flat.push({ name, logo: c.logo || undefined, url: c.url || undefined });
+            }
+        }
+        const seen = new Set<string>();
+        const deduped = flat.filter(c => {
+            if (isPlaceholderChannel(c.name)) return false;
+            const key = c.name.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        // Arabic/MENA broadcasters (beIN, AL KASS, أبوظبي الرياضية…) lead the list.
+        return sortChannelsArabicFirst(deduped);
+    }, [displayChannel]);
+
     const leagueLogo = match.leagueLogoUrl || getLeagueLogo(match.league) || null;
     const isAFCON = match.league.includes('أمم إفريقيا') || match.league.includes('الأمم الإفريقية');
 
@@ -297,12 +349,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, index, onClick, isTomorrow
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-start">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <div className={`${isAFCON ? 'w-7 h-7 sm:w-9 sm:h-9' : 'w-5 h-5 sm:w-6 sm:h-6'} flex-shrink-0 flex items-center justify-center`}>
-                            <OptimizedImage 
-                                src={leagueLogo} 
-                                alt={match.league} 
-                                width={48} 
+                            <OptimizedImage
+                                src={leagueLogo}
+                                alt={match.league}
+                                width={48}
                                 loading="lazy"
-                                className="w-full h-full object-contain drop-shadow-[0_0_2px_rgba(0,0,0,0.4)]" 
+                                className="w-full h-full object-contain drop-shadow-[0_0_2px_rgba(0,0,0,0.4)]"
                                 fallbackElement={<TrophyIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-300" />}
                             />
                         </div>
@@ -318,50 +370,45 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, index, onClick, isTomorrow
                         {statusText}
                     </span>
                 </div>
-                
-                <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 justify-end flex-wrap cursor-pointer" onClick={(e) => { e.stopPropagation(); toggleExpanded(e); }}>
-                    {Array.isArray(displayChannel) ? (
-                        <div className="flex items-center gap-1 bg-white/50 px-1 py-0.5 rounded-md border border-gray-100">
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 flex items-center justify-center">
-                                {channelLogo ? (
-                                    <OptimizedImage 
-                                        src={channelLogo} 
-                                        alt={firstChannelName} 
-                                        width={20} 
-                                        loading="lazy"
-                                        className="w-full h-full object-contain" 
-                                    />
-                                ) : (
-                                    <ScreenIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                                )}
-                            </div>
-                            <span className="text-[9px] sm:text-xs font-bold text-gray-700 group-hover:text-black truncate max-w-[80px] sm:max-w-[120px]" dir="ltr">
-                                {firstChannelName || 'غير محدد'}
-                            </span>
-                            {displayChannel.length > 1 && (
-                                <span className="text-[9px] sm:text-[10px] font-bold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded-md">
-                                    +{displayChannel.length - 1}
+
+                {/* Broadcasters live only here, in the card's top corner: the channel
+                    logo (wordmarks are wide, so height-sized) plus a "+N" counter.
+                    Tapping expands the full list underneath. */}
+                <div
+                    className={`flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0 justify-end flex-wrap ${channelList.length > 1 ? 'cursor-pointer' : ''}`}
+                    onClick={channelList.length > 1 ? (e) => { e.stopPropagation(); toggleExpanded(e); } : undefined}
+                >
+                    {channelList.length > 0 && (
+                        <div
+                            className="flex items-center gap-1.5 bg-gray-50 px-1.5 py-1 rounded-md border border-gray-200"
+                            title={channelList.map(c => c.name).join(' • ')}
+                            dir="ltr"
+                        >
+                            {(() => {
+                                const first = channelList[0];
+                                const logo = first.logo || getChannelLogo(first.name);
+                                return (
+                                    <>
+                                        <span className="text-[9px] sm:text-[11px] font-bold text-gray-800 truncate max-w-[78px] sm:max-w-[120px]">
+                                            {first.name}
+                                        </span>
+                                        {logo && (
+                                            <OptimizedImage
+                                                src={logo}
+                                                alt={first.name}
+                                                height={20}
+                                                loading="lazy"
+                                                className="h-3.5 sm:h-[18px] w-auto max-w-[44px] sm:max-w-[60px] object-contain flex-shrink-0"
+                                            />
+                                        )}
+                                    </>
+                                );
+                            })()}
+                            {channelList.length > 1 && (
+                                <span className="text-[9px] sm:text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 px-1 py-0.5 rounded flex-shrink-0">
+                                    +{channelList.length - 1}
                                 </span>
                             )}
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-1 bg-white/50 px-1.5 py-0.5 rounded-md border border-gray-100">
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 flex items-center justify-center">
-                                {channelLogo ? (
-                                    <OptimizedImage 
-                                        src={channelLogo} 
-                                        alt={firstChannelName} 
-                                        width={20} 
-                                        loading="lazy"
-                                        className="w-full h-full object-contain" 
-                                    />
-                                ) : (
-                                    <ScreenIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                                )}
-                            </div>
-                            <span className="text-[9px] sm:text-xs font-bold text-gray-700 group-hover:text-black truncate max-w-[100px] sm:max-w-[150px]" dir="ltr">
-                                {firstChannelName || 'غير محدد'}
-                            </span>
                         </div>
                     )}
                 </div>
@@ -432,20 +479,26 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, index, onClick, isTomorrow
                         <span>الإحصائيات</span>
                     </div>
                 </div>
-                
-                {isExpanded && displayChannel && (
+
+                {isExpanded && channelList.length > 1 && (
                     <div className="mt-2 pt-2 border-t border-gray-100 bg-gray-50/50 rounded-b-lg p-2">
                         <div className="flex flex-wrap items-center justify-center gap-2">
-                            {Array.isArray(displayChannel) ? displayChannel.map((ch, idx) => {
-                                const chName = typeof ch === 'string' ? ch : ch.name;
-                                const chLogo = typeof ch === 'object' && ch.logo ? ch.logo : getChannelLogo(chName);
-                                const chUrl = typeof ch === 'object' ? ch.url : undefined;
+                            {channelList.map((ch, idx) => {
+                                const chName = ch.name;
+                                const chLogo = ch.logo || getChannelLogo(chName);
+                                const chUrl = ch.url;
 
                                 const content = (
                                     <div key={idx} className={`flex items-center gap-1.5 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm ${chUrl ? 'hover:border-emerald-300 hover:bg-emerald-50 transition-all' : ''}`}>
-                                        <div className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 flex items-center justify-center">
+                                        <div className="h-4 sm:h-5 flex-shrink-0 flex items-center justify-center">
                                             {chLogo ? (
-                                                <OptimizedImage src={chLogo} alt={chName} width={20} className="w-full h-full object-contain" />
+                                                <OptimizedImage
+                                                    src={chLogo}
+                                                    alt={chName}
+                                                    height={20}
+                                                    className="h-full w-auto max-w-[70px] object-contain"
+                                                    fallbackElement={<ScreenIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />}
+                                                />
                                             ) : (
                                                 <ScreenIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
                                             )}
@@ -471,18 +524,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, index, onClick, isTomorrow
                                         {content}
                                     </a>
                                 ) : content;
-                            }) : (
-                                <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm">
-                                    <div className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 flex items-center justify-center">
-                                        {channelLogo ? (
-                                            <OptimizedImage src={channelLogo} alt={firstChannelName} width={20} className="w-full h-full object-contain" />
-                                        ) : (
-                                            <ScreenIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                                        )}
-                                    </div>
-                                    <span className="text-[9px] sm:text-xs font-bold text-gray-700 whitespace-nowrap" dir="ltr">{firstChannelName}</span>
-                                </div>
-                            )}
+                            })}
                         </div>
                     </div>
                 )}

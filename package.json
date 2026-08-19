@@ -7,6 +7,8 @@
     "dev": "tsx server.ts",
     "start": "tsx server.ts",
     "build": "vite build",
+    "package:theme": "powershell -ExecutionPolicy Bypass -File ../wordpress-theme/build-theme.ps1",
+    "package:theme:zip": "powershell -ExecutionPolicy Bypass -File ../wordpress-theme/build-theme.ps1 -SkipBuild",
     "preview": "vite preview",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0"
   },

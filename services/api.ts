@@ -1,40 +1,37 @@
 
-import { Match, MatchStatus, MatchDetails, GoalEvent, TimelineEvent, Standing, Player, MatchStatistic, GoalInfo, H2HMatch, MatchInfo, Scorer, StandingGroup, Coach, ChannelInfo, CompetitionBracket, NewsItem, NewsArticle } from '../types';
+import { Match, MatchStatus, MatchDetails, GoalEvent, TimelineEvent, Standing, Player, MatchStatistic, GoalInfo, H2HMatch, MatchInfo, Scorer, StandingGroup, Coach, ChannelInfo, CompetitionBracket, NewsItem, NewsArticle, LeagueMatch, Broadcast, BeinGuideChannel } from '../types';
 import { translateLeague, translateTeam, isMajorLeague, isStandingLeague } from '../utils/translations';
+import { API_BASE } from './config';
 
 type DateString = 'yesterday' | 'today' | 'tomorrow';
 
-// Proxy rotation configuration
+// Proxy rotation configuration.
+// WordPress build: the site's own /api/proxy (the theme's PHP proxy) is ALWAYS the
+// first hop, whatever the domain. The old hostname sniffing (netlify.app /
+// yallamatch.online → Netlify function + remote API base) predates the WordPress
+// port and silently bypassed the theme's API layer when the site ran on the
+// production domain — breaking tournaments/news/standings there.
 const PROXIES = [
     (url: string) => {
         if (url.startsWith('http')) {
-            // Check if we are hosted on Netlify vs local AI Studio
-            const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-            const isAIStudio = typeof window !== 'undefined' && window.location.hostname.includes('run.app');
-            const isNetlify = typeof window !== 'undefined' && (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('yallamatch.online'));
-            
-            if (isLocal || isAIStudio) return `/api/proxy?url=${encodeURIComponent(url)}`;
-            if (isNetlify) return `/.netlify/functions/kooora-proxy?url=${encodeURIComponent(url)}`;
-            
-            // Default fallback
             return `/api/proxy?url=${encodeURIComponent(url)}`;
         }
         return url;
     },
     (url: string) => {
         if (url.startsWith('http')) {
-            return `https://yallamatch.pages.dev/api/proxy?url=${encodeURIComponent(url)}`;
+            return `${API_BASE}/api/proxy?url=${encodeURIComponent(url)}`;
         }
         return url;
     },
-    (url: string) => url.startsWith('http') ? `https://api.allorigins.win/get?url=${encodeURIComponent(url)}` : url,
+    // NOTE: the old third-party `api.allorigins.win` fallback was removed — it leaked
+    // the target URL + user IP to a third party and returned a wrapped {contents}
+    // envelope the callers never unwrapped (so it never actually worked). The two
+    // same-origin/backend proxies above cover every case.
 ];
 
-// Helper to get the API base URL
-const getApiBase = () => {
-    const isNetlify = typeof window !== 'undefined' && (window.location.hostname.includes('netlify.app') || window.location.hostname.includes('yallamatch.online'));
-    return isNetlify ? 'https://yallamatch.pages.dev' : '';
-};
+// API base: always same-origin — WordPress serves (or proxies) every /api/* route.
+const getApiBase = () => '';
 
 let serverTimeOffset = 0;
 
@@ -278,7 +275,7 @@ const fetchKoooraData = async (date?: string) => {
             }
 
             // Fallback to absolute yallamatch API via proxy if local server failed
-            const fallbackApiUrl = `https://yallamatch.pages.dev/api/kooora/channels?date=${targetDate}`;
+            const fallbackApiUrl = `${API_BASE}/api/kooora/channels?date=${targetDate}`;
             try {
                 const res = await fetchWithRetry(fallbackApiUrl, 8000);
                 if (res.ok) {
@@ -296,7 +293,7 @@ const fetchKoooraData = async (date?: string) => {
 
             // Try LiveOnSat absolute API
             try {
-                const losUrl = `https://yallamatch.pages.dev/api/liveonsat/channels?date=${targetDate}`;
+                const losUrl = `${API_BASE}/api/liveonsat/channels?date=${targetDate}`;
                 const res = await fetchWithRetry(losUrl, 5000);
                 if (res.ok) {
                     const json = await res.json();
@@ -455,10 +452,10 @@ const promiseAny = <T>(promises: Promise<T>[]): Promise<T> => {
 const fetchWithRetry = async (targetUrl: string, timeout = 15000): Promise<Response> => {
     let lastError: any = null;
 
-    // In local dev only the same-origin /api/proxy works — the cross-origin fallbacks
-    // (yallamatch.pages.dev/api/proxy returns 403; api.allorigins.win is CORS-blocked) can
-    // never succeed from localhost and only add console noise plus retry latency. The local
-    // proxy already performs its own server-side rotation, so a single entry is enough.
+    // In local dev only the same-origin /api/proxy works — the cross-origin fallback
+    // (API_BASE/api/proxy, allowlist-only) can never succeed from localhost and only adds
+    // console noise plus retry latency. The local proxy already performs its own
+    // server-side rotation, so a single entry is enough.
     const isLocal = typeof window !== 'undefined' &&
         (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const activeProxies = isLocal ? PROXIES.slice(0, 1) : PROXIES;
@@ -485,20 +482,9 @@ const fetchWithRetry = async (targetUrl: string, timeout = 15000): Promise<Respo
 
             if (!response.ok) throw new Error(`Status ${response.status}`);
             
-            let text = await response.text();
-            
-            if (proxyUrl.includes('api.allorigins.win/get')) {
-                try {
-                    const json = JSON.parse(text);
-                    if (json.contents) {
-                        text = json.contents;
-                    }
-                } catch (e) {
-                    // Ignore parse error
-                }
-            }
-            
-            return new Response(text, { 
+            const text = await response.text();
+
+            return new Response(text, {
                 status: 200, 
                 statusText: 'OK', 
                 headers: response.headers 
@@ -530,6 +516,9 @@ export interface Yanb8League {
     name: string;
     logoUrl: string;
     url: string;
+    // Recency signals used to surface currently/recently played competitions first.
+    liveGames?: number;
+    active?: boolean;
 }
 
 // --- Helpers ---
@@ -703,9 +692,21 @@ export const mapStingMatchToMatch = (data: any): Match => {
     // Further clean league name from common suffixes if not already handled
     league = league.replace(/\s*[-–—]?\s*(المجموعات|المجموعة).*/g, '').trim();
 
+    // Broadcasters set by the admin (AdminChannels) win over auto-resolution.
+    const adminChannels: ChannelInfo[] = Array.isArray(data["AdminChannels"])
+        ? data["AdminChannels"]
+            .map((c: any) => ({ name: String(c?.name || '').trim(), logo: c?.logo || undefined, url: c?.url || undefined }))
+            .filter((c: ChannelInfo) => c.name)
+        : [];
+
     return {
         id: data["Match-id"],
-        channel: (data["Tv"] && typeof data["Tv"] === 'string' && data["Tv"].trim() !== "N/A" && data["Tv"].trim() !== "غير محدد") ? data["Tv"].trim() : '',
+        channel: adminChannels.length > 0
+            ? adminChannels.map(c => c.name).join(' - ')
+            : ((data["Tv"] && typeof data["Tv"] === 'string' && data["Tv"].trim() !== "N/A" && data["Tv"].trim() !== "غير محدد") ? data["Tv"].trim() : ''),
+        channels: adminChannels.length > 0 ? adminChannels : undefined,
+        channelsLocked: adminChannels.length > 0 || undefined,
+        adminShown: data["AdminShown"] === true || undefined,
         league: league,
         leagueCode: getLeagueCode(rawLeagueName),
         leagueLogoUrl: fixUrl(data["Cup-Logo"]),
@@ -715,8 +716,9 @@ export const mapStingMatchToMatch = (data: any): Match => {
         scoreB: parseInt(data["Team-Left"]?.Goal) || 0,
         status, statusText,
         time: formatToMoroccoTime(matchDate),
-        utcDate: matchDate.toISOString(), 
+        utcDate: matchDate.toISOString(),
         round: round,
+        isCustom: data["__custom"] === true,
     };
 };
 
@@ -763,6 +765,133 @@ export const fetchMatchesByDate = async (dateTab: DateString): Promise<Match[]> 
   }
 };
 
+// One resolved fixture from /api/winwin/channels: its broadcasters plus the
+// Arabic club names the source knows (used when our own feed ships Latin ones).
+interface WinwinRow { channels: ChannelInfo[]; teamAAr?: string; teamBAr?: string; }
+
+// Arabic/MENA broadcasters lead the list — they are the ones this audience can
+// actually watch. Covers Arabic-script names and the Latin-spelled regional
+// networks (beIN, AL KASS, SSC, Abu Dhabi/Dubai Sports, Arryadia…).
+const MENA_CHANNEL_HINTS = [
+    'bein', 'be in', 'kass', 'ssc', 'abu dhabi', 'abudhabi', 'ad sports', 'dubai',
+    'arryadia', 'thmanyah', 'shahid', 'rotana', 'starzplay', 'saudi', 'on sport',
+    'on time', 'time sport', 'mbc', 'tod', 'yas', 'nile sport', 'watania',
+];
+export const isMenaChannel = (name: string): boolean => {
+    const n = (name || '').toLowerCase();
+    if (/[؀-ۿ]/.test(n)) return true;
+    return MENA_CHANNEL_HINTS.some(h => n.includes(h));
+};
+export const sortChannelsArabicFirst = <T extends { name: string }>(list: T[]): T[] => {
+    const mena: T[] = [];
+    const rest: T[] = [];
+    for (const c of list) (isMenaChannel(c.name) ? mena : rest).push(c);
+    return [...mena, ...rest];
+};
+
+// Per-date cache of the winwin channels lookup (matchId -> resolved row).
+const winwinChannelsPromise: { [date: string]: Promise<Map<number, WinwinRow>> } = {};
+
+// Fetch /api/winwin/channels once per date and index it by match id. This is the
+// single endpoint that resolves broadcasting channels for ALL the day's matches
+// server-side, so the client can fill channels for every match in one request
+// instead of each card fanning out to four upstream sources.
+const fetchWinwinChannels = (dateString: string): Promise<Map<number, WinwinRow>> => {
+    if (winwinChannelsPromise[dateString]) return winwinChannelsPromise[dateString];
+    winwinChannelsPromise[dateString] = (async () => {
+        const map = new Map<number, WinwinRow>();
+        try {
+            const res = await fetch(`/api/winwin/channels?date=${dateString}`);
+            if (!res.ok) return map;
+            const json = await res.json();
+            const rows = json?.data || [];
+            for (const row of rows) {
+                if (row?.matchId == null) continue;
+                const list: ChannelInfo[] = (Array.isArray(row.channels) ? row.channels : [])
+                    .map((c: any) => (typeof c === 'string'
+                        ? { name: c.trim() }
+                        : { name: String(c?.name || '').trim(), logo: c?.logo || undefined, url: c?.url || undefined }))
+                    .filter((c: ChannelInfo) => !!c.name);
+                if (list.length || row.teamAAr || row.teamBAr) {
+                    map.set(Number(row.matchId), { channels: sortChannelsArabicFirst(list), teamAAr: row.teamAAr || undefined, teamBAr: row.teamBAr || undefined });
+                }
+            }
+        } catch { /* channels are an enhancement — matches render without them */ }
+        return map;
+    })();
+    return winwinChannelsPromise[dateString];
+};
+
+// The Morocco day a kickoff belongs to — the bucket /api/winwin/channels uses.
+const moroccoDayOf = (utcDate: string): string => {
+    try {
+        return new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit',
+        }).format(new Date(utcDate));
+    } catch {
+        return getMoroccanDateString(0);
+    }
+};
+
+/**
+ * Broadcasters for a single match, read from the shared per-date lookup.
+ *
+ * Cards call this after first paint. The underlying request is cached per date,
+ * so all cards share ONE call — and a cold lookup that outran the list-level
+ * timeout still lands here, instead of the day being stuck channel-less until
+ * the local match cache expires.
+ */
+export const fetchWinwinChannelForMatch = async (matchId: number, utcDate: string): Promise<ChannelInfo[] | null> => {
+    try {
+        const byId = await fetchWinwinChannels(moroccoDayOf(utcDate));
+        const hit = byId.get(Number(matchId));
+        return (hit && hit.channels.length > 0) ? hit.channels : null;
+    } catch {
+        return null;
+    }
+};
+
+// Fill in the broadcasting channels for every match that lacks them. Sets both
+// the structured list (cards render logos + a "+N" counter from it) and the flat
+// `channel` string kept for the views that only display text.
+const enrichWithWinwinChannels = async (matches: Match[], dateString: string): Promise<Match[]> => {
+    if (matches.length === 0) return matches;
+    try {
+        // Never hold the match list hostage to the channels lookup: on a cold
+        // server cache it can take a few seconds. Wait briefly, then render the
+        // matches regardless — the promise is cached per date, so the next pass
+        // (SWR refresh / tab switch) picks the channels up instantly, and each
+        // card still has its own fallback lookup in the meantime.
+        const channelsById = await Promise.race([
+            fetchWinwinChannels(dateString),
+            new Promise<Map<number, WinwinRow>>(resolve => setTimeout(() => resolve(new Map()), 1500)),
+        ]);
+        if (channelsById.size === 0) return matches;
+        const hasArabic = (s: string) => /[؀-ۿ]/.test(s || '');
+        for (const m of matches) {
+            // Admin-defined channels are locked — never overwrite them.
+            if (m.channelsLocked) continue;
+            const found = channelsById.get(m.id);
+            if (!found) continue;
+
+            // Some feed fixtures ship a Latin club name ("Montevideo City Torque");
+            // the channel source knows the Arabic one, so use it for display.
+            if (found.teamAAr && !hasArabic(m.teamA.name)) m.teamA.name = found.teamAAr;
+            if (found.teamBAr && !hasArabic(m.teamB.name)) m.teamB.name = found.teamBAr;
+
+            if (!found.channels.length) continue;
+            const isBlank = !m.channel || m.channel.trim() === '' || m.channel.trim() === 'غير محدد' || m.channel.trim().toUpperCase() === 'N/A';
+            // Always attach the structured list (it carries logos the flat string
+            // can't), but only overwrite an existing channel string when blank.
+            m.channels = found.channels;
+            if (isBlank) {
+                m.channel = found.channels.map(c => c.name).join(' - ');
+            }
+        }
+    } catch { /* ignore */ }
+    return matches;
+};
+
 const fetchFromMessisporatInternal = async (dateString: string): Promise<Match[]> => {
     try {
         // Try local server API first (which has deduplication and caching)
@@ -770,39 +899,45 @@ const fetchFromMessisporatInternal = async (dateString: string): Promise<Match[]
         if (response.ok) {
             const data = await response.json();
             const rawMatches = data["STING-WEB-Matches"] || [];
-            return rawMatches.map((m: any) => mapStingMatchToMatch(m)).filter((match: Match) => {
+            const matches = rawMatches.map((m: any) => mapStingMatchToMatch(m)).filter((match: Match) => {
+                if (match.isCustom || match.adminShown) return true; // admin-created / force-shown always pass
                 if (!match.league) return false;
                 return isMajorLeague(match.league);
             });
+            return await enrichWithWinwinChannels(matches, dateString);
         }
         throw new Error(`Local API returned ${response.status}`);
     } catch (e) {
         // Fallback to absolute URL via proxy
-        const url = `https://yallamatch.pages.dev/api/matches?date=${dateString}`;
+        const url = `${API_BASE}/api/matches?date=${dateString}`;
         const response = await fetchWithRetry(url);
         const data = await response.json();
         const rawMatches = data["STING-WEB-Matches"] || [];
-        return rawMatches.map((m: any) => mapStingMatchToMatch(m)).filter((match: Match) => {
+        const matches = rawMatches.map((m: any) => mapStingMatchToMatch(m)).filter((match: Match) => {
+            if (match.isCustom || match.adminShown) return true;
             if (!match.league) return false;
             return isMajorLeague(match.league);
         });
+        return await enrichWithWinwinChannels(matches, dateString);
     }
 };
 
 const fetch365ScoresInternal = async (offset: number): Promise<Match[]> => {
     const dateStr365 = get365DateString(offset);
     const url = `${SCORES365_GAMES_BASE}&startDate=${dateStr365}&endDate=${dateStr365}`;
-    const response = await fetchWithRetry(url, 12000); 
+    const response = await fetchWithRetry(url, 12000);
     const data = await response.json();
-    return (data.games || []).map(map365MatchToMatch).filter((match: Match) => {
+    const matches = (data.games || []).map(map365MatchToMatch).filter((match: Match) => {
          if (!match.league) return false;
          return isMajorLeague(match.league);
     });
+    // Same channel enrichment as the primary path, so the fallback isn't channel-less.
+    return await enrichWithWinwinChannels(matches, getMoroccanDateString(offset));
 };
 
 export const fetchLiveMatches = async (): Promise<Match[]> => {
     try {
-        const url = `https://yallamatch.pages.dev/api/live`;
+        const url = `${API_BASE}/api/live`;
         const response = await fetchWithRetry(url);
         const data = await response.json();
         const rawMatches = data["STING-WEB-Matches"] || [];
@@ -884,7 +1019,7 @@ const fetchLiveOnSatDailyChannels = async (targetDate: string, signal?: AbortSig
             const params = new URLSearchParams();
             if (targetDate) params.append('date', targetDate);
 
-            const apiUrl = `https://yallamatch.pages.dev/api/liveonsat/channels?${params.toString()}`;
+            const apiUrl = `${API_BASE}/api/liveonsat/channels?${params.toString()}`;
             try {
                 const res = await fetchWithRetry(apiUrl, 5000);
                 if (res.ok) {
@@ -936,7 +1071,7 @@ const fetchKoooraDailyChannels = async (targetDate: string, signal?: AbortSignal
             if (targetDate) params.append('date', targetDate);
 
             // Try absolute yallamatch API first
-            const apiUrl = `https://yallamatch.pages.dev/api/kooora/channels?${params.toString()}`;
+            const apiUrl = `${API_BASE}/api/kooora/channels?${params.toString()}`;
             try {
                 const res = await fetchWithRetry(apiUrl, 5000);
                 if (res.ok) {
@@ -1013,7 +1148,7 @@ const fetchMatchChannelFromSources = async (matchId: number, teamA?: string, tea
                     if (targetDate) params.append('date', targetDate);
                     params.append('teamA', teamA);
                     params.append('teamB', teamB);
-                    const apiUrl = `https://yallamatch.pages.dev/api/bein-channels?${params.toString()}`;
+                    const apiUrl = `${API_BASE}/api/bein-channels?${params.toString()}`;
                     const res = await fetch(apiUrl, { signal: controller.signal });
                     
                     if (res.ok) {
@@ -1309,6 +1444,90 @@ export const fetchKoooraEvents = async (teamA: string, teamB: string, date?: str
     return null;
 };
 
+// messisporat team-logo ids double as 365scores competitor ids, so we can read a
+// team id straight out of its crest URL — both the `team-logo.php?id=NNN` form and
+// the 365scores `.../competitors/NNN` form.
+const extractTeamId = (logoUrl?: string): string | null => {
+    const m = /(?:[?&]id=|competitors\/)(\d+)/i.exec(logoUrl || '');
+    return m ? m[1] : null;
+};
+
+// Each team's last five results from 365scores. The messisporat details feed almost
+// never carries per-team recent matches, so this fills "آخر مباريات الفريقين". Cached
+// per team (30 min) so detail-view polling doesn't refetch. Routed through the app
+// proxy (fetchWithRetry) to avoid the webws.365scores.com CORS wall.
+export const fetchTeamRecentMatches = async (teamId: string): Promise<H2HMatch[]> => {
+    const cacheKey = `recent365_${teamId}`;
+    const cached = getStorageItem(cacheKey);
+    if (cached) return cached;
+    try {
+        const url = `https://webws.365scores.com/web/games/results/?appTypeId=5&langId=27&timezoneName=${encodeURIComponent(USER_TIMEZONE)}&userCountryId=131&competitors=${teamId}`;
+        const res = await fetchWithRetry(url, 6000);
+        const json = await res.json();
+        const games: any[] = Array.isArray(json?.games) ? json.games : [];
+        const logo = (id: any) => (id ? `https://imagecache.365scores.com/image/upload/f_png,w_60,h_60,c_limit,q_auto:eco/competitors/${id}` : undefined);
+        const num = (v: any) => (typeof v === 'number' && v >= 0 ? v : 0);
+        const mapped: H2HMatch[] = games
+            .filter(g => g.homeCompetitor && g.awayCompetitor)
+            .map(g => ({
+                date: (g.startTime || '').slice(0, 10),
+                league: g.competitionDisplayName || 'مباراة',
+                homeTeam: g.homeCompetitor?.name || '',
+                awayTeam: g.awayCompetitor?.name || '',
+                homeScore: num(g.homeCompetitor?.score),
+                awayScore: num(g.awayCompetitor?.score),
+                homeLogo: logo(g.homeCompetitor?.id),
+                awayLogo: logo(g.awayCompetitor?.id),
+            }))
+            .filter(m => m.date)
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .slice(0, 5);
+        if (mapped.length) setStorageItem(cacheKey, mapped, 30 * 60 * 1000);
+        return mapped;
+    } catch (e) {
+        console.warn(`[API] 365scores recent matches failed for team ${teamId}`, e);
+        return [];
+    }
+};
+
+// Direct meetings between two teams, mined from teamA's 365scores results (the games
+// whose other side is teamB). Fallback for "سجل المواجهات المباشرة" when the messisporat
+// feed carries no head-to-head. Returns every meeting found (1..5), never padded.
+export const fetchHeadToHead = async (idA: string, idB: string): Promise<H2HMatch[]> => {
+    const cacheKey = `h2h365_${idA}_${idB}`;
+    const cached = getStorageItem(cacheKey);
+    if (cached) return cached;
+    try {
+        const url = `https://webws.365scores.com/web/games/results/?appTypeId=5&langId=27&timezoneName=${encodeURIComponent(USER_TIMEZONE)}&userCountryId=131&competitors=${idA}`;
+        const res = await fetchWithRetry(url, 6000);
+        const json = await res.json();
+        const games: any[] = Array.isArray(json?.games) ? json.games : [];
+        const logo = (id: any) => (id ? `https://imagecache.365scores.com/image/upload/f_png,w_60,h_60,c_limit,q_auto:eco/competitors/${id}` : undefined);
+        const num = (v: any) => (typeof v === 'number' && v >= 0 ? v : 0);
+        const target = String(idB);
+        const mapped: H2HMatch[] = games
+            .filter(g => String(g.homeCompetitor?.id) === target || String(g.awayCompetitor?.id) === target)
+            .map(g => ({
+                date: (g.startTime || '').slice(0, 10),
+                league: g.competitionDisplayName || 'مواجهة سابقة',
+                homeTeam: g.homeCompetitor?.name || '',
+                awayTeam: g.awayCompetitor?.name || '',
+                homeScore: num(g.homeCompetitor?.score),
+                awayScore: num(g.awayCompetitor?.score),
+                homeLogo: logo(g.homeCompetitor?.id),
+                awayLogo: logo(g.awayCompetitor?.id),
+            }))
+            .filter(m => m.date)
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .slice(0, 5);
+        if (mapped.length) setStorageItem(cacheKey, mapped, 30 * 60 * 1000);
+        return mapped;
+    } catch (e) {
+        console.warn(`[API] 365scores head-to-head failed for ${idA} vs ${idB}`, e);
+        return [];
+    }
+};
+
 export const fetchMatchDetails = async (match: Match): Promise<MatchDetails> => {
     // Check cache first
     const cached = detailsCache.get(match.id);
@@ -1324,8 +1543,8 @@ export const fetchMatchDetails = async (match: Match): Promise<MatchDetails> => 
             new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500))
         ]);
 
-        const detailsUrl = `https://yallamatch.pages.dev/api/match-details?id=${matchId}`;
-        const h2hUrl = `https://yallamatch.pages.dev/api/h2h?id=${matchId}`;
+        const detailsUrl = `${API_BASE}/api/match-details?id=${matchId}`;
+        const h2hUrl = `${API_BASE}/api/h2h?id=${matchId}`;
         // The yallamatch match-details API serves lineup/events/info but carries NO statistics, so the
         // "الإحصائيات" tab must come from the dedicated messisporat stats endpoint, whose payload puts
         // Statistics-1/Statistics-2 at the top level. Fetched alongside the others below.
@@ -1643,6 +1862,20 @@ export const fetchMatchDetails = async (match: Match): Promise<MatchDetails> => 
             rawTeamBMatches.forEach((item: any) => recentMatchesB.push(mapH2HItem(item)));
         }
 
+        // The messisporat feed rarely fills these, so fall back to 365scores (team ids
+        // match the crest ids) so "آخر مباريات الفريقين" and "سجل المواجهات المباشرة" show
+        // real data instead of empty states.
+        const teamIdA = extractTeamId(match.teamA.logoUrl);
+        const teamIdB = extractTeamId(match.teamB.logoUrl);
+        const [extraRecentA, extraRecentB, extraH2H] = await Promise.all([
+            recentMatchesA.length > 0 || !teamIdA ? Promise.resolve([] as H2HMatch[]) : fetchTeamRecentMatches(teamIdA),
+            recentMatchesB.length > 0 || !teamIdB ? Promise.resolve([] as H2HMatch[]) : fetchTeamRecentMatches(teamIdB),
+            h2hMatches.length > 0 || !teamIdA || !teamIdB ? Promise.resolve([] as H2HMatch[]) : fetchHeadToHead(teamIdA, teamIdB),
+        ]);
+        extraRecentA.forEach(m => recentMatchesA.push(m));
+        extraRecentB.forEach(m => recentMatchesB.push(m));
+        extraH2H.forEach(m => h2hMatches.push(m));
+
         const jsonInfo = eventsData?.["Match-Info"] || {};
         const jsonCard = eventsData?.["Match-Card"] || {};
         const formatRound = (val: any) => (!val || val === "N/A" || val === "غير محدد" ? undefined : (/^\d+$/.test(String(val).trim()) ? `الجولة ${String(val).trim()}` : String(val).trim()));
@@ -1689,12 +1922,82 @@ export const fetchMatchDetails = async (match: Match): Promise<MatchDetails> => 
             }
         }
 
+        // ------------------------------------------------------------------
+        // Real per-player ratings + jersey numbers from the 365scores game
+        // payload (this app's match ids are 365scores game ids). The feed's
+        // lineups rarely carry ratings; 365scores' `ranking` field is the
+        // live performance note shown by broadcast-style lineups.
+        // ------------------------------------------------------------------
+        interface SideRatings { byName: Map<string, { rating: number; jersey?: number }>; byJersey: Map<number, number>; }
+        const emptySide = (): SideRatings => ({ byName: new Map(), byJersey: new Map() });
+        let side365Home = emptySide();
+        let side365Away = emptySide();
+        const normPlayerName = (s: string) => (s || '').trim().toLowerCase();
+        try {
+            const gameRes = await fetchWithRetry(`https://webws.365scores.com/web/game/?appTypeId=5&langId=27&timezoneName=${USER_TIMEZONE}&gameId=${match.id}`, 6000);
+            const game = (await gameRes.json())?.game;
+            const athletes = new Map<number, { name: string; jerseyNumber?: number }>();
+            for (const m of (game?.members || [])) {
+                if (m?.id != null) athletes.set(m.id, { name: m.name || '', jerseyNumber: m.jerseyNumber });
+            }
+            const collect = (comp: any): SideRatings => {
+                const side = emptySide();
+                for (const mem of (comp?.lineups?.members || [])) {
+                    const ath = athletes.get(mem.id);
+                    const rating = typeof mem.ranking === 'number' && mem.ranking > 0 ? mem.ranking : 0;
+                    if (!rating) continue;
+                    if (ath?.name) side.byName.set(normPlayerName(ath.name), { rating, jersey: ath.jerseyNumber });
+                    if (typeof ath?.jerseyNumber === 'number') side.byJersey.set(ath.jerseyNumber, rating);
+                }
+                return side;
+            };
+            side365Home = collect(game?.homeCompetitor);
+            side365Away = collect(game?.awayCompetitor);
+
+            // Orientation check: if the feed's home lineup matches the 365scores AWAY
+            // side better (by name), the sides are flipped — swap the maps.
+            const nameHits = (players: any[], side: SideRatings) => {
+                let hits = 0;
+                for (const p of players) {
+                    const n = normPlayerName(p['Player-Name'] || '');
+                    if (!n) continue;
+                    for (const key of side.byName.keys()) {
+                        if (key === n || key.includes(n) || n.includes(key)) { hits++; break; }
+                    }
+                }
+                return hits;
+            };
+            const homeAsHome = nameHits(homePlayers, side365Home);
+            const homeAsAway = nameHits(homePlayers, side365Away);
+            if (homeAsAway > homeAsHome) {
+                const tmp = side365Home; side365Home = side365Away; side365Away = tmp;
+            }
+        } catch { /* ratings are an enhancement — lineups render fine without them */ }
+
+        const enrichWithRating = (p: Player, side: SideRatings): Player => {
+            let number = p.number;
+            let rating = p.stats?.rating || 0;
+            const byName = side.byName.get(normPlayerName(p.name));
+            if (byName) {
+                rating = rating || byName.rating;
+                if (!number && typeof byName.jersey === 'number') number = byName.jersey;
+            } else if (!rating) {
+                // Name didn't match (transliteration differences) — try the jersey number.
+                for (const [key, val] of side.byName.entries()) {
+                    const n = normPlayerName(p.name);
+                    if (n && (key.includes(n) || n.includes(key))) { rating = val.rating; break; }
+                }
+                if (!rating && number > 0) rating = side.byJersey.get(number) || 0;
+            }
+            return { ...p, number, stats: { ...(p.stats || {}), rating } };
+        };
+
         const details: MatchDetails = {
             statistics,
-            lineupHome: homePlayers.filter((p: any) => p.Status === "Starting").map(mapPlayer),
-            lineupAway: awayPlayers.filter((p: any) => p.Status === "Starting").map(mapPlayer),
-            benchHome: homePlayers.filter((p: any) => p.Status === "Substitute").map(mapPlayer),
-            benchAway: awayPlayers.filter((p: any) => p.Status === "Substitute").map(mapPlayer),
+            lineupHome: homePlayers.filter((p: any) => p.Status === "Starting").map(mapPlayer).map(p => enrichWithRating(p, side365Home)),
+            lineupAway: awayPlayers.filter((p: any) => p.Status === "Starting").map(mapPlayer).map(p => enrichWithRating(p, side365Away)),
+            benchHome: homePlayers.filter((p: any) => p.Status === "Substitute").map(mapPlayer).map(p => enrichWithRating(p, side365Home)),
+            benchAway: awayPlayers.filter((p: any) => p.Status === "Substitute").map(mapPlayer).map(p => enrichWithRating(p, side365Away)),
             homeCoach: getCoach(lineupRoot?.["Home-Team"]),
             awayCoach: getCoach(lineupRoot?.["Away-Team"]),
             formationHome: lineupRoot?.["Home-Team"]?.["Formation"] || '',
@@ -1774,6 +2077,7 @@ export const fetchYanb8Leagues = async (): Promise<Yanb8League[]> => {
             5096, // كأس العالم للأندية
             329, // كأس الأمم الأوروبية
             167, // كأس الأمم الإفريقية
+            8746, // كأس أمم إفريقيا للسيدات (Women's AFCON) — force-added so it survives the women's filter
             6067, // كأس آسيا
             5930, // كأس العالم
             7674, // كأس العرب
@@ -1819,6 +2123,21 @@ export const fetchYanb8Leagues = async (): Promise<Yanb8League[]> => {
             name: 'كأس إفريقيا لأقل من 17 سنة – المغرب 2026',
             logoUrl: 'https://imagecache.365scores.com/image/upload/f_png,w_200,h_200,c_limit,q_auto:eco/competitors/282'
         });
+
+        // One lightweight call over the recent window (yesterday → today) to learn which
+        // competitions actually played recently — a truer "last played" signal than the
+        // live-right-now flag alone. Degrades to an empty set on failure.
+        const recentlyPlayed = new Set<string>();
+        try {
+            const recentUrl = `${SCORES365_GAMES_BASE}&startDate=${get365DateString(-1)}&endDate=${get365DateString(0)}`;
+            const recentRes = await fetchWithRetry(recentUrl, 6000);
+            const recentData = await recentRes.json();
+            for (const g of (recentData.games || [])) {
+                if (g?.competitionId != null) recentlyPlayed.add(String(g.competitionId));
+            }
+        } catch (e) {
+            console.error("Failed to fetch recently-played competitions:", e);
+        }
         
         const toLeague = (c: any): Yanb8League => ({
             id: String(c.id),
@@ -1826,6 +2145,8 @@ export const fetchYanb8Leagues = async (): Promise<Yanb8League[]> => {
             url: '',
             // Preserve a custom logo (e.g. the manual U-17 entry); otherwise build the 365scores one.
             logoUrl: c.logoUrl || `https://imagecache.365scores.com/image/upload/f_png,w_200,h_200,c_limit,q_auto:eco/competitions/${c.id}`,
+            liveGames: c.liveGames || 0,
+            active: !!(c.hasActiveGames || c.isActive),
         });
 
         // The timezone's base competition list is noisy (other sports, women's/youth/reserve
@@ -1883,12 +2204,34 @@ export const fetchYanb8Leagues = async (): Promise<Yanb8League[]> => {
                     return 99; // Default priority
                 };
 
+                // The recency boost is limited to important competitions, so a currently-live
+                // minor competition — a women's/youth/reserve league, a club friendly — can't
+                // jump ahead of the majors. Tier 0 = major playing now, 1 = major that played
+                // in the recent window, 2 = other major, 3 = minor.
+                // Women's/youth/reserve are excluded even though getPriority may score them
+                // (e.g. a club friendly matches the "ودية" rule meant for national-team games).
+                const isBoostable = (name: string): boolean => {
+                    if (/نساء|سيدات|women|ناشئ|شباب|تحت 1|تحت 2|رديف|reserve|u1[0-9]|u2[0-3]/i.test(name)) return false;
+                    return getPriority(name) < 99;
+                };
+                const tierOf = (x: any): number => {
+                    if (!isBoostable(x.name)) return 3;
+                    if ((x.liveGames || 0) > 0) return 0;
+                    if (recentlyPlayed.has(x.id) || x.active) return 1;
+                    return 2;
+                };
+
+                const tierA = tierOf(a), tierB = tierOf(b);
+                if (tierA !== tierB) return tierA - tierB;
+
+                // Within a tier: more live games first, then the hand-tuned importance order.
+                const liveA = a.liveGames || 0, liveB = b.liveGames || 0;
+                if (liveA !== liveB) return liveB - liveA;
+
                 const priorityA = getPriority(a.name);
                 const priorityB = getPriority(b.name);
-
                 if (priorityA !== priorityB) return priorityA - priorityB;
-                
-                // Alphabetical sort for equal priority
+
                 return a.name.localeCompare(b.name);
             });
     } catch { return []; }
@@ -1933,6 +2276,71 @@ export const fetchLeagueTopScorers = async (leagueId: string): Promise<Scorer[]>
     }
 };
 
+// Top assist providers ("صناع اللعب"). Reuses the Scorer shape (the `goals` field
+// carries the assist count).
+export const fetchLeagueAssists = async (leagueId: string): Promise<Scorer[]> => {
+    try {
+        const response = await fetch(`/api/assists?leagueId=${leagueId}`);
+        if (!response.ok) return [];
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to fetch assists:', error);
+        return [];
+    }
+};
+
+// A competition's recent + upcoming fixtures for the standings match tabs.
+export const fetchLeagueMatchList = async (leagueId: string): Promise<LeagueMatch[]> => {
+    if (!/^\d+$/.test(leagueId)) return [];
+    try {
+        const response = await fetch(`/api/league-matches?leagueId=${leagueId}`);
+        if (!response.ok) return [];
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to fetch league matches:', error);
+        return [];
+    }
+};
+
+// Strips LiveOnSat's trailing annotations like " ($/geo/R)" or " [app]" from a channel name.
+const cleanChannelName = (name: string): string =>
+    String(name || '').replace(/\s*[([][^\])]*[\])]\s*$/g, '').trim();
+
+// Today's football broadcasts (match → channels airing it), from LiveOnSat.
+export const fetchTodayBroadcasts = async (): Promise<Broadcast[]> => {
+    try {
+        const date = getMoroccanDateString(0);
+        const response = await fetch(`/api/liveonsat/channels?date=${date}`);
+        if (!response.ok) return [];
+        const data = await response.json();
+        const matches = Array.isArray(data?.matches) ? data.matches : [];
+        return matches.map((m: any): Broadcast => {
+            const [a, b] = String(m.match || '').split(/\s+v\s+/i);
+            return {
+                teamA: (a || '').trim(),
+                teamB: (b || '').trim(),
+                time: (m.time || '').trim(),
+                channels: (Array.isArray(m.channels) ? m.channels : []).map(cleanChannelName).filter(Boolean),
+            };
+        }).filter((m: Broadcast) => m.teamA && m.teamB && m.channels.length > 0);
+    } catch (error) {
+        console.error('Failed to fetch broadcasts:', error);
+        return [];
+    }
+};
+
+// beIN Sports channel guide (now/next per channel).
+export const fetchBeinGuide = async (): Promise<BeinGuideChannel[]> => {
+    try {
+        const response = await fetch('/api/bein-guide');
+        if (!response.ok) return [];
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to fetch beIN guide:', error);
+        return [];
+    }
+};
+
 export const fetchNewsArticle = async (id: string): Promise<NewsArticle | null> => {
     try {
         const response = await fetch(`/api/news/article?id=${encodeURIComponent(id)}`);
@@ -1961,4 +2369,93 @@ export const fetchLeagueMatches = async (leagueId: string): Promise<Match[]> => 
         const data = await response.json();
         return ((data && Array.isArray(data.games)) ? data.games : []).map(map365MatchToMatch);
     } catch { return []; }
+};
+
+// --- Admin-managed live stream section (watch servers + promo banner) ---
+
+export interface LiveStreamServer {
+    id: string;
+    label: string;
+    flag?: string;
+    url: string;
+    type: 'iframe' | 'hls';
+}
+
+export interface LiveOverlayAd {
+    enabled: boolean;
+    imageUrl: string;
+    linkUrl: string;
+    position: 'bottom' | 'top' | 'bottom-left' | 'bottom-right';
+    closeAfterSec: number;
+}
+
+// A per-channel logo placement rule. `match` is a case-insensitive substring of the
+// channel name, so one rule for "bein" covers every beIN variant.
+export interface LogoPlacement {
+    match: string;
+    topPct: number;
+    rightPct: number;
+    sizePct: number;
+    backdrop: boolean;
+}
+
+// Picks the placement for the channel currently playing: the first rule whose `match`
+// appears in the channel name, else the global values. Longer `match` strings are tried
+// first, so a specific "bein sports 2" rule beats a catch-all "bein" one regardless of
+// the order the operator happened to add them in.
+export const resolveLogoPlacement = (
+    config: LiveStreamConfig | null,
+    channelName?: string
+): { topPct?: number; rightPct?: number; sizePct?: number; backdrop?: boolean } => {
+    const name = (channelName || '').toLowerCase();
+    const rules = [...(config?.logoPlacements || [])].sort((a, b) => b.match.length - a.match.length);
+    const hit = name ? rules.find(r => r.match && name.includes(r.match.toLowerCase())) : undefined;
+    if (hit) {
+        return { topPct: hit.topPct, rightPct: hit.rightPct, sizePct: hit.sizePct, backdrop: hit.backdrop };
+    }
+    return {
+        topPct: config?.logoTopPct,
+        rightPct: config?.logoRightPct,
+        sizePct: config?.logoSizePct,
+        backdrop: config?.logoBackdrop,
+    };
+};
+
+export interface LiveStreamConfig {
+    enabled: boolean;
+    servers: LiveStreamServer[];
+    overlayAd?: LiveOverlayAd;
+    // Branded-player chrome, set in the admin Live tab.
+    logoUrl?: string;
+    bottomText?: string;
+    // Logo placement as % of the video box, so it stays on the broadcaster's own
+    // on-screen bug at every player size. Tunable per channel from the admin Live tab.
+    logoTopPct?: number;
+    logoRightPct?: number;
+    logoSizePct?: number;
+    logoBackdrop?: boolean;
+    // Per-channel overrides of the four fields above; first matching rule wins.
+    logoPlacements?: LogoPlacement[];
+    // Where `servers` came from: 'override' | 'playlist' | 'default'.
+    source?: string;
+}
+
+// Optional home/away/date let the server auto-match sportsonline (prog.txt)
+// channels onto this fixture when no admin servers are configured.
+export const fetchLiveStreamConfig = async (
+    matchId: number | string,
+    opts?: { home?: string; away?: string; date?: string }
+): Promise<LiveStreamConfig | null> => {
+    try {
+        const params = new URLSearchParams({ matchId: String(matchId) });
+        if (opts?.home) params.set('home', opts.home);
+        if (opts?.away) params.set('away', opts.away);
+        if (opts?.date) params.set('date', opts.date);
+        const response = await fetch(`${getApiBase()}/api/live-config?${params.toString()}`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (error) {
+        console.debug('Failed to fetch live stream config:', error);
+        return null;
+    }
 };

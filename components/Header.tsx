@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { TelegramIcon, YoutubeIcon, FacebookIcon, XIcon } from '../constants';
 
-export type AppView = 'matches' | 'tournaments' | 'standings' | 'news' | 'contact' | 'channels' | 'privacy' | 'terms';
+export type AppView = 'matches' | 'tournaments' | 'standings' | 'news' | 'contact' | 'privacy' | 'terms';
 export type DateTab = 'yesterday' | 'today' | 'tomorrow';
 
 interface HeaderProps {
@@ -86,10 +86,8 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, view, setView 
 
     const navItems = [
         { label: 'مباريات اليوم', view: 'matches', isActive: view === 'matches' && activeTab === 'today' },
-        { label: 'القنوات', view: 'channels', isActive: view === 'channels' },
-        { label: 'البطولات', view: 'tournaments', isActive: view === 'tournaments' },
-        { label: 'الترتيب', view: 'standings', isActive: view === 'standings' },
         { label: 'الأخبار', view: 'news', isActive: view === 'news' },
+        { label: 'البطولات', view: 'tournaments', isActive: view === 'tournaments' || view === 'standings' },
         { label: 'اتصل بنا', view: 'contact', isActive: view === 'contact' },
     ];
 

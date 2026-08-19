@@ -3,136 +3,86 @@ export const CHANNELS = [
         id: 'bein1', 
         name: 'beIN Sports 1', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/6/6c/1-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b1/fhd.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein1/?serv=1',
         servers: [
-            { name: 'سيرفر FHD (جديد)', url: 'https://stream.goalxtv.workers.dev/b1/fhd.m3u8' },
-            { name: 'سيرفر المشغل (HTML)', url: 'https://esvideofy.com/tvela1es.php' },
-            { name: 'سيرفر HLS (Worker)', url: 'https://esvideofy.com/ote.php?id=spt1' },
-            { name: 'سيرفر خاص (Iframe)', url: 'https://eyj0exaioijkv1qilcjhbgcioijiuzi1nij99ds.zliymordanex.sbs/playerv5.php?match=4702863&key=c0ae1abba6eebd7e6cc5b88b1d2B71547' },
-            { name: 'سيرفر أساسي', url: 'https://channels-api.najilahcen7.workers.dev/api/stream?id=bein1' },
-            { name: 'سيرفر 2', url: 'http://130.61.139.32/hls/channel2/index.m3u8' },
-            { name: 'سيرفر 3', url: 'https://dlhd.vynx.workers.dev/play/91?key=vynx' },    
-            { name: 'سيرفر 4', url: 'http://apontv.pm:80/63635522402322430/1593574628/9138' },
-            { name: 'سيرفر 5', url: 'https://a2vlca.fubohd.com/espn/mono.m3u8?token=da9bd815174f340a8ba9cdbb87ee10ba6b8d5b79-6c-1778004044-1777986044' },
-            { name: 'سيرفر 6', url: 'https://anvtcax.fubohd.com/tudn/mono.m3u8?token=47b4a0cb27f0a43ae8e77f2f38ce0a29767c331e-5f-1778021358-1778003358' },
-            { name: 'سيرفر 7', url: 'https://dw5pdgvk.fubohd.com/univision/mono.m3u8?token=0c1967f930c5f41f129e7cf42b8599d5c3c707f2-8f-1778021356-1778003356' },
-            { name: 'سيرفر 8', url: 'https://aw1wcm92zq.fubohd.com/espn/2026/05/05/18/04/34-06006.ts?token=7167b24447e4455bb426b63d65e7eb689b24d90b-a5-1778021354-1778003354' },
-            { name: 'سيرفر 9', url: 'https://iptv-worker-new.najilahcen7.workers.dev/' },
-            
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein1/?serv=1' },
+            { name: 'سيرفر HD', url: 'https://w2.sportsonlinee.click/channels/bra/br2.php' },   
         ]
     },
     { 
         id: 'bein2', 
         name: 'beIN Sports 2', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/5/51/2-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b2/auto.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein2/?serv=1',
         servers: [
-            { name: 'سيرفر المشغل (HTML)', url: 'https://latamvidz1.com/canal.php?stream=disney4"' },
-            { name: 'سيرفر خاص (Iframe)', url: 'https://a12.kooora-sia.com/albaplayer/bein-2/' },
-            { name: 'سيرفر IPTV (M3U8)', url: 'http://xtef2r1k.russtv.net/iptv/N9HD5PAR5NG9FK/31942/index.m3u8' },
-            { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/b2/auto.m3u8' },
-            { name: 'سيرفر 2', url: 'https://channels-api.najilahcen7.workers.dev/api/stream?id=bein2' },
-            { name: 'سيرفر 3', url: 'https://new.ayassport.ir/hls2/bein2.m3u8' },
-            { name: 'سيرفر 4', url: 'https://live.ayassport.ir/hls2/bein2.m3u8' },
-            { name: 'سيرفر 5', url: 'https://3.simosports.live/splayer/Live2.php' },
-            { name: 'سيرفر 6', url: 'http://130.61.139.32/hls/channel2/index.m3u8' }
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein2/?serv=1' },
+          
         ]
     },
     { 
         id: 'bein3', 
         name: 'beIN Sports 3', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/3-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b3/auto.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein3/?serv=1',
         servers: [
-            { name: 'سيرفر المشغل (HTML)', url: '/players/bein3.html' },
-            { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/b3/auto.m3u8' },
-            { name: 'سيرفر 2', url: 'https://channels-api.najilahcen7.workers.dev/api/stream?id=bein3' },
-            { name: 'سيرفر 3', url: 'https://yalla.kora-top.zip/frame.php?ch=b3&p=12&token=8d0b4721-76ea-48b9-8338-2979414e6890&kt=1775939342' },
-            { name: 'سيرفر 4', url: 'https://af.ayassport.ir/hls2/bein3.m3u8' },
-            { name: 'سيرفر 5', url: 'https://new.ayassport.ir/hls2/bein3.m3u8' },
-            { name: 'سيرفر جديد', url: 'http://130.61.139.32/hls/channel2/index.m3u8' }
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein3/?serv=1' }
         ]
     },
     { 
         id: 'bein4', 
         name: 'beIN Sports 4', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/9/91/4-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b4/auto.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein4/?serv=1',
         servers: [
-            { name: 'سيرفر المشغل (HTML)', url: '/players/bein4.html' },
-            { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/b4/auto.m3u8' },
-            { name: 'سيرفر 2', url: 'https://channels-api.najilahcen7.workers.dev/api/stream?id=bein4' },
-            { name: 'سيرفر 3', url: 'https://dlhd.vynx.workers.dev/play/94?key=vynx' },
-            { name: 'سيرفر 4', url: 'https://new.ayassport.ir/hls2/bein4.m3u8' },
-            { name: 'سيرفر 5', url: 'http://130.61.139.32/hls/channel2/index.m3u8' }
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein4/?serv=1' },
+            { name: 'سيرفر HD', url: 'https://m5.kora-sami.com/splplayer/sharjah-1/' },   
+
         ]
     },
     { 
         id: 'bein5', 
         name: 'beIN Sports 5', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/2/29/5-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b5/auto.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein5/?serv=1',
         servers: [
-            { name: 'سيرفر المشغل (HTML)', url: '/players/bein5.html' },
-            { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/b5/auto.m3u8' },
-            { name: 'سيرفر 2', url: 'https://channels-api.najilahcen7.workers.dev/api/stream?id=bein5' },
-            { name: 'سيرفر 3', url: 'https://dlhd.vynx.workers.dev/play/95?key=vynx' },
-            { name: 'سيرفر 4', url: 'https://new.ayassport.ir/hls2/bein5.m3u8' },
-            { name: 'سيرفر 5', url: 'http://130.61.139.32/hls/channel2/index.m3u8' }
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein5/?serv=1' },
         ]
     },
     { 
         id: 'bein6', 
         name: 'beIN Sports 6', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/7/74/6-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b6/auto.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein6/?serv=1',
         servers: [
-            { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/b6/auto.m3u8' },
-            { name: 'سيرفر 2', url: 'https://dlhd.vynx.workers.dev/play/96?key=vynx' },
-            { name: 'سيرفر 3', url: 'https://new.ayassport.ir/hls2/bein6.m3u8' },
-            { name: 'سيرفر 4', url: 'https://live.ayassport.ir/hls2/bein6.m3u8' },
-            { name: 'سيرفر 5', url: 'https://amg01370-italiansportcom-sportitalia-rakuten-3hmdb.amagi.tv/hls/amagi_hls_data_rakutenAA-sportitalia-rakuten/CDN/640x360_985600/chunklist.m3u8' },
-            { name: 'سيرفر 6', url: 'http://130.61.139.32/hls/channel2/index.m3u8' }
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein6/?serv=1' },
         ]
     },
     { 
         id: 'bein7', 
         name: 'beIN Sports 7', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/2/27/7-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b7/auto.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein7/?serv=1',
         servers: [
-            { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/b7/auto.m3u8' },
-            { name: 'سيرفر 2', url: 'https://dlhd.vynx.workers.dev/play/97?key=vynx' },
-            { name: 'سيرفر 3', url: 'https://new.ayassport.ir/hls2/bein7.m3u8' },
-            { name: 'سيرفر 4', url: 'https://live.ayassport.ir/hls2/bein7.m3u8' },
-            { name: 'سيرفر 5', url: 'http://130.61.139.32/hls/channel2/index.m3u8' }
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein7/?serv=1' },
+        
         ]
     },
     { 
         id: 'bein8', 
         name: 'beIN Sports 8', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/8-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b8/auto.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein8/?serv=1',
         servers: [
-            { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/b8/auto.m3u8' },
-            { name: 'سيرفر 2', url: 'https://dlhd.vynx.workers.dev/play/98?key=vynx' },
-            { name: 'سيرفر 3', url: 'https://new.ayassport.ir/hls2/bein8.m3u8' },
-            { name: 'سيرفر 4', url: 'https://live.ayassport.ir/hls2/bein8.m3u8' },
-            { name: 'سيرفر 5', url: 'https://3.simosports.live/splayer/Live3.php' },
-            { name: 'سيرفر 6', url: 'http://130.61.139.32/hls/channel2/index.m3u8' }
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein8/?serv=1' },
         ]
     },
     { 
         id: 'bein9', 
         name: 'beIN Sports 9', 
         logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/9-HD.png', 
-        url: 'https://stream.goalxtv.workers.dev/b9/auto.m3u8',
+        url: 'https://player.syria-player.live/albaplayer/bein9/?serv=1',
         servers: [
-            { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/b9/auto.m3u8' },
-            { name: 'سيرفر 2', url: 'https://dlhd.vynx.workers.dev/play/99?key=vynx' },
-            { name: 'سيرفر 3', url: 'https://new.ayassport.ir/hls2/bein9.m3u8' },
-            { name: 'سيرفر 4', url: 'https://live.ayassport.ir/hls2/bein9.m3u8' },
-            { name: 'سيرفر 5', url: 'http://130.61.139.32/hls/channel2/index.m3u8' }
+            { name: 'سيرفر أساسي', url: 'https://player.syria-player.live/albaplayer/bein9/?serv=1' },
         ]
     },
     { 
@@ -142,11 +92,6 @@ export const CHANNELS = [
         url: 'https://stream.goalxtv.workers.dev/bm1/auto.m3u8',
         servers: [
             { name: 'سيرفر خاص (Iframe)', url: 'https://player.syria-player.live/albaplayer/beinmax1/?serv=0' },
-            { name: 'سيرفر خاص (Iframe)', url: 'http://xtef2r1k.russtv.net/iptv/N9HD5PAR5NG9FK/31904/index.m3u8' },
-            { name: 'سيرفر خاص (Iframe)', url: 'http://xtef2r1k.russtv.net/iptv/N9HD5PAR5NG9FK/31857/index.m3u8' },
-            { name: 'سيرفر خاص (Iframe)', url: 'http://xtef2r1k.russtv.net/iptv/N9HD5PAR5NG9FK/31612/index.m3u8' },
-            { name: 'سيرفر خاص (Iframe)', url: 'http://xtef2r1k.russtv.net/iptv/N9HD5PAR5NG9FK/31856/index.m3u8' },
-            { name: 'سيرفر خاص (Iframe)', url: 'http://xtef2r1k.russtv.net/iptv/N9HD5PAR5NG9FK/31855/index.m3u8' },
             { name: 'سيرفر أساسي', url: 'https://stream.goalxtv.workers.dev/bm1/auto.m3u8' },
             { name: 'سيرفر 2', url: 'https://af.ayassport.ir/hls2/bein_max1.m3u8' },
             { name: 'سيرفر 3', url: 'https://amg01370-italiansportcom-sportitalia-rakuten-3hmdb.amagi.tv/hls/amagi_hls_data_rakutenAA-sportitalia-rakuten/CDN/640x360_985600/chunklist.m3u8' },

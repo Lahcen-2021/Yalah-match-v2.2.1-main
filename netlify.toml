@@ -2,9 +2,18 @@
   functions = "netlify/functions"
 
 # Security headers on every response (improves Lighthouse "Best Practices" and
-# hardens against clickjacking / protocol-downgrade). img/media/connect/frame stay
-# permissive because streams, team crests and news images come from many hosts;
-# script-src is locked to self + the on-demand video-player CDNs.
+# hardens against clickjacking / protocol-downgrade).
+#   connect-src is now an explicit allowlist (was `*`): the app's own backend, the
+#     Firebase/Firestore endpoints, and the few third-party data hosts the client
+#     still calls directly. This is the key anti-exfiltration control.
+#     NOTE: `hls`-type live-stream servers (hls.js) fetch segments from their own
+#     host — a direct-HLS stream from a host not listed here will be blocked. Most
+#     admin streams are the `iframe` type (covered by frame-src), so this is rare;
+#     add a stream host here if you rely on direct HLS from it.
+#   frame-src https: allows any HTTPS iframe stream but blocks http/data framing.
+#   img/media prefer `https:` over `*` so plain-HTTP assets can't be injected.
+#   script-src drops 'unsafe-inline' — the build ships no inline executable script
+#     (the only inline block is non-executable JSON-LD); keeps self + player CDNs.
 [[headers]]
   for = "/*"
   [headers.values]
@@ -13,7 +22,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     Cross-Origin-Opener-Policy = "same-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vjs.zencdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://vjs.zencdn.net; font-src 'self' https://fonts.gstatic.com data:; img-src * data: blob:; media-src * blob:; connect-src *; frame-src *; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://vjs.zencdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://vjs.zencdn.net; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; media-src 'self' https: blob:; connect-src 'self' https://yallamatchapi-jdwel.pages.dev https://*.googleapis.com https://*.firebaseio.com https://site.api.espn.com https://webws.365scores.com https://www.messisporat.com; frame-src https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
 
 # Vite emits hashed filenames under /assets, so they can be cached forever.
 [[headers]]
@@ -28,7 +37,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://yallamatch.pages.dev/api/:splat"
+  to = "https://yallamatchapi-jdwel.pages.dev/api/:splat"
   status = 200
   force = true
 

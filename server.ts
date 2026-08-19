@@ -18,14 +18,23 @@ import { isSourceEnabled, setSourceEnabled, getKillSwitchMap } from "./server/ki
 import { FOOTBALL_DATA_COMPETITIONS, fetchFootballDataMatches, fetchFootballDataStandings, mapFootballDataMatchToSting, mapFootballDataStandingsToShared } from "./server/footballDataApi.ts";
 import { processMatchUpdates } from "./server/pushTriggers.ts";
 import { checkPassword, createAdminToken, isAdminEnabled, requireAdmin } from "./server/adminAuth.ts";
-import { getAdminSettings, updateAdminSettings, setMatchOverride, applyMatchOverrides } from "./server/adminSettings.ts";
+import { getAdminSettings, updateAdminSettings, setMatchOverride, setLeagueHidden, setLeagueShown, applyMatchOverrides, updateLiveConfig, setMatchLiveServers, sanitizeLiveConfig, injectCustomMatches, setCustomMatch, deleteCustomMatch } from "./server/adminSettings.ts";
+import { getAdminChannels, setAdminChannels } from "./server/adminChannels.ts";
+import { generateMatchSlug } from "./utils/translations.ts";
+import { importFaborServers } from "./server/faborTv.ts";
+import { handleHlsProxy } from "./server/hlsProxy.ts";
 import * as adminMetrics from "./server/adminMetrics.ts";
 import { fetchAllNews, fetchArticle } from "./server/newsFeed.ts";
 
 // Sources known to attemptSource() below — surfaced in the admin panel's Sources tab so an
 // operator can see/flip kill switches even for a source that hasn't failed (and so isn't in
 // the circuit breaker's state map) yet.
-const KNOWN_SOURCES = ["yallamatch", "messisporat", "football-data", "espn-standings", "365scores-standings", "365scores-bracket", "espn-scorers", "365scores-scorers", "kooora"];
+const KNOWN_SOURCES = ["yallamatch", "messisporat", "football-data", "espn-standings", "365scores-standings", "365scores-bracket", "espn-scorers", "365scores-scorers", "espn-assists", "365scores-assists", "365scores-fixtures", "bein-guide", "kooora"];
+
+// Upstream STING/jdwel API base. The old `yallamatch.pages.dev` is a dead Pages
+// project in a different Cloudflare account; the live backend is the jdwel one.
+// Override with BACKEND_BASE in the environment.
+const BACKEND_BASE = (process.env.BACKEND_BASE || "https://yallamatchapi-jdwel.pages.dev").replace(/\/$/, "");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -267,13 +276,102 @@ const MATCHES_CACHE_TTL = 10 * 1000; // 10 seconds
 // Single exit point for /api/matches so admin-panel maintenance mode and per-match content
 // overrides (server/adminSettings.ts) apply on every response path — cache hit or fresh
 // fetch alike — without needing to invalidate any cache when an operator changes them.
-async function sendMatchesResponse(res: import("express").Response, payload: any) {
+async function sendMatchesResponse(res: import("express").Response, payload: any, date?: string) {
     const settings = await getAdminSettings();
     if (settings.maintenanceMode) {
         return res.status(503).json({ maintenance: true, message: settings.maintenanceMessage || "الموقع تحت الصيانة حالياً" });
     }
-    return res.json(applyMatchOverrides(payload, settings));
+    const withOverrides = applyMatchOverrides(payload, settings);
+    return res.json(injectCustomMatches(withOverrides, settings, date));
 }
+
+// Resolves the raw matches payload for a date through the cache → source fallback
+// chain, WITHOUT applying admin overrides or maintenance mode. Both the public
+// /api/matches route and the admin raw-matches route build on this.
+async function resolveMatchesPayload(date: string): Promise<any> {
+    // 1. Check in-memory cache first for extremely low latency
+    const cached = matchesCache[date];
+    if (cached && Date.now() - cached.timestamp < MATCHES_CACHE_TTL) {
+        console.log(`[API] Returning in-memory cached matches for ${date}`);
+        return cached.data;
+    }
+
+    // 2. Check Firestore persistent cache
+    // If it is today (live games), check every 15 seconds. If past/future, cache is valid for 1 hour.
+    const isToday = date === getMoroccanDateString(0);
+    const ttl = isToday ? 15000 : 60 * 60 * 1000;
+    const fsCached = await getCachedData(`matches_${date}`, ttl);
+    if (fsCached) {
+        matchesCache[date] = { data: fsCached, timestamp: Date.now() };
+        return fsCached;
+    }
+
+    // Use user-provided API
+    const newApiUrl = `${BACKEND_BASE}/api/matches?date=${date}`;
+    const newData = await attemptSource('yallamatch', () => fetchWithTimeout(newApiUrl, 8000), (r) => !!r?.["STING-WEB-Matches"]);
+    if (newData && newData["STING-WEB-Matches"]) {
+        console.log(`[API] Successfully fetched matches from yallamatch API for ${date}`);
+        matchesCache[date] = { data: newData, timestamp: Date.now() };
+        setCachedData(`matches_${date}`, newData).catch(err => console.error('[Cache] Save matches failed:', err));
+        return newData;
+    }
+
+    // Only fallback if primary fails
+    const url = `https://www.messisporat.com/matches/npm/?date=${date}&lang=27&time=%2B00%3A00`;
+    const data = await attemptSource('messisporat', () => fetchWithTimeout(url, 8000), (r) => !!r?.["STING-WEB-Matches"]);
+    if (data && data["STING-WEB-Matches"]) {
+        console.log(`[API] Successfully fetched matches for ${date}`);
+        matchesCache[date] = { data, timestamp: Date.now() };
+        setCachedData(`matches_${date}`, data).catch(err => console.error('[Cache] Save matches fallback failed:', err));
+        return data;
+    }
+
+    // Last resort: official football-data.org API, scoped to major leagues only
+    // (its free tier doesn't cover Botola/Saudi league/AFCON U17 etc).
+    const fdMatches = await attemptSource('football-data', () => fetchFootballDataMatches(date, date), (r) => r.length > 0);
+    if (fdMatches && fdMatches.length > 0) {
+        const filtered = fdMatches.filter((m: any) => Object.values(FOOTBALL_DATA_COMPETITIONS).includes(m.competition?.code));
+        if (filtered.length > 0) {
+            console.log(`[API] Successfully fetched matches from football-data.org for ${date}`);
+            const fdData = { "STING-WEB-Matches": filtered.map(mapFootballDataMatchToSting) };
+            matchesCache[date] = { data: fdData, timestamp: Date.now() };
+            setCachedData(`matches_${date}`, fdData).catch(err => console.error('[Cache] Save football-data matches failed:', err));
+            return fdData;
+        }
+    }
+
+    console.warn(`[API] No matches found for ${date} or fetch failed`);
+    return { "STING-WEB-Matches": [] };
+}
+
+// Dynamic sitemap: static pages + every match page for yesterday/today/tomorrow, so
+// Google can discover and index the individual match-detail URLs.
+app.get("/sitemap.xml", async (_req, res) => {
+    const SITE = "https://www.yallamatch.online";
+    const staticPaths = ["/", "/standings", "/tournaments", "/news", "/contact", "/privacy", "/terms"];
+    const urls = new Set(staticPaths.map(p => SITE + p));
+    try {
+        const dates = [getMoroccanDateString(-1), getMoroccanDateString(0), getMoroccanDateString(1)];
+        for (const date of dates) {
+            const payload = await resolveMatchesPayload(date).catch(() => null);
+            const list = payload?.["STING-WEB-Matches"] || [];
+            for (const m of list) {
+                const home = m?.["Team-Right"]?.Name || "";
+                const away = m?.["Team-Left"]?.Name || "";
+                const start = m?.["Time-Start"] || date;
+                if (home && away) urls.add(SITE + generateMatchSlug(home, away, start));
+            }
+        }
+    } catch (e) {
+        console.error("[sitemap] build error:", e);
+    }
+    const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+        [...urls].map(u => `  <url><loc>${u.replace(/&/g, "&amp;")}</loc></url>`).join("\n") +
+        `\n</urlset>\n`;
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=1800");
+    res.send(body);
+});
 
 app.get("/api/matches", async (req, res) => {
     const date = req.query.date as string;
@@ -286,63 +384,12 @@ app.get("/api/matches", async (req, res) => {
     console.log(`[API] Fetching matches for date: ${date}`);
 
     try {
-        // 1. Check in-memory cache first for extremely low latency
-        const cached = matchesCache[date];
-        if (cached && Date.now() - cached.timestamp < MATCHES_CACHE_TTL) {
-            console.log(`[API] Returning in-memory cached matches for ${date}`);
-            return sendMatchesResponse(res, cached.data);
-        }
-
-        // 2. Check Firestore persistent cache
-        // If it is today (live games), check every 15 seconds. If past/future, cache is valid for 1 hour.
-        const isToday = date === getMoroccanDateString(0);
-        const ttl = isToday ? 15000 : 60 * 60 * 1000;
-        const fsCached = await getCachedData(`matches_${date}`, ttl);
-        if (fsCached) {
-            matchesCache[date] = { data: fsCached, timestamp: Date.now() };
-            return sendMatchesResponse(res, fsCached);
-        }
-
-        // Use user-provided API
-        const newApiUrl = `https://yallamatch.pages.dev/api/matches?date=${date}`;
-        const newData = await attemptSource('yallamatch', () => fetchWithTimeout(newApiUrl, 8000), (r) => !!r?.["STING-WEB-Matches"]);
-
-        if (newData && newData["STING-WEB-Matches"]) {
-            console.log(`[API] Successfully fetched matches from yallamatch API for ${date}`);
-            matchesCache[date] = { data: newData, timestamp: Date.now() };
-            setCachedData(`matches_${date}`, newData).catch(err => console.error('[Cache] Save matches failed:', err));
-            return sendMatchesResponse(res, newData);
-        }
-
-        // Only fallback if primary fails
-        const url = `https://www.messisporat.com/matches/npm/?date=${date}&lang=27&time=%2B00%3A00`;
-        const data = await attemptSource('messisporat', () => fetchWithTimeout(url, 8000), (r) => !!r?.["STING-WEB-Matches"]);
-        if (data && data["STING-WEB-Matches"]) {
-            console.log(`[API] Successfully fetched matches for ${date}`);
-            matchesCache[date] = { data, timestamp: Date.now() };
-            setCachedData(`matches_${date}`, data).catch(err => console.error('[Cache] Save matches fallback failed:', err));
-            return sendMatchesResponse(res, data);
-        }
-
-        // Last resort: official football-data.org API, scoped to major leagues only
-        // (its free tier doesn't cover Botola/Saudi league/AFCON U17 etc).
-        const fdMatches = await attemptSource('football-data', () => fetchFootballDataMatches(date, date), (r) => r.length > 0);
-        if (fdMatches && fdMatches.length > 0) {
-            const filtered = fdMatches.filter((m: any) => Object.values(FOOTBALL_DATA_COMPETITIONS).includes(m.competition?.code));
-            if (filtered.length > 0) {
-                console.log(`[API] Successfully fetched matches from football-data.org for ${date}`);
-                const fdData = { "STING-WEB-Matches": filtered.map(mapFootballDataMatchToSting) };
-                matchesCache[date] = { data: fdData, timestamp: Date.now() };
-                setCachedData(`matches_${date}`, fdData).catch(err => console.error('[Cache] Save football-data matches failed:', err));
-                return sendMatchesResponse(res, fdData);
-            }
-        }
-
-        console.warn(`[API] No matches found for ${date} or fetch failed`);
+        const payload = await resolveMatchesPayload(date);
+        return sendMatchesResponse(res, payload, date);
     } catch (e) {
         console.error(`[API] Error fetching matches for ${date}:`, e);
+        return sendMatchesResponse(res, { "STING-WEB-Matches": [] }, date);
     }
-    return sendMatchesResponse(res, { "STING-WEB-Matches": [] });
 });
 
 // Forces a re-fetch for `date`, bypassing both the in-memory and Firestore caches, and
@@ -350,7 +397,7 @@ app.get("/api/matches", async (req, res) => {
 async function forceRefreshMatches(date: string): Promise<any> {
     delete matchesCache[date];
 
-    const newApiUrl = `https://yallamatch.pages.dev/api/matches?date=${date}`;
+    const newApiUrl = `${BACKEND_BASE}/api/matches?date=${date}`;
     const newData = await attemptSource('yallamatch', () => fetchWithTimeout(newApiUrl, 8000), (r) => !!r?.["STING-WEB-Matches"]);
     if (newData && newData["STING-WEB-Matches"]) {
         matchesCache[date] = { data: newData, timestamp: Date.now() };
@@ -399,7 +446,7 @@ const getMatchDetails = async (id: string) => {
     }
 
     // Try new API first
-    const newApiUrl = `https://yallamatch.pages.dev/api/match-details?id=${id}`;
+    const newApiUrl = `${BACKEND_BASE}/api/match-details?id=${id}`;
     const newData = await attemptSource('yallamatch', () => fetchWithTimeout(newApiUrl, 5000), (r) => !!r?.["STING-WEB-Match-Details"]);
 
     if (newData && newData["STING-WEB-Match-Details"]) {
@@ -457,7 +504,7 @@ app.get("/api/match-details", async (req, res) => {
 
 app.get("/api/live", async (req, res) => {
     try {
-        const url = "https://yallamatch.pages.dev/api/live";
+        const url = BACKEND_BASE + "/api/live";
         const data = await fetchWithTimeout(url, 5000);
         if (data) return res.json(data);
     } catch (e) {
@@ -507,7 +554,7 @@ app.get("/api/h2h", async (req, res) => {
 
     try {
         // Try the dedicated H2H API first from user-provided endpoint
-        const h2hUrl = `https://yallamatch.pages.dev/api/h2h?id=${id}`;
+        const h2hUrl = `${BACKEND_BASE}/api/h2h?id=${id}`;
         const h2hData = await fetchWithTimeout(h2hUrl, 5000);
         
         if (h2hData && (h2hData.matches || h2hData["STING-WEB-Match-Details"])) {
@@ -592,7 +639,15 @@ const STANDINGS_LEAGUE_MAP: Record<string, string> = {
     '649': 'sau.1',
     '572': 'uefa.champions', '573': 'uefa.europa', '7685': 'uefa.europa.conf',
     '5930': 'fifa.world', '329': 'uefa.euro', '167': 'caf.nations',
-    '6067': 'afc.asian.cup', '5096': 'fifa.cwc'
+    '6067': 'afc.asian.cup', '5096': 'fifa.cwc',
+    // Continental club competitions whose league/group phase 365scores does not expose
+    // as a table (hasStandings:false) — ESPN carries them, so map them explicitly.
+    '623': 'afc.champions',      // دوري أبطال آسيا للنخبة (AFC Champions League Elite)
+    '568': 'afc.cup',            // دوري أبطال آسيا 2 (AFC Champions League Two)
+    '624': 'caf.champions',      // دوري أبطال أفريقيا (CAF Champions League)
+    // Extra domestic leagues that 365scores may not table for this timezone list.
+    '113': 'bra.1',              // الدوري البرازيلي
+    '141': 'mex.1',              // الدوري المكسيكي
 };
 
 const SCORES365_STANDINGS_BASE = `https://webws.365scores.com/web/standings/?appTypeId=5&langId=27&timezoneName=Africa/Casablanca`;
@@ -698,15 +753,17 @@ app.get("/api/standings", async (req, res) => {
 
     const result = await cachedJson(`standings:${leagueId}`, 300_000, async () => {
         let mapped: any[] = [];
-        const espnLeagueId = STANDINGS_LEAGUE_MAP[leagueId];
-        if (espnLeagueId) {
-            const data = await attemptSource('espn-standings', () => fetchWithTimeout(`https://site.api.espn.com/apis/v2/sports/soccer/${espnLeagueId}/standings`, 10000), (r) => !!r?.children);
-            if (data) mapped = mapEspnStandings(data);
-        }
+        // 365scores FIRST: Arabic club names natively. ESPN (English, translated
+        // client-side) is the fallback for competitions 365scores doesn't table.
+        const s365 = await attemptSource('365scores-standings', () => fetchWithTimeout(`${SCORES365_STANDINGS_BASE}&competitions=${leagueId}`, 10000), (r) => !!r?.standings);
+        if (s365) mapped = map365Standings(s365);
 
         if (mapped.length === 0) {
-            const data = await attemptSource('365scores-standings', () => fetchWithTimeout(`${SCORES365_STANDINGS_BASE}&competitions=${leagueId}`, 10000), (r) => !!r?.standings);
-            if (data) mapped = map365Standings(data);
+            const espnLeagueId = STANDINGS_LEAGUE_MAP[leagueId];
+            if (espnLeagueId) {
+                const data = await attemptSource('espn-standings', () => fetchWithTimeout(`https://site.api.espn.com/apis/v2/sports/soccer/${espnLeagueId}/standings`, 10000), (r) => !!r?.children);
+                if (data) mapped = mapEspnStandings(data);
+            }
         }
 
         if (mapped.length === 0) {
@@ -780,13 +837,18 @@ app.get("/api/scorers", async (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
 
     const cached = await cachedJson(`scorers:${leagueId}`, 300_000, async () => {
-        let result: any[] = [];
+        // 365scores FIRST: Arabic player + club names (langId=27) and real athlete photos.
+        // ESPN (English) is only a fallback for competitions 365scores doesn't cover.
+        const s365 = await attemptSource('365scores-scorers', () => fetchWithTimeout(`${SCORES365_STATS_BASE}&competitions=${leagueId}&statTypeId=1`, 10000), (r) => !!r?.stats);
+        const scorers365 = s365 ? map365AthletesCategory(s365, 1) : [];
+        if (scorers365.length > 0) return scorers365;
+
         const espnLeagueId = STANDINGS_LEAGUE_MAP[leagueId];
         if (espnLeagueId) {
             const data = await attemptSource('espn-scorers', () => fetchWithTimeout(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeagueId}/statistics`, 10000), (r) => !!r?.stats);
             const goalsLeaders = Array.isArray(data?.stats) ? data.stats.find((s: any) => s.name === 'goalsLeaders') : null;
             if (Array.isArray(goalsLeaders?.leaders)) {
-                result = goalsLeaders.leaders.map((leader: any, index: number) => {
+                return goalsLeaders.leaders.map((leader: any, index: number) => {
                     const getStat = (name: string) => leader.athlete?.statistics?.find((s: any) => s.name === name)?.value || 0;
                     return {
                         rank: index + 1,
@@ -797,28 +859,113 @@ app.get("/api/scorers", async (req, res) => {
                 });
             }
         }
-
-        if (result.length === 0) {
-            const data = await attemptSource('365scores-scorers', () => fetchWithTimeout(`${SCORES365_STATS_BASE}&competitions=${leagueId}&statTypeId=1`, 10000), (r) => !!r?.stats);
-            const stats = Array.isArray(data?.stats) ? data.stats : [];
-            result = stats.map((stat: any, index: number) => ({
-                rank: index + 1,
-                player: {
-                    id: stat.player?.id, name: stat.player?.name,
-                    imageUrl: `https://imagecache.365scores.com/image/upload/f_png,w_100,h_100,c_limit,q_auto:eco/competitors/${stat.player?.id}`
-                },
-                team: {
-                    name: stat.competitor?.name || '',
-                    logoUrl: `https://imagecache.365scores.com/image/upload/f_png,w_100,h_100,c_limit,q_auto:eco/competitors/${stat.competitor?.id}`
-                },
-                goals: stat.value || 0, played: stat.gamesPlayed || 0
-            }));
-        }
-
-        return result;
+        return [];
     });
 
     res.json(cached);
+});
+
+// 365scores now returns player stats grouped by category under stats.athletesStats
+// (id 1 = goals, id 3 = assists/"صناعة"). Extracts one category into the shared
+// scorer shape (the `goals` field carries whatever the category measures).
+const map365AthletesCategory = (data: any, categoryId: number) => {
+    const cats = data?.stats?.athletesStats;
+    if (!Array.isArray(cats)) return [];
+    // competitorId → Arabic team name from the response's competitors[] list.
+    const teamNames = new Map<string, string>(
+        (Array.isArray(data?.competitors) ? data.competitors : []).map((c: any) => [String(c.id), c.name || ''])
+    );
+    const cat = cats.find((c: any) => c.id === categoryId);
+    const rows = Array.isArray(cat?.rows) ? cat.rows : [];
+    return rows.map((row: any, index: number) => {
+        const compId = String(row.entity?.competitorId ?? '');
+        return {
+            rank: index + 1,
+            player: {
+                id: row.entity?.id,
+                name: row.entity?.name,
+                imageUrl: `https://imagecache.365scores.com/image/upload/f_png,w_100,h_100,c_limit,q_auto:eco/athletes/${row.entity?.id}`
+            },
+            team: {
+                name: teamNames.get(compId) || '',
+                logoUrl: `https://imagecache.365scores.com/image/upload/f_png,w_100,h_100,c_limit,q_auto:eco/competitors/${compId}`
+            },
+            goals: Number(row.stats?.[0]?.value) || 0, played: 0
+        };
+    });
+};
+
+// Top assist providers ("صناع اللعب"): ESPN assistsLeaders, then 365scores category 3.
+app.get("/api/assists", async (req, res) => {
+    const leagueId = req.query.leagueId as string;
+    if (!leagueId) return res.status(400).json({ error: "leagueId parameter is required" });
+    res.set('Cache-Control', 'public, max-age=300');
+
+    const cached = await cachedJson(`assists:${leagueId}`, 300_000, async () => {
+        // 365scores FIRST (Arabic names + photos); ESPN only as a coverage fallback.
+        const s365 = await attemptSource('365scores-assists', () => fetchWithTimeout(`${SCORES365_STATS_BASE}&competitions=${leagueId}`, 10000), (r) => !!r?.stats);
+        const assists365 = s365 ? map365AthletesCategory(s365, 3) : [];
+        if (assists365.length > 0) return assists365;
+
+        const espnLeagueId = STANDINGS_LEAGUE_MAP[leagueId];
+        if (espnLeagueId) {
+            const data = await attemptSource('espn-assists', () => fetchWithTimeout(`https://site.api.espn.com/apis/site/v2/sports/soccer/${espnLeagueId}/statistics`, 10000), (r) => !!r?.stats);
+            const leaders = Array.isArray(data?.stats) ? data.stats.find((s: any) => s.name === 'assistsLeaders') : null;
+            if (Array.isArray(leaders?.leaders)) {
+                return leaders.leaders.map((leader: any, index: number) => ({
+                    rank: index + 1,
+                    player: { id: leader.athlete?.id, name: leader.athlete?.displayName, imageUrl: leader.athlete?.headshot?.href || '' },
+                    team: { name: leader.athlete?.team?.displayName || '', logoUrl: leader.athlete?.team?.logos?.[0]?.href || '' },
+                    goals: leader.value || 0, played: 0
+                }));
+            }
+        }
+        return [];
+    });
+
+    res.json(cached);
+});
+
+const SCORES365_CURRENT_GAMES_BASE = `https://webws.365scores.com/web/games/current/?appTypeId=5&langId=27&timezoneName=Africa/Casablanca`;
+
+// Classifies a competition fixture as finished / live / upcoming from its status text
+// and score (scores come back < 0 when a game hasn't been played).
+const map365LeagueMatch = (g: any) => {
+    const st = g.statusText || '';
+    const homeScore = g.homeCompetitor?.score ?? -1;
+    const awayScore = g.awayCompetitor?.score ?? -1;
+    const hasScore = homeScore >= 0 && awayScore >= 0;
+    const isLive = /الشوط|مباشر|استراح|إضاف|توقف/.test(st) && !/انته|بعد|نهائ/.test(st);
+    let state: 'finished' | 'live' | 'upcoming' = 'upcoming';
+    if (isLive) state = 'live';
+    else if (hasScore || /انته|بعد|نهائ/.test(st)) state = 'finished';
+    return {
+        id: g.id,
+        home: { id: g.homeCompetitor?.id, name: g.homeCompetitor?.name || '' },
+        away: { id: g.awayCompetitor?.id, name: g.awayCompetitor?.name || '' },
+        homeScore: hasScore ? Math.floor(homeScore) : null,
+        awayScore: hasScore ? Math.floor(awayScore) : null,
+        startTime: g.startTime || null,
+        statusText: st,
+        round: g.stageName || (g.roundName && g.roundNum ? `${g.roundName} ${g.roundNum}` : ''),
+        state,
+    };
+};
+
+// A competition's recent + upcoming fixtures window (games/current), for the
+// "المباريات القادمة" / "المباريات المنتهية" tabs. The client splits by `state`.
+app.get("/api/league-matches", async (req, res) => {
+    const leagueId = req.query.leagueId as string;
+    if (!leagueId || !/^\d+$/.test(leagueId)) return res.status(400).json({ error: "A numeric leagueId parameter is required" });
+    res.set('Cache-Control', 'public, max-age=120');
+
+    const result = await cachedJson(`league-matches:${leagueId}`, 120_000, async () => {
+        const data = await attemptSource('365scores-fixtures', () => fetchWithTimeout(`${SCORES365_CURRENT_GAMES_BASE}&competitions=${leagueId}`, 10000), (r) => Array.isArray(r?.games));
+        const games = Array.isArray(data?.games) ? data.games.filter((g: any) => String(g.competitionId) === leagueId) : [];
+        return games.map(map365LeagueMatch);
+    });
+
+    res.json(result);
 });
 
 const koooraCache: { [key: string]: { data: any, timestamp: number } } = {};
@@ -930,7 +1077,7 @@ app.get("/api/bein-channels", async (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
     try {
         // Try new API first
-        const newApiUrl = `https://yallamatch.pages.dev/api/bein-channels?teamA=${encodeURIComponent(teamA)}&teamB=${encodeURIComponent(teamB)}`;
+        const newApiUrl = `${BACKEND_BASE}/api/bein-channels?teamA=${encodeURIComponent(teamA)}&teamB=${encodeURIComponent(teamB)}`;
         const newData = await fetchWithTimeout(newApiUrl, 5000);
         if (newData && newData.channels && newData.channels.length > 0) {
             return res.json(newData);
@@ -967,6 +1114,35 @@ app.get("/api/bein-channels", async (req, res) => {
     }
 });
 
+// Full beIN Sports program guide (all channels + their schedules), reduced to the
+// "now" and "next" program per channel. Distinct from /api/bein-channels above, which
+// looks up the channels airing one specific match.
+app.get("/api/bein-guide", async (_req, res) => {
+    res.set('Cache-Control', 'public, max-age=600');
+    const result = await cachedJson('bein-guide', 600_000, async () => {
+        const data = await attemptSource('bein-guide', () => fetchWithTimeout(BACKEND_BASE + '/api/bein-channels', 8000), (r) => Array.isArray(r?.channels));
+        const channels = Array.isArray(data?.channels) ? data.channels : [];
+        const now = Date.now();
+        return channels.map((ch: any) => {
+            const progs = (Array.isArray(ch.programs) ? ch.programs : [])
+                .map((p: any) => ({ title: p.title, start: p.start, t: new Date(p.start).getTime() }))
+                .filter((p: any) => !isNaN(p.t))
+                .sort((a: any, b: any) => a.t - b.t);
+            let current: any = null, next: any = null;
+            for (const p of progs) {
+                if (p.t <= now) current = p;
+                else { next = p; break; }
+            }
+            return {
+                name: ch.name,
+                now: current ? { title: current.title, start: current.start } : null,
+                next: next ? { title: next.title, start: next.start } : null,
+            };
+        }).filter((c: any) => c.now || c.next);
+    });
+    res.json(result);
+});
+
 app.get("/api/kooora/events", async (req, res) => {
     let url = req.query.url as string;
     if (!url) return res.status(400).json({ error: "URL parameter is required" });
@@ -979,7 +1155,7 @@ app.get("/api/kooora/events", async (req, res) => {
     try {
         // Try new API first. Tracked under the shared "kooora" source along with the
         // direct scrape below since both ultimately depend on kooora.com being reachable.
-        const newApiUrl = `https://yallamatch.pages.dev/api/kooora/events?url=${encodeURIComponent(url)}`;
+        const newApiUrl = `${BACKEND_BASE}/api/kooora/events?url=${encodeURIComponent(url)}`;
         const newData = await attemptSource('kooora', () => fetchWithTimeout(newApiUrl, 5000), (r) => !!r?.success);
         if (newData && newData.success) {
             return res.json(newData);
@@ -1128,7 +1304,7 @@ app.get("/api/kooora/channels", async (req, res) => {
         // Try new API first - IMPORTANT: Always fetch the "global" date URL to ensure
         // max cache hits and prevent 429s from too many specific match requests.
         // Tracked under the shared "kooora" source along with the direct scrape below.
-        const newApiUrl = `https://yallamatch.pages.dev/api/kooora/channels?date=${targetDate}`;
+        const newApiUrl = `${BACKEND_BASE}/api/kooora/channels?date=${targetDate}`;
 
         const newData = await attemptSource('kooora', () => fetchWithDedupe(newApiUrl, 8000), (r) => !!r?.success);
         if (newData && newData.success) {
@@ -1293,6 +1469,22 @@ app.post("/api/admin/settings", requireAdmin, async (req, res) => {
     res.json(await updateAdminSettings(patch));
 });
 
+// The full, UN-filtered feed for a date (admin only) — includes matches an
+// override or hiddenLeagues would hide from the public site, plus custom matches,
+// so the operator can see and toggle everything.
+app.get("/api/admin/raw-matches", requireAdmin, async (req, res) => {
+    const date = req.query.date as string;
+    if (!date) return res.status(400).json({ error: "Date parameter is required" });
+    try {
+        const payload = await resolveMatchesPayload(date);
+        const settings = await getAdminSettings();
+        return res.json(injectCustomMatches(payload, settings, date));
+    } catch (e) {
+        console.error(`[Admin] raw-matches error for ${date}:`, e);
+        return res.json({ "STING-WEB-Matches": [] });
+    }
+});
+
 app.post("/api/admin/overrides/match/:matchId", requireAdmin, async (req, res) => {
     const fields = req.body || {};
     res.json(await setMatchOverride(String(req.params.matchId), fields));
@@ -1300,6 +1492,145 @@ app.post("/api/admin/overrides/match/:matchId", requireAdmin, async (req, res) =
 
 app.delete("/api/admin/overrides/match/:matchId", requireAdmin, async (req, res) => {
     res.json(await setMatchOverride(String(req.params.matchId), null));
+});
+
+// Hide (POST) / reveal (DELETE) a whole league on the public site.
+app.post("/api/admin/overrides/league/:name", requireAdmin, async (req, res) => {
+    try {
+        res.json(await setLeagueHidden(decodeURIComponent(String(req.params.name)), true));
+    } catch (e) {
+        res.status(400).json({ error: e instanceof Error ? e.message : "Failed to hide league" });
+    }
+});
+
+app.delete("/api/admin/overrides/league/:name", requireAdmin, async (req, res) => {
+    try {
+        res.json(await setLeagueHidden(decodeURIComponent(String(req.params.name)), false));
+    } catch (e) {
+        res.status(400).json({ error: e instanceof Error ? e.message : "Failed to reveal league" });
+    }
+});
+
+// Force-show (POST) / stop force-showing (DELETE) a whole league on the public site.
+app.post("/api/admin/overrides/league-show/:name", requireAdmin, async (req, res) => {
+    try {
+        res.json(await setLeagueShown(decodeURIComponent(String(req.params.name)), true));
+    } catch (e) {
+        res.status(400).json({ error: e instanceof Error ? e.message : "Failed to show league" });
+    }
+});
+
+app.delete("/api/admin/overrides/league-show/:name", requireAdmin, async (req, res) => {
+    try {
+        res.json(await setLeagueShown(decodeURIComponent(String(req.params.name)), false));
+    } catch (e) {
+        res.status(400).json({ error: e instanceof Error ? e.message : "Failed to unshow league" });
+    }
+});
+
+// --- Channels directory (admin-managed name/logo/link/servers) ---
+app.get("/api/admin/channels", requireAdmin, async (_req, res) => {
+    res.json(await getAdminChannels());
+});
+
+app.post("/api/admin/channels", requireAdmin, async (req, res) => {
+    const list = Array.isArray(req.body?.channels) ? req.body.channels : req.body;
+    res.json(await setAdminChannels(list));
+});
+
+// --- Custom (admin-created) matches ---
+app.get("/api/admin/custom-matches", requireAdmin, async (_req, res) => {
+    res.json((await getAdminSettings(true)).customMatches);
+});
+
+app.post("/api/admin/custom-match", requireAdmin, async (req, res) => {
+    try {
+        const settings = await setCustomMatch(req.body || {});
+        const match = settings.customMatches.find(c => c.id === (req.body?.id)) || settings.customMatches[settings.customMatches.length - 1];
+        res.json({ match, customMatches: settings.customMatches });
+    } catch (e) {
+        res.status(400).json({ error: e instanceof Error ? e.message : "Failed to save match" });
+    }
+});
+
+app.delete("/api/admin/custom-match/:id", requireAdmin, async (req, res) => {
+    const settings = await deleteCustomMatch(String(req.params.id));
+    res.json({ customMatches: settings.customMatches });
+});
+
+// Re-serves a direct .m3u8 (and its segments/keys) with permissive CORS, for hosts that
+// send no CORS headers or demand a same-site Referer. Only removes browser-side barriers
+// — a dead upstream stays dead, and says so.
+app.get("/api/hls", handleHlsProxy);
+
+// --- Live stream section (Fabor-style watch page): admin-managed servers + promo banner ---
+
+// Public: what the match page needs to render the live section. Per-match servers win
+// over the global defaults; the promo banner is global.
+app.get("/api/live-config", async (req, res) => {
+    const matchId = String(req.query.matchId || "");
+    const { liveConfig } = await getAdminSettings();
+    const servers = (matchId && liveConfig.matchServers[matchId]) || liveConfig.defaultServers;
+    res.setHeader("Cache-Control", "no-store");
+    res.json({
+        enabled: liveConfig.enabled,
+        servers,
+        overlayAd: liveConfig.overlayAd,
+        logoUrl: liveConfig.logoUrl,
+        bottomText: liveConfig.bottomText,
+        logoTopPct: liveConfig.logoTopPct,
+        logoRightPct: liveConfig.logoRightPct,
+        logoSizePct: liveConfig.logoSizePct,
+        logoBackdrop: liveConfig.logoBackdrop,
+        logoPlacements: liveConfig.logoPlacements,
+        hasMatchOverride: !!(matchId && liveConfig.matchServers[matchId]),
+    });
+});
+
+app.get("/api/admin/live", requireAdmin, async (req, res) => {
+    res.json((await getAdminSettings(true)).liveConfig);
+});
+
+// Patch enabled / defaultServers. Body is sanitized field-by-field.
+app.post("/api/admin/live", requireAdmin, async (req, res) => {
+    const body = req.body || {};
+    const clean = sanitizeLiveConfig(body);
+    const patch: any = {};
+    if (typeof body.enabled === "boolean") patch.enabled = clean.enabled;
+    if (Array.isArray(body.defaultServers)) patch.defaultServers = clean.defaultServers;
+    if (body.overlayAd && typeof body.overlayAd === "object") patch.overlayAd = clean.overlayAd;
+    if (typeof body.logoUrl === "string") patch.logoUrl = clean.logoUrl;
+    if (typeof body.bottomText === "string") patch.bottomText = clean.bottomText;
+    if (body.logoTopPct !== undefined) patch.logoTopPct = clean.logoTopPct;
+    if (body.logoRightPct !== undefined) patch.logoRightPct = clean.logoRightPct;
+    if (body.logoSizePct !== undefined) patch.logoSizePct = clean.logoSizePct;
+    if (typeof body.logoBackdrop === "boolean") patch.logoBackdrop = clean.logoBackdrop;
+    if (Array.isArray(body.logoPlacements)) patch.logoPlacements = clean.logoPlacements;
+    res.json((await updateLiveConfig(patch)).liveConfig);
+});
+
+app.post("/api/admin/live/match/:matchId", requireAdmin, async (req, res) => {
+    const { servers } = req.body || {};
+    if (!Array.isArray(servers)) return res.status(400).json({ error: "servers (array) is required" });
+    const clean = sanitizeLiveConfig({ matchServers: { m: servers } }).matchServers["m"] || [];
+    res.json((await setMatchLiveServers(String(req.params.matchId), clean)).liveConfig);
+});
+
+app.delete("/api/admin/live/match/:matchId", requireAdmin, async (req, res) => {
+    res.json((await setMatchLiveServers(String(req.params.matchId), null)).liveConfig);
+});
+
+// Import watch servers from a Fabor-TV page. Fetched through the proxy chain
+// (fetchWithTimeout) since Fabor blocks direct server-side requests.
+app.post("/api/admin/live/import-fabor", requireAdmin, async (req, res) => {
+    const { url } = req.body || {};
+    if (!url || typeof url !== "string") return res.status(400).json({ error: "url (string) is required" });
+    try {
+        const servers = await importFaborServers(url, fetchWithTimeout);
+        res.json({ servers });
+    } catch (e: any) {
+        res.status(502).json({ error: e?.message || "Fabor-TV import failed" });
+    }
 });
 
 // Background Pre-warmer to keep cache fresh
@@ -1310,7 +1641,7 @@ const prewarmCache = async () => {
     for (const date of dates) {
         try {
             // 1. Pre-warm Matches (Main API)
-            const matchUrl = `https://yallamatch.pages.dev/api/matches?date=${date}`;
+            const matchUrl = `${BACKEND_BASE}/api/matches?date=${date}`;
             const matchData = await fetchWithTimeout(matchUrl, 8000);
             if (matchData && matchData["STING-WEB-Matches"]) {
                 matchesCache[date] = { data: matchData, timestamp: Date.now() };
@@ -1318,7 +1649,7 @@ const prewarmCache = async () => {
             }
 
             // 2. Pre-warm Kooora
-            const koooraUrl = `https://yallamatch.pages.dev/api/kooora/channels?date=${date}`;
+            const koooraUrl = `${BACKEND_BASE}/api/kooora/channels?date=${date}`;
             const koooraData = await fetchWithTimeout(koooraUrl, 8000);
             if (koooraData && koooraData.success) {
                 koooraCache[date] = { data: koooraData.data, timestamp: Date.now() };
@@ -1326,7 +1657,7 @@ const prewarmCache = async () => {
             }
             
             // 3. Pre-warm LiveOnSat
-            const losUrl = `https://yallamatch.pages.dev/api/liveonsat/channels?date=${date}`;
+            const losUrl = `${BACKEND_BASE}/api/liveonsat/channels?date=${date}`;
             const losData = await fetchWithTimeout(losUrl, 8000);
             if (losData) {
                 setCachedData(`liveonsat_${date}`, losData).catch(() => {});
@@ -1349,7 +1680,7 @@ app.get("/api/liveonsat/channels", async (req, res) => {
             return res.json(fsCached);
         }
 
-        const apiUrl = `https://yallamatch.pages.dev/api/liveonsat/channels?date=${targetDate}`;
+        const apiUrl = `${BACKEND_BASE}/api/liveonsat/channels?date=${targetDate}`;
         const data = await fetchWithTimeout(apiUrl, 8000);
         if (data) {
             setCachedData(`liveonsat_${targetDate}`, data).catch(err => console.error('[Cache] Save liveonsat failed:', err));
@@ -1374,6 +1705,295 @@ const checkPushTriggers = async () => {
         console.error("[PushTriggers] Tick failed:", e);
     }
 };
+
+/* ---------------------------------------------------------------------------
+ * GET /api/winwin/channels?date=YYYY-MM-DD
+ *
+ * Broadcasting channels for EVERY match of the day in one call. Mirrors the
+ * WordPress theme's PHP implementation (inc/api-local.php) so the dev server
+ * and production behave identically.
+ *
+ * winwin.com is the primary source: its schedule API returns matchChannels[]
+ * (name + logo) per fixture. It only answers with real data when given the
+ * compact date=YYYYMMDD plus a from/to UTC window covering the Morocco local
+ * day — a plain date=YYYY-MM-DD silently returns a stale default set.
+ * ------------------------------------------------------------------------- */
+
+// Africa/Casablanca UTC offset (minutes) on a given day — Morocco shifts during Ramadan.
+const casablancaOffsetMinutes = (dateISO: string): number => {
+    try {
+        const probe = new Date(`${dateISO}T12:00:00Z`);
+        const name = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Casablanca', timeZoneName: 'longOffset' })
+            .formatToParts(probe).find(p => p.type === 'timeZoneName')?.value || 'GMT+01:00';
+        const m = name.match(/GMT([+-])(\d{2}):(\d{2})/);
+        if (!m) return 60;
+        return (m[1] === '-' ? -1 : 1) * (parseInt(m[2], 10) * 60 + parseInt(m[3], 10));
+    } catch { return 60; }
+};
+
+const buildWinwinUrl = (dateISO: string): string => {
+    const [y, mo, d] = dateISO.split('-').map(Number);
+    const offset = casablancaOffsetMinutes(dateISO);
+    const fromMs = Date.UTC(y, mo - 1, d, 0, 0, 0) - offset * 60000;
+    const toMs = fromMs + 24 * 60 * 60 * 1000;
+    const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+    return 'https://www.winwin.com/api/component_data/match_landing_section/82053'
+        + `?path=${encodeURIComponent('/matches')}&v=01`
+        + `&date=${dateISO.replace(/-/g, '')}`
+        + `&from=${encodeURIComponent(iso(fromMs))}`
+        + `&to=${encodeURIComponent(iso(toMs))}`;
+};
+
+// Folds the letters Arabic sources swap when transliterating a Latin "g"
+// (winwin writes "جامبا أوساكا", the match feed "غامبا أوساكا"), strips club
+// noise ("إف سي"/FC) and collapses doubled letters so spellings converge.
+const AR_FOLD: Record<string, string> = {
+    'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ٱ': 'ا', 'ة': 'ه', 'ى': 'ي', 'ؤ': 'و', 'ئ': 'ي',
+    'ک': 'ك', 'ی': 'ي', 'چ': 'غ', 'ج': 'غ', 'گ': 'غ', 'ڤ': 'ف', 'پ': 'ب',
+};
+const normalizeTeam = (input: string): string => {
+    let s = String(input || '').replace(/[ً-ْـ]/g, '');
+    s = s.replace(/[أإآٱةىؤئکیچجگڤپ]/g, ch => AR_FOLD[ch] || ch);
+    s = s.replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    for (const noise of [' اف سي', 'اف سي ', ' اس سي', 'اس سي ']) s = s.split(noise).join(' ');
+    s = s.replace(/(?<![a-z])(fc|sc|cf|ac)(?![a-z])/g, ' ').replace(/\s+/g, ' ').trim();
+    return s.replace(/(.)\1+/gu, '$1');
+};
+// Generic football words are dropped so two unrelated clubs can't "match" on a
+// shared suffix ("… يونايتد", "… سيتي").
+const TEAM_STOPWORDS = new Set([
+    'ال', 'نادي', 'فريق', 'fc', 'sc', 'cf', 'club', 'the',
+    'يونايتد', 'سيتي', 'سبورت', 'سبورتينغ', 'سبورتنغ', 'اتلتيك', 'اتليتيك', 'اكاديميه',
+]);
+const teamTokens = (n: string) => n.split(' ').filter(t => t.length >= 3 && !TEAM_STOPWORDS.has(t));
+// Loose containment only for distinctive strings: "نيك" (NEC) sits inside
+// "باناثينيكوس" (Panathinaikos), which previously fused two different fixtures.
+const strAkin = (x: string, y: string): boolean => {
+    if (x === y) return true;
+    if (Math.min(x.length, y.length) < 4) return false;
+    return x.includes(y) || y.includes(x);
+};
+const teamsMatch = (a: string, b: string): boolean => {
+    if (!a || !b) return false;
+    if (strAkin(a, b)) return true;
+    for (const x of teamTokens(a)) {
+        for (const y of teamTokens(b)) {
+            if (strAkin(x, y)) return true;
+        }
+    }
+    return false;
+};
+
+// Kick-off as UTC "HH:MM" — a second matching signal for names spelled too
+// differently (or written in Latin) between sources.
+const kickoffUtc = (value?: string, offset?: string): string => {
+    const s = String(value || '').trim();
+    if (!s) return '';
+    if (/^\d{1,2}:\d{2}$/.test(s)) {
+        const [h, m] = s.split(':');
+        return `${String(parseInt(h, 10)).padStart(2, '0')}:${m}`;
+    }
+    const hasZone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(s);
+    const d = new Date(hasZone ? s : (offset ? `${s}${offset}` : `${s}Z`));
+    if (isNaN(d.getTime())) return '';
+    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+};
+
+type ChannelEntry = { name: string; logo: string; url: string };
+type CatalogRow = { src: string; a: string; b: string; channels: ChannelEntry[]; commentator: string; kickoff: string };
+
+// Latin → Arabic club names, so sources that publish Latin names (liveonsat,
+// the beIN EPG) can be matched against the Arabic match feed.
+const LATIN_TO_AR: Record<string, string> = (() => {
+    const norm = (t: string) => t.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\b(fc|sfc|sc|cf|ac|club|the)\b/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+    const out: Record<string, string> = {};
+    for (const [en, ar] of Object.entries(TEAM_TRANSLATIONS)) {
+        const k = norm(en);
+        if (k && !out[k]) out[k] = ar as string;
+    }
+    return out;
+})();
+
+const teamKey = (raw: string): string => {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    if (!/[؀-ۿ]/.test(s)) {
+        const k = s.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\b(fc|sfc|sc|cf|ac|club|the)\b/g, ' ')
+            .replace(/\s+/g, ' ').trim();
+        if (LATIN_TO_AR[k]) return normalizeTeam(LATIN_TO_AR[k]);
+    }
+    return normalizeTeam(s);
+};
+
+const splitPairLabel = (label: string): [string, string] => {
+    const parts = String(label || '').split(/\s+(?:ضد|في مواجهة|vs|v|x|×)\s+/i);
+    return [teamKey(parts[0] || ''), teamKey(parts[1] || '')];
+};
+
+// "…: PSG vs Arsenal - Final" → [psg, arsenal]; null when not a fixture title.
+const parseProgramTitle = (title: string): [string, string] | null => {
+    let t = String(title || '');
+    if (t.includes(':')) t = t.slice(t.indexOf(':') + 1);
+    t = t.replace(/\s+-\s+[^-]*$/, '');
+    if (!/\s(?:vs|v|ضد|×)\s/i.test(t)) return null;
+    const [a, b] = splitPairLabel(t.trim());
+    return (a && b) ? [a, b] : null;
+};
+
+const channelKey = (n: string) => String(n || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+
+// Best unambiguous entry for a fixture within one source (see the PHP twin in
+// inc/api-local.php): 2 points per matching side + 1 for an identical kick-off,
+// accepted at >= 3, ties rejected rather than guessed.
+const bestEntry = (catalog: CatalogRow[], src: string, a: string, b: string, kick: string): CatalogRow | null => {
+    let best: CatalogRow | null = null;
+    let score = 0;
+    let tied = false;
+    for (const e of catalog) {
+        if (e.src !== src) continue;
+        const direct = (teamsMatch(a, e.a) ? 1 : 0) + (teamsMatch(b, e.b) ? 1 : 0);
+        const reverse = (teamsMatch(a, e.b) ? 1 : 0) + (teamsMatch(b, e.a) ? 1 : 0);
+        const sides = Math.max(direct, reverse);
+        if (!sides) continue;
+        const s = sides * 2 + ((kick && e.kickoff === kick) ? 1 : 0);
+        if (s > score) { score = s; best = e; tied = false; }
+        else if (s === score && best) { tied = true; }
+    }
+    return (best && score >= 3 && !tied) ? best : null;
+};
+
+app.get("/api/winwin/channels", async (req, res) => {
+    const raw = String(req.query.date || '');
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : getMoroccanDateString(0);
+    res.set('Cache-Control', 'public, max-age=300');
+
+    const result = await cachedJson(`winwin:${date}`, 300_000, async () => {
+        // The day's fixtures (ids + Arabic team names + kick-off).
+        const feed = await attemptSource(
+            'yallamatch',
+            () => fetchWithTimeout(`${BACKEND_BASE}/api/matches?date=${date}`, 12000),
+            (r: any) => Array.isArray(r?.["STING-WEB-Matches"])
+        );
+        const matches: any[] = Array.isArray(feed?.["STING-WEB-Matches"]) ? feed["STING-WEB-Matches"] : [];
+        if (matches.length === 0) return [];
+
+        const catalog: CatalogRow[] = [];
+
+        // --- Source 1 (primary): winwin.com ---
+        try {
+            const ww = await fetchWithTimeout(buildWinwinUrl(date), 14000);
+            const groups: any[] = Array.isArray(ww?.b) ? ww.b : (Array.isArray(ww) ? ww : []);
+            for (const g of groups) {
+                for (const mm of (Array.isArray(g?.matches) ? g.matches : [])) {
+                    if (!Array.isArray(mm?.matchChannels) || mm.matchChannels.length === 0) continue;
+                    const t1 = mm?.team1?.name || '';
+                    const t2 = mm?.team2?.name || '';
+                    if (!t1 || !t2) continue;
+                    const channels: ChannelEntry[] = [];
+                    for (const c of mm.matchChannels) {
+                        const name = (typeof c === 'string' ? c : (c?.name || c?.title || '')).toString().trim();
+                        if (name) channels.push({ name, logo: (typeof c === 'object' && c?.logo) || '', url: '' });
+                    }
+                    if (channels.length) {
+                        catalog.push({
+                            src: 'winwin',
+                            a: teamKey(t1), b: teamKey(t2), channels,
+                            commentator: mm?.commentator || '',
+                            kickoff: kickoffUtc(mm?.kickoffTime), // winwin publishes UTC
+                        });
+                    }
+                }
+            }
+        } catch (e: any) {
+            console.warn('[winwin] channels fetch failed:', e?.message || e);
+        }
+
+        // --- Source 2: kooora (kept warm in-process by prewarmCache) ---
+        const koooraRows: any[] = Array.isArray(koooraCache[date]?.data) ? koooraCache[date].data : [];
+        for (const row of koooraRows) {
+            const channels: ChannelEntry[] = [];
+            for (const c of (Array.isArray(row?.channels) ? row.channels : [])) {
+                const name = (typeof c === 'string' ? c : (c?.name || '')).toString().trim();
+                if (name) channels.push({ name, logo: (typeof c === 'object' && c?.logo) || '', url: (typeof c === 'object' && c?.url) || '' });
+            }
+            if (!channels.length) continue;
+            const [a, b] = splitPairLabel(row?.name || '');
+            if (a && b) catalog.push({ src: 'kooora', a, b, channels, commentator: row?.commentator || '', kickoff: kickoffUtc(row?.startDate) });
+        }
+
+        // --- Sources 3 & 4: liveonsat + the beIN EPG (Latin names; teamKey()
+        // bridges them onto the Arabic feed via the app's club translations). ---
+        const [losRes, beinRes] = await Promise.all([
+            fetchWithTimeout(`${BACKEND_BASE}/api/liveonsat/channels?date=${date}`, 12000).catch(() => null),
+            fetchWithTimeout(`${BACKEND_BASE}/api/bein-channels`, 14000).catch(() => null),
+        ]);
+        for (const row of (Array.isArray(losRes?.matches) ? losRes.matches : [])) {
+            const channels: ChannelEntry[] = [];
+            for (const c of (Array.isArray(row?.channels) ? row.channels : [])) {
+                const name = (typeof c === 'string' ? c : (c?.name || '')).toString().trim();
+                if (name) channels.push({ name, logo: '', url: '' });
+            }
+            if (!channels.length) continue;
+            const [a, b] = splitPairLabel(row?.match || '');
+            if (a && b) catalog.push({ src: 'los', a, b, channels, commentator: '', kickoff: kickoffUtc(row?.time) });
+        }
+        for (const chan of (Array.isArray(beinRes?.channels) ? beinRes.channels : [])) {
+            const chanName = String(chan?.name || '').trim();
+            if (!chanName) continue;
+            for (const p of (Array.isArray(chan?.programs) ? chan.programs : [])) {
+                const pair = parseProgramTitle(p?.title || '');
+                if (!pair) continue;
+                catalog.push({
+                    src: 'bein', a: pair[0], b: pair[1],
+                    channels: [{ name: chanName, logo: '', url: '' }],
+                    commentator: '', kickoff: kickoffUtc(p?.start),
+                });
+            }
+        }
+
+        // --- Resolve each fixture against EVERY source and merge the hits, so a
+        // match ends up with the union of what all four sources know about it.
+        const SOURCE_ORDER = ['winwin', 'kooora', 'los', 'bein'];
+        return matches.map((m: any) => {
+            const aRaw = m?.["Team-Right"]?.Name || '';
+            const bRaw = m?.["Team-Left"]?.Name || '';
+            const a = teamKey(aRaw);
+            const b = teamKey(bRaw);
+            const kick = kickoffUtc(m?.["Time-Start"], m?.["Time-Zone"]);
+
+            const channels: ChannelEntry[] = [];
+            const seen = new Set<string>();
+            let commentator = '';
+            for (const src of SOURCE_ORDER) {
+                const hit = bestEntry(catalog, src, a, b, kick);
+                if (!hit) continue;
+                for (const c of hit.channels) {
+                    const key = channelKey(c.name);
+                    if (!key || seen.has(key)) continue;
+                    seen.add(key);
+                    channels.push(c);
+                }
+                if (!commentator && hit.commentator) commentator = hit.commentator;
+            }
+
+            return {
+                matchId: m?.["Match-id"] ?? null,
+                name: `${aRaw} ضد ${bRaw}`.trim(),
+                teamA: aRaw,
+                teamB: bRaw,
+                channels,
+                commentator,
+            };
+        });
+    });
+
+    res.json({ success: true, data: Array.isArray(result) ? result : [] });
+});
 
 async function startServer() {
     // Run initial pre-warm
