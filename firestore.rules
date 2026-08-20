@@ -1,10 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Global Safety Net
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    // NOTE: there is deliberately no `match /{document=**} { allow read, write: if false; }`
+    // block here. Firestore ORs rule matches — a deny-all wildcard does NOT override the
+    // specific allows below it, so the one that used to sit here provided no protection
+    // while reading like it did. Anything not matched by a rule below is denied by
+    // default; that default IS the safety net.
 
     // Helper Functions
     function isValidId(id) { 
@@ -15,17 +16,19 @@ service cloud.firestore {
       return request.resource.data; 
     }
     
-    function isValidCache(data) {
-      return data.keys().hasAll(['data', 'updatedAt']) && 
-             data.keys().size() == 2 && 
-             data.updatedAt is string; // ISO string representing update time
-    }
-
-    // Cache Collection
+    // Cache Collection — public read, NO client writes.
+    //
+    // This used to allow create/update to any unauthenticated client, gated only
+    // by a shape check that left `data` completely unconstrained. That meant
+    // anyone could overwrite cache/matches_YYYY-MM-DD with arbitrary content and
+    // the app would render it: full content takeover, not merely cache tampering.
+    //
+    // Writes now come from the server via the firebase-admin SDK
+    // (server/firebaseAdmin.ts), which bypasses these rules entirely. See the
+    // header of services/firestoreCache.ts.
     match /cache/{cacheId} {
       allow read: if true;
-      allow create, update: if isValidId(cacheId) && isValidCache(incoming());
-      allow delete: if false; // Prevention of cache tampering
+      allow write: if false;
     }
 
     function isValidUserDoc(data) {
@@ -52,6 +55,10 @@ service cloud.firestore {
     function isVoteIncrement(prev, next) {
       return next.keys().hasAll(['a','draw','b','updatedAt']) && next.keys().size() == 4
           && next.updatedAt is string
+          // Re-assert int, as isNewVote does. Without this a float satisfies both
+          // `next.a >= prev.a` and the sum check, so counters could be written as
+          // non-integers (e.g. 1.5) and drift out of the intended domain.
+          && next.a is int && next.draw is int && next.b is int
           && next.a >= prev.a && next.draw >= prev.draw && next.b >= prev.b
           && (next.a + next.draw + next.b) == (prev.a + prev.draw + prev.b) + 1;
     }

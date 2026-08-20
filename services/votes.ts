@@ -1,6 +1,6 @@
 import { doc, onSnapshot, runTransaction, increment } from 'firebase/firestore';
 import { db } from './firebase.ts';
-import { handleFirestoreError, OperationType } from './firestoreCache.ts';
+import { handleFirestoreError, OperationType } from './firestoreErrors.ts';
 
 export type VoteChoice = 'a' | 'draw' | 'b';
 export interface VoteCounts { a: number; draw: number; b: number; }
