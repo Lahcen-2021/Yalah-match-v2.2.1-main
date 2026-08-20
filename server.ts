@@ -41,14 +41,46 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
 app.use(compression());
-app.use(cors());
+// Public data routes are meant to be readable cross-origin, so they keep the open
+// policy. The admin API is not: `cors()` alone sent Access-Control-Allow-Origin: *
+// on /api/admin/* too, letting any page on the internet script against it with a
+// stolen token. Admin routes get an allowlist (CORS_ADMIN_ORIGINS, comma-separated)
+// and default to same-origin only.
+const adminOrigins = (process.env.CORS_ADMIN_ORIGINS || '')
+    .split(',').map(o => o.trim()).filter(Boolean);
+
+const adminCors = cors({
+    origin: (origin, cb) => {
+        // No Origin header = same-origin or a non-browser client; allow.
+        if (!origin) return cb(null, true);
+        cb(null, adminOrigins.includes(origin));
+    },
+    credentials: true,
+});
+const publicCors = cors();
+
+// One dispatcher rather than two app.use() layers: mounting the admin policy first
+// and the open one second meant the open one ran afterwards and overwrote
+// Access-Control-Allow-Origin back to "*" on admin routes too.
+app.use((req, res, next) =>
+    req.path.startsWith('/api/admin') ? adminCors(req, res, next) : publicCors(req, res, next));
 app.use(express.json());
+
+// Behind a reverse proxy, req.ip is the proxy's address unless Express is told how many
+// hops to trust. Set TRUST_PROXY to the number of proxies in front of this server.
+app.set("trust proxy", config.trustProxy);
 
 // A local dev client (or the app's own SPA on the same host) is not the abuse vector these
 // limiters defend against — it's a single trusted user whose normal page load bursts well past
 // any sane per-minute cap. Exempt loopback so the app never rate-limits itself in development.
+//
+// ONLY when this server is directly exposed. If it sits behind a proxy on the same host,
+// req.ip is loopback for every request, so this exemption would switch off rate limiting
+// entirely — which is exactly what it used to do.
+const exemptLoopback = config.trustProxy === 0;
 const isLoopback = (ip?: string): boolean =>
-    !!ip && (ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1" || ip.startsWith("::ffff:127."));
+    exemptLoopback && !!ip &&
+    (ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1" || ip.startsWith("::ffff:127."));
 
 // Protects this server's own inbound requests from a single abusive client/bot.
 // Does not throttle outbound scraper calls — that is the circuit breaker's job.
@@ -70,11 +102,24 @@ const proxyLimiter = rateLimit({
 
 // Tight limiter on the admin login route specifically — it's a single shared password,
 // so brute-force attempts need to be slowed down harder than general API traffic.
+// skipSuccessfulRequests: only failures count, so an operator logging in normally can
+// never lock themselves out.
 const adminLoginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true,
+});
+
+// The HLS proxy streams segments, so an unmetered one is a free bandwidth relay.
+// Higher ceiling than the generic limiter because one stream is many segment requests.
+const hlsLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: Number(process.env.HLS_RATE_LIMIT_MAX) || 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => isLoopback(req.ip),
 });
 
 // Records per-route request/error counts for the admin Overview tab. Lives at the top of
@@ -1603,7 +1648,7 @@ app.delete("/api/admin/custom-match/:id", requireAdmin, async (req, res) => {
 // Re-serves a direct .m3u8 (and its segments/keys) with permissive CORS, for hosts that
 // send no CORS headers or demand a same-site Referer. Only removes browser-side barriers
 // — a dead upstream stays dead, and says so.
-app.get("/api/hls", handleHlsProxy);
+app.get("/api/hls", hlsLimiter, handleHlsProxy);
 
 // --- Live stream section (Fabor-style watch page): admin-managed servers + promo banner ---
 

@@ -21,6 +21,15 @@ export const config = {
     },
     firebaseAdminCredentials: process.env.FIREBASE_ADMIN_CREDENTIALS || '',
     vapidPublicKey: process.env.VAPID_PUBLIC_KEY || '',
+    // Number of reverse proxies in front of this server (Netlify/Cloudflare/nginx = 1).
+    // 0 means "directly exposed" and is the safe default.
+    //
+    // This matters more than it looks: without it Express reports the socket peer as
+    // req.ip, which behind a CDN is the CDN's address. Every visitor then shares one
+    // rate-limit bucket — one client can lock out everybody — and if the proxy runs on
+    // the same host, req.ip is loopback for EVERY request, which silently disabled all
+    // rate limiting via the loopback exemption below.
+    trustProxy: Number(process.env.TRUST_PROXY) || 0,
     rateLimit: {
         windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60 * 1000,
         max: Number(process.env.RATE_LIMIT_MAX) || 60,
