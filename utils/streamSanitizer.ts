@@ -39,7 +39,7 @@ const REDIRECT_KEYS = ['url', 'u', 'redirect', 'redirect_url', 'redirecturl', 'r
 
 // Remove ad/tracking params and follow ad-redirect wrappers to the real stream URL.
 // Functional params (stream, id, channel, token…) are always kept. Never throws —
-// returns the input unchanged if it isn't a parseable absolute URL.
+// returns '' if the input isn't a parseable absolute http(s) URL.
 export function cleanStreamUrl(raw: string): string {
     const input = (raw || '').trim();
     if (!input) return '';
@@ -47,8 +47,18 @@ export function cleanStreamUrl(raw: string): string {
     try {
         url = new URL(input);
     } catch {
-        return input;
+        // Not an absolute URL. Returning the raw string here used to let a relative
+        // path — or anything at all — reach an iframe src unchecked.
+        return '';
     }
+
+    // The return value is used directly as <iframe src> and as a player source
+    // (components/LiveStreamHub.tsx). `new URL('javascript:alert(1)')` parses
+    // perfectly happily, as does data:text/html, so without this check a stream URL
+    // set through the admin panel (or by anyone who got hold of an admin token)
+    // becomes script execution on our own origin. The redirect-unwrap loop below
+    // already screened candidates with ^https?://; the initial input never was.
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
 
     // Unwrap ad/redirect wrappers that carry the real http(s) URL (bounded depth).
     for (let depth = 0; depth < 3; depth++) {
