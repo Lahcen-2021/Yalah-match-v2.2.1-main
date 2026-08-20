@@ -14,16 +14,22 @@ import { pipeline } from "node:stream/promises";
 import dns from "node:dns/promises";
 import net from "node:net";
 
+// `Response` in this file is Express's (imported above), so the global fetch
+// Response has to be referred to by a distinct name.
+type FetchResponse = Awaited<ReturnType<typeof fetch>>;
+
 // A proxy that fetches any URL the caller names is an SSRF gadget: without this it could
 // be pointed at cloud metadata endpoints or services on the private network and made to
 // relay the response back. Only public hosts are allowed through.
-function isPrivateAddress(ip: string): boolean {
+export function isPrivateAddress(ip: string): boolean {
     if (net.isIPv4(ip)) {
         const [a, b] = ip.split(".").map(Number);
         return (
             a === 0 || a === 10 || a === 127 ||
             (a === 172 && b >= 16 && b <= 31) ||
             (a === 192 && b === 168) ||
+            (a === 192 && b === 0) ||            // 192.0.0.0/24 IETF protocol assignments
+            (a === 198 && (b === 18 || b === 19)) || // 198.18.0.0/15 benchmarking
             (a === 169 && b === 254) ||          // link-local (cloud metadata)
             (a === 100 && b >= 64 && b <= 127) ||// carrier-grade NAT
             a >= 224                              // multicast / reserved
@@ -32,12 +38,20 @@ function isPrivateAddress(ip: string): boolean {
     const lower = ip.toLowerCase();
     if (lower === "::1" || lower === "::") return true;
     if (lower.startsWith("fe80") || lower.startsWith("fc") || lower.startsWith("fd")) return true;
-    // IPv4-mapped IPv6 (::ffff:10.0.0.1) — unwrap and re-check.
+    // IPv4-mapped IPv6, dotted form (::ffff:10.0.0.1) — unwrap and re-check.
     const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(lower);
-    return mapped ? isPrivateAddress(mapped[1]) : false;
+    if (mapped) return isPrivateAddress(mapped[1]);
+    // IPv4-mapped IPv6, hex form (::ffff:7f00:1 === 127.0.0.1). The dotted regex
+    // above misses this spelling, which is a valid way to write loopback.
+    const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(lower);
+    if (hex) {
+        const n = (parseInt(hex[1], 16) << 16) | parseInt(hex[2], 16);
+        return isPrivateAddress([n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join("."));
+    }
+    return false;
 }
 
-async function assertPublicHost(hostname: string): Promise<void> {
+export async function assertPublicHost(hostname: string): Promise<void> {
     if (net.isIP(hostname)) {
         if (isPrivateAddress(hostname)) throw new Error("blocked host");
         return;
@@ -48,10 +62,40 @@ async function assertPublicHost(hostname: string): Promise<void> {
     }
 }
 
-function parseTarget(raw: unknown): URL {
+export function parseTarget(raw: unknown): URL {
     const url = new URL(String(raw || ""));
     if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("bad protocol");
     return url;
+}
+
+/**
+ * fetch() that re-validates every hop instead of trusting the first one.
+ *
+ * assertPublicHost() only ever saw the URL the caller supplied. With
+ * `redirect: "follow"` an allowed public host could answer 302 -> 169.254.169.254
+ * and the guard was bypassed entirely, because redirects are resolved inside
+ * fetch where nothing re-checks them. Following manually puts the check back on
+ * every hop. `extraCheck` lets the caller also re-assert a host allowlist.
+ */
+export async function fetchGuarded(
+    target: URL,
+    init: RequestInit,
+    { maxRedirects = 5, extraCheck }: { maxRedirects?: number; extraCheck?: (url: URL) => void } = {},
+): Promise<FetchResponse> {
+    let current = target;
+    for (let hop = 0; hop <= maxRedirects; hop++) {
+        extraCheck?.(current);
+        await assertPublicHost(current.hostname);
+
+        const response = await fetch(current.toString(), { ...init, redirect: "manual" });
+        const isRedirect = response.status >= 300 && response.status < 400 && response.headers.has("location");
+        if (!isRedirect) return response;
+
+        const next = new URL(response.headers.get("location")!, current);
+        if (next.protocol !== "http:" && next.protocol !== "https:") throw new Error("bad protocol");
+        current = next;
+    }
+    throw new Error("too many redirects");
 }
 
 const BROWSER_UA =
@@ -104,9 +148,11 @@ export async function handleHlsProxy(req: Request, res: Response): Promise<void>
     req.on("close", abortIfUnfinished);
 
     try {
-        const upstream = await fetch(target.toString(), {
+        // fetchGuarded, not fetch: every redirect hop is re-checked against
+        // assertPublicHost, so an allowed host cannot bounce us to the metadata
+        // endpoint or onto the private network.
+        const upstream = await fetchGuarded(target, {
             signal: controller.signal,
-            redirect: "follow",
             headers: {
                 "User-Agent": BROWSER_UA,
                 // Many stream hosts allow only requests that look like they came from

@@ -22,7 +22,8 @@ import { getAdminSettings, updateAdminSettings, setMatchOverride, setLeagueHidde
 import { getAdminChannels, setAdminChannels } from "./server/adminChannels.ts";
 import { generateMatchSlug } from "./utils/translations.ts";
 import { importFaborServers } from "./server/faborTv.ts";
-import { handleHlsProxy } from "./server/hlsProxy.ts";
+import { handleHlsProxy, assertPublicHost, parseTarget } from "./server/hlsProxy.ts";
+import { isAllowedProxyHost } from "./server/proxyAllowlist.ts";
 import * as adminMetrics from "./server/adminMetrics.ts";
 import { fetchAllNews, fetchArticle } from "./server/newsFeed.ts";
 
@@ -121,11 +122,46 @@ const getProxied = (url: string): Promise<any> => {
     return p;
 };
 
-app.get("/api/proxy", proxyLimiter, async (req, res) => {
-    const url = req.query.url as string;
-    if (!url) return res.status(400).json({ error: "URL parameter is required" });
+/**
+ * Validate a caller-supplied proxy target.
+ *
+ * This endpoint used to accept any URL at all, which made it an SSRF gadget
+ * (cloud metadata at 169.254.169.254, anything bound on localhost, any service
+ * on the private network) whose response was then relayed back to the caller.
+ * The WordPress port of the same proxy has always had a host allowlist; this is
+ * the Express side catching up, reusing that list and hlsProxy's IP guards.
+ *
+ * Returns the parsed URL, or an { status, error } to send back.
+ */
+const vetProxyTarget = async (raw: string): Promise<{ url: URL } | { status: number; error: string }> => {
+    let url: URL;
+    try {
+        url = parseTarget(raw); // rejects anything that isn't http(s)
+    } catch {
+        return { status: 400, error: "URL must be an absolute http(s) URL" };
+    }
+    if (!isAllowedProxyHost(url.hostname)) {
+        return { status: 403, error: "URL not allowed" };
+    }
+    try {
+        // Blocks a hostname in the allowlist that resolves to a private address.
+        await assertPublicHost(url.hostname);
+    } catch {
+        return { status: 403, error: "URL not allowed" };
+    }
+    return { url };
+};
 
-    console.log(`[Proxy] Requesting with rotation: ${url}`);
+app.get("/api/proxy", proxyLimiter, async (req, res) => {
+    const raw = req.query.url as string;
+    if (!raw) return res.status(400).json({ error: "URL parameter is required" });
+
+    const vetted = await vetProxyTarget(raw);
+    if ('error' in vetted) {
+        console.warn(`[Proxy] Rejected ${raw}: ${vetted.error}`);
+        return res.status(vetted.status).json({ error: vetted.error });
+    }
+    const url = vetted.url.toString();
 
     try {
         // Cached + deduped wrapper around the rotating fetcher.
@@ -135,13 +171,19 @@ app.get("/api/proxy", proxyLimiter, async (req, res) => {
             console.error(`[Proxy] All proxies failed for ${url}`);
             return res.status(502).json({ error: "Upstream fetch failed via all proxies" });
         }
-        
-        // If it's a string (e.g. HTML), send as is. If object, send as JSON.
+
+        // Never echo an upstream body back as text/html: this endpoint is served
+        // from the app's own origin, so doing that turned any allowlisted host
+        // (or a compromised one) into stored XSS here - and the 30s proxyCache
+        // meant one poisoned fetch was replayed to every later caller. Serve it
+        // as inert text instead; callers parse it themselves.
+        res.setHeader('X-Content-Type-Options', 'nosniff');
         if (typeof data === 'string') {
-            res.setHeader('Content-Type', 'text/html');
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.setHeader('Content-Disposition', 'attachment');
             return res.send(data);
         }
-        
+
         res.json(data);
     } catch (e: any) {
         console.error(`[Proxy] Execution error for ${url}:`, e);
