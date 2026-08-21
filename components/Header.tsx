@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { TelegramIcon, YoutubeIcon, FacebookIcon, XIcon } from '../constants';
+import { InstagramIcon, FacebookIcon, XIcon } from '../constants';
 
 export type AppView = 'matches' | 'tournaments' | 'standings' | 'news' | 'contact' | 'privacy' | 'terms';
 export type DateTab = 'yesterday' | 'today' | 'tomorrow';
@@ -75,15 +75,6 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, view, setView 
         }
     };
 
-    const handleSocialClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        try {
-            window.location.reload();
-        } catch (e) {
-            console.warn('Reload failed', e);
-        }
-    };
-
     const navItems = [
         { label: 'مباريات اليوم', view: 'matches', isActive: view === 'matches' && activeTab === 'today' },
         { label: 'الأخبار', view: 'news', isActive: view === 'news' },
@@ -91,11 +82,17 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, view, setView 
         { label: 'اتصل بنا', view: 'contact', isActive: view === 'contact' },
     ];
 
+    // Real destinations. These were all href="/" behind a click handler that
+    // preventDefault()ed and reloaded the page, so every icon was a dead no-op.
+    // They double as an SEO signal: the same three URLs are listed under the
+    // Organization's `sameAs` in the JSON-LD, which is how Google ties the site
+    // and its social profiles together as one entity.
+    // (Telegram is not listed — there is no Telegram account to point at yet.
+    // Add it back here and in `sameAs` together when there is one.)
     const socialLinks = [
-        { Icon: XIcon, href: '/' },
-        { Icon: FacebookIcon, href: '/' },
-        { Icon: YoutubeIcon, href: '/' },
-        { Icon: TelegramIcon, href: '/' },
+        { Icon: XIcon, href: 'https://x.com/YallaMatchx', label: 'يلا ماتش على X' },
+        { Icon: FacebookIcon, href: 'https://www.facebook.com/profile.php?id=61591953794737', label: 'يلا ماتش على فيسبوك' },
+        { Icon: InstagramIcon, href: 'https://www.instagram.com/yallamatch.online/', label: 'يلا ماتش على إنستغرام' },
     ];
 
     return (
@@ -137,11 +134,14 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, view, setView 
                     <div className="flex-shrink-0 flex items-center gap-4">
                         <div className="hidden md:flex items-center gap-4 text-[#5f6368]">
                             {socialLinks.map((item, idx) => (
-                                <a 
-                                    key={idx} 
-                                    href={item.href} 
+                                <a
+                                    key={idx}
+                                    href={item.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer me"
+                                    aria-label={item.label}
+                                    title={item.label}
                                     className="hover:text-green-600 transition-colors"
-                                    onClick={handleSocialClick}
                                 >
                                     <item.Icon className="w-5 h-5" />
                                 </a>
@@ -185,11 +185,14 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, view, setView 
                      </nav>
                      <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-gray-100 text-[#5f6368]">
                         {socialLinks.map((item, idx) => (
-                            <a 
-                                key={idx} 
-                                href={item.href} 
+                            <a
+                                key={idx}
+                                href={item.href}
+                                target="_blank"
+                                rel="noopener noreferrer me"
+                                aria-label={item.label}
+                                title={item.label}
                                 className="hover:text-green-600"
-                                onClick={handleSocialClick}
                             >
                                 <item.Icon className="w-6 h-6" />
                             </a>
