@@ -362,17 +362,20 @@ const LiveStreamHub: React.FC<Props> = ({ match, fallback }) => {
                         key={`if-${activeServer.id}-${reloadKey}`}
                         src={safeUrl}
                         className="w-full h-full border-0"
-                        // NOTE: intentionally NO `fullscreen` in `allow` and NO `allowFullScreen`.
-                        // A cross-origin embed's own fullscreen button would take only the iframe
-                        // fullscreen, dropping our logo/text/ad overlays (they live outside it).
-                        // Blocking it forces fullscreen through our own button, which fullscreens
-                        // the whole wrapper (iframe + overlays together) so the branding stays on.
-                        allow="autoplay; encrypted-media; picture-in-picture"
+                        // Fullscreen IS permitted. Blocking it made the fullscreen button inside
+                        // third-party players do nothing, which reads as a broken site. The
+                        // overlays are still protected: useWrapperFullscreen watches for the
+                        // iframe making itself the fullscreen element and re-points fullscreen at
+                        // the wrapper, so logo/text/ads come along.
+                        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                        allowFullScreen
                         // Sandboxed: keeps what a player needs, drops `allow-top-navigation`
                         // (tab-hijacking redirects) and `allow-popups` (popunders) — the two
                         // things stream hosts abuse. cleanStreamUrl + isAdHost above are a
                         // denylist of known-bad hosts; this holds for the ones not on it.
-                        sandbox="allow-scripts allow-same-origin allow-presentation"
+                        // `allow-forms` is required: without it the embed's anti-bot captcha
+                        // cannot submit, so a viewer who gets challenged is stuck forever.
+                        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
                         referrerPolicy="no-referrer"
                         title={`بث ${activeServer.label}`}
                     />
