@@ -67,10 +67,24 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
 };
 
+// Pass-through fallback (no memoization, always calls the fetcher) used only if a
+// consumer somehow renders before/outside <CacheProvider>. Observed in production on
+// direct deep-link loads (e.g. /TeamA-vs-TeamB/YYYY-MM-DD): a component reading this
+// context can commit before the Provider's own commit is visible to it, which used to
+// throw and crash the whole app via the root ErrorBoundary (dragging down an unrelated
+// video-player DOM tree with it — see Players.tsx cleanup). Degrading instead of
+// throwing keeps the page alive; call sites just lose the in-memory cache for that one
+// mount, which self-heals on the next render once the real Provider is in the tree.
+const fallbackCache: CacheContextType = {
+    fetchWithCache: (_key, fetcher) => fetcher(),
+    invalidateCache: () => {},
+};
+
 export const useCache = () => {
     const context = useContext(CacheContext);
     if (!context) {
-        throw new Error('useCache must be used within a CacheProvider');
+        console.warn('useCache used outside CacheProvider — falling back to uncached fetch.');
+        return fallbackCache;
     }
     return context;
 };

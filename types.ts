@@ -18,6 +18,18 @@ export interface Team {
 export interface Match {
   id: number;
   channel: string;
+  /**
+   * Structured broadcaster list resolved server-side by GET /api/winwin/channels
+   * (name + logo per channel). `channel` keeps the flat joined string for the
+   * views that only need text; cards prefer this so they can render the channel
+   * logo and a "+N more" counter.
+   */
+  channels?: ChannelInfo[];
+  // True when `channels` came from an admin override — auto-resolution (winwin /
+  // scrapers) must not overwrite them.
+  channelsLocked?: boolean;
+  // Admin force-showed this match onto the site — bypasses the major-league filter.
+  adminShown?: boolean;
   league: string;
   leagueCode: string; // Added to fetch standings
   leagueLogoUrl?: string;
@@ -35,6 +47,7 @@ export interface Match {
   halfTimeScore?: string;
   utcDate: string; // Added to calculate live match timer
   round?: string; // For detail view header
+  isCustom?: boolean; // Admin-created match (bypasses the major-league display filter)
 }
 
 // Added for match highlights feature
@@ -61,6 +74,10 @@ export interface Player {
       assists?: number;
       rating?: number;
   };
+  // Match-event decorations derived from the timeline (goals/cards/subs icons)
+  subOff?: { minute: number };                 // starter substituted out
+  subOn?: { minute: number; forName: string }; // bench player who came on
+  cards?: { yellow: number; red: number };
 }
 
 export interface Coach {
@@ -179,6 +196,36 @@ export interface NewsItem {
 export interface NewsArticle extends NewsItem {
     paragraphs: string[];
     sourceUrl: string;
+}
+
+// A single match's broadcast entry for the channels "today's broadcasts" tab
+// (built from GET /api/liveonsat/channels)
+export interface Broadcast {
+    teamA: string;
+    teamB: string;
+    time: string;
+    channels: string[];
+}
+
+// One beIN channel's now/next program, from GET /api/bein-guide
+export interface BeinGuideChannel {
+    name: string;
+    now: { title: string; start: string } | null;
+    next: { title: string; start: string } | null;
+}
+
+// A competition fixture for the standings "upcoming/finished matches" tabs,
+// served by GET /api/league-matches
+export interface LeagueMatch {
+    id: number;
+    home: { id: number; name: string };
+    away: { id: number; name: string };
+    homeScore: number | null;
+    awayScore: number | null;
+    startTime: string | null;
+    statusText: string;
+    round: string;
+    state: 'finished' | 'live' | 'upcoming';
 }
 
 export interface Scorer {

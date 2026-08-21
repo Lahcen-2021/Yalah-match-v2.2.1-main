@@ -3,6 +3,115 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from '
 import OptimizedImage from './OptimizedImage';
 import { CHANNELS } from '../constants/channels';
 import { InlinePlayer, VideoJSPlayer, ClapprPlayer, PlyrPlayer } from './Players';
+import { fetchTodayBroadcasts, fetchBeinGuide, USER_TIMEZONE } from '../services/api';
+import { translateTeam } from '../utils/translations';
+import { useCache } from '../context/CacheContext';
+import { Broadcast, BeinGuideChannel } from '../types';
+
+type ChannelsTab = 'grid' | 'broadcasts' | 'bein';
+
+const formatProgTime = (iso: string): string => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('en-GB', { timeZone: USER_TIMEZONE, hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+};
+
+const PanelSkeleton: React.FC = () => (
+    <div className="space-y-3 animate-fadeIn">
+        {[...Array(8)].map((_, i) => <div key={i} className="h-16 bg-gray-100 rounded-2xl animate-shimmer" style={{ animationDelay: `${i * 0.05}s` }}></div>)}
+    </div>
+);
+
+const EmptyState: React.FC<{ text: string }> = ({ text }) => (
+    <div className="text-center py-16 bg-white rounded-3xl border-2 border-dashed border-gray-200 text-gray-400 font-bold">{text}</div>
+);
+
+// "بث اليوم" — today's matches and the channels broadcasting each (LiveOnSat).
+const BroadcastsPanel: React.FC = () => {
+    const { fetchWithCache } = useCache();
+    const [items, setItems] = useState<Broadcast[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetchWithCache('today-broadcasts', fetchTodayBroadcasts, 600000)
+            .then(d => { if (!cancelled) setItems(d); })
+            .catch(() => {})
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
+    }, [fetchWithCache]);
+
+    const sorted = useMemo(() => [...items].sort((a, b) => a.time.localeCompare(b.time)), [items]);
+
+    if (loading) return <PanelSkeleton />;
+    if (sorted.length === 0) return <EmptyState text="لا توجد مباريات على القنوات اليوم" />;
+
+    return (
+        <div className="space-y-3">
+            {sorted.map((m, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex items-center gap-2 sm:w-[42%] flex-shrink-0">
+                        <span className="bg-emerald-50 text-emerald-700 font-black text-xs px-2.5 py-1 rounded-lg flex-shrink-0" dir="ltr">{m.time || '—'}</span>
+                        <span className="font-bold text-gray-800 text-xs sm:text-sm truncate">
+                            {translateTeam(m.teamA)} <span className="text-gray-300">×</span> {translateTeam(m.teamB)}
+                        </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 sm:flex-1 sm:border-r sm:border-gray-100 sm:pr-3">
+                        {m.channels.map((ch, ci) => (
+                            <span key={ci} className="bg-gray-100 text-gray-600 text-[10px] sm:text-[11px] font-bold px-2 py-1 rounded-md whitespace-nowrap" dir="ltr">{ch}</span>
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// "دليل beIN" — now/next program per beIN channel (bein-channels EPG).
+const BeinGuidePanel: React.FC = () => {
+    const { fetchWithCache } = useCache();
+    const [items, setItems] = useState<BeinGuideChannel[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetchWithCache('bein-guide', fetchBeinGuide, 600000)
+            .then(d => { if (!cancelled) setItems(d); })
+            .catch(() => {})
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
+    }, [fetchWithCache]);
+
+    if (loading) return <PanelSkeleton />;
+    if (items.length === 0) return <EmptyState text="دليل قنوات beIN غير متاح حالياً" />;
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {items.map((ch, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
+                        <h4 className="font-black text-gray-800 text-sm" dir="ltr">{ch.name}</h4>
+                    </div>
+                    {ch.now && (
+                        <div className="flex items-start gap-2 mb-2">
+                            <span className="flex items-center gap-1 bg-red-50 text-red-600 text-[9px] font-black px-2 py-0.5 rounded-md flex-shrink-0 mt-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>الآن
+                            </span>
+                            <p className="text-gray-800 text-xs font-bold leading-snug" dir="ltr">{ch.now.title}</p>
+                        </div>
+                    )}
+                    {ch.next && (
+                        <div className="flex items-start gap-2">
+                            <span className="bg-gray-100 text-gray-500 text-[9px] font-black px-2 py-0.5 rounded-md flex-shrink-0 mt-0.5" dir="ltr">{formatProgTime(ch.next.start)}</span>
+                            <p className="text-gray-500 text-xs font-medium leading-snug" dir="ltr">{ch.next.title}</p>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
 
 // --- Error Reporting Utility ---
 const reportPlaybackError = (data: {
@@ -184,23 +293,50 @@ export const ChannelPlayer = memo(({ channel, onClose }: { channel: any; onClose
 const ChannelsView: React.FC = () => {
     // Changed state type to store the full channel object
     const [selectedChannel, setSelectedChannel] = useState<typeof CHANNELS[0] | null>(null);
+    const [tab, setTab] = useState<ChannelsTab>('grid');
+
+    const tabs: { id: ChannelsTab; label: string }[] = [
+        { id: 'grid', label: 'القنوات الناقلة' },
+        { id: 'broadcasts', label: 'بث اليوم' },
+        { id: 'bein', label: 'دليل beIN' },
+    ];
 
     return (
         <div className="py-10 font-tajawal max-w-7xl mx-auto px-4">
             {selectedChannel && (
-                <ChannelPlayer 
+                <ChannelPlayer
                     channel={selectedChannel}
-                    onClose={() => setSelectedChannel(null)} 
+                    onClose={() => setSelectedChannel(null)}
                 />
             )}
 
             {/* Header */}
-            <div className="flex flex-col items-center mb-12 text-center animate-fadeInUp">
+            <div className="flex flex-col items-center mb-6 text-center animate-fadeInUp">
                 <h2 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 tracking-tight">القنوات الناقلة</h2>
                 <div className="h-1.5 w-24 bg-emerald-600 rounded-full shadow-sm"></div>
                 <p className="mt-4 text-gray-500 font-medium">شاهد قنواتك الرياضية المفضلة بجودة عالية</p>
             </div>
 
+            {/* Tab bar */}
+            <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center justify-center gap-6 sm:gap-9 border-b border-gray-200 mb-8">
+                {tabs.map(t => (
+                    <button
+                        key={t.id}
+                        onClick={() => setTab(t.id)}
+                        className={`relative pb-3 text-sm sm:text-base font-bold whitespace-nowrap flex-shrink-0 transition-colors ${
+                            tab === t.id ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-800'
+                        }`}
+                    >
+                        {t.label}
+                        {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full"></span>}
+                    </button>
+                ))}
+            </div>
+
+            {tab === 'broadcasts' && <BroadcastsPanel />}
+            {tab === 'bein' && <BeinGuidePanel />}
+
+            {tab === 'grid' && (<>
             {/* Live stream embed. Fixed responsive height reserves layout space (no CLS). */}
             <div className="mb-12 animate-fadeInUp">
                 <div className="relative w-full overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-black">
@@ -255,6 +391,7 @@ const ChannelsView: React.FC = () => {
                     </div>
                 ))}
             </div>
+            </>)}
         </div>
     );
 };

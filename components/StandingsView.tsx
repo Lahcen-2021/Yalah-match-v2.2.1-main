@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { fetchYanb8Leagues, Yanb8League, fetchYanb8Standings, fetchLeagueTopScorers, fetchCompetitionBracket } from '../services/api';
+import { fetchYanb8Leagues, Yanb8League, fetchYanb8Standings, fetchLeagueTopScorers, fetchLeagueAssists, fetchLeagueMatchList, fetchCompetitionBracket, USER_TIMEZONE } from '../services/api';
 import { fetchLeagueStandings, LEAGUES as ESPN_LEAGUES } from '../services/espnService';
 import { translateLeague, translateTeam } from '../utils/translations';
 import OptimizedImage from './OptimizedImage';
-import { StandingGroup, Scorer, Standing, CompetitionBracket, BracketTie, BracketStage } from '../types';
+import { StandingGroup, Scorer, Standing, CompetitionBracket, BracketTie, BracketStage, LeagueMatch, Match, MatchStatus } from '../types';
 import { useCache } from '../context/CacheContext';
 import U17AfconStandings from './U17AfconStandings';
 
@@ -14,7 +14,7 @@ interface StandingsViewProps {
     onBackToTournaments?: () => void;
 }
 
-type TabType = 'standings' | 'scorers';
+type TabType = 'standings' | 'scorers' | 'assists' | 'upcoming' | 'finished';
 type SortDirection = 'asc' | 'desc';
 interface SortConfig {
     key: string;
@@ -77,59 +77,128 @@ const GoldTrophy: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
-const TieCard: React.FC<{ tie: BracketTie; big?: boolean; fullWidth?: boolean }> = ({ tie, big, fullWidth }) => {
-    const sides = [tie.home, tie.away];
+// The competition's own cup/logo image at the top of the bracket (World Cup shows the
+// World Cup cup, Champions League its trophy, …). Falls back to the gold trophy SVG when
+// the competition has no logo or the image fails to load.
+const CompetitionCup: React.FC<{ logoUrl?: string; className?: string }> = ({ logoUrl, className }) => (
+    logoUrl
+        ? <OptimizedImage src={logoUrl} alt="" width={128} className={`${className ?? ''} object-contain drop-shadow-md`} fallbackElement={<GoldTrophy className={className} />} />
+        : <GoldTrophy className={className} />
+);
+
+// A tie's kick-off, formatted in the user's timezone → { time: "20:00", date: "19.07.2026" }.
+const formatTieDateTime = (iso: string | null): { time: string; date: string } | null => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    const time = new Intl.DateTimeFormat('en-GB', { timeZone: USER_TIMEZONE, hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+    const date = new Intl.DateTimeFormat('en-GB', { timeZone: USER_TIMEZONE, day: '2-digit', month: '2-digit', year: 'numeric' }).format(d).replace(/\//g, '.');
+    return { time, date };
+};
+
+// Arabic "5 يوليو" round-date shown next to each round label (like the broadcast graphics).
+const formatArabicDay = (iso: string | null): string | null => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return new Intl.DateTimeFormat('ar-EG', { timeZone: USER_TIMEZONE, day: 'numeric', month: 'long' }).format(d);
+};
+
+// Earliest kick-off across a stage's ties → the round's headline date.
+const stageDate = (s: BracketStage): string | null => {
+    const times = s.ties.map(t => t.startTime).filter(Boolean).map(x => new Date(x as string).getTime()).filter(n => !isNaN(n));
+    return times.length ? formatArabicDay(new Date(Math.min(...times)).toISOString()) : null;
+};
+
+// One competitor pill inside a tie card: crest + name + score, winner in gold.
+const TieSide: React.FC<{ side: BracketTie['home']; big?: boolean }> = ({ side, big }) => {
+    const crest = big ? 26 : 20;
     return (
-        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:border-emerald-300 transition-colors ${fullWidth ? 'w-full' : big ? 'w-64' : 'w-44'}`}>
-            {tie.live && (
-                <div className="flex items-center gap-1.5 px-2 pt-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                    <span className="text-[9px] font-black text-red-500">مباشر</span>
-                </div>
-            )}
-            <div className="divide-y divide-gray-100">
-                {sides.map((side, i) => (
-                    <div key={i} className={`flex items-center justify-between gap-1.5 ${big ? 'p-3' : 'p-2'}`}>
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            {side && side.id > 0 ? (
-                                <OptimizedImage src={TEAM_CREST(side.id)} alt={side.name} width={big ? 24 : 18} className={`${big ? 'w-6 h-6' : 'w-[18px] h-[18px]'} object-contain flex-shrink-0`} />
-                            ) : (
-                                <div className={`${big ? 'w-6 h-6' : 'w-[18px] h-[18px]'} rounded-full bg-gray-100 flex-shrink-0`}></div>
-                            )}
-                            <span className={`truncate ${big ? 'text-sm' : 'text-[11px]'} ${side?.winner ? 'font-black text-gray-900' : 'font-bold text-gray-500'}`}>
-                                {side?.name ? translateTeam(side.name) : '—'}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                            {side?.penalties != null && (
-                                <span className="text-[9px] font-bold text-gray-400">({side.penalties})</span>
-                            )}
-                            <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-md text-[11px] font-black ${
-                                side?.winner ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                                {side?.score != null ? side.score : '-'}
-                            </span>
-                        </div>
-                    </div>
-                ))}
+        <div className="flex items-center justify-between gap-1.5 px-2 py-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+                {side && side.id > 0 ? (
+                    <span className={`grid place-items-center rounded-md overflow-hidden bg-white/95 shrink-0 shadow-sm ${big ? 'w-7 h-5' : 'w-6 h-[15px]'}`}>
+                        <OptimizedImage src={TEAM_CREST(side.id)} alt={side.name} width={crest} className="w-full h-full object-cover" />
+                    </span>
+                ) : (
+                    <span className={`rounded-md bg-white/10 shrink-0 ${big ? 'w-7 h-5' : 'w-6 h-[15px]'}`}></span>
+                )}
+                <span className={`truncate ${big ? 'text-sm' : 'text-[11px]'} ${side?.winner ? 'font-black text-amber-300' : 'font-bold text-slate-200/90'}`}>
+                    {side?.name ? translateTeam(side.name) : '—'}
+                </span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+                {side?.penalties != null && <span className="text-[9px] font-bold text-slate-400">({side.penalties})</span>}
+                {side?.score != null && (
+                    <span className={`inline-flex items-center justify-center min-w-[18px] h-5 px-1 rounded text-[11px] font-black ${
+                        side?.winner ? 'bg-amber-400 text-slate-900' : 'bg-white/10 text-slate-300'
+                    }`}>{side.score}</span>
+                )}
             </div>
         </div>
     );
 };
 
-const StageColumn: React.FC<{ name: string; ties: BracketTie[] }> = ({ name, ties }) => (
-    <div className="flex flex-col flex-shrink-0">
-        <div className="text-center text-[10px] font-black text-gray-400 uppercase mb-3 whitespace-nowrap">{name}</div>
-        <div className="flex-1 flex flex-col justify-around gap-4">
+const TieCard: React.FC<{ tie: BracketTie; big?: boolean; fullWidth?: boolean }> = ({ tie, big, fullWidth }) => {
+    const dt = formatTieDateTime(tie.startTime);
+    return (
+        <div className={`relative rounded-xl overflow-hidden bg-white/[0.06] border transition-colors ${
+            tie.live ? 'border-red-400/60' : 'border-white/10 hover:border-amber-300/40'
+        } ${fullWidth ? 'w-full' : big ? 'w-60' : 'w-40'} backdrop-blur-sm shadow-lg shadow-black/20`}>
+            {tie.live && (
+                <span className="absolute top-1 left-1 flex items-center gap-1 z-10">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                    <span className="text-[8px] font-black text-red-400">مباشر</span>
+                </span>
+            )}
+            <div className="divide-y divide-white/10">
+                <TieSide side={tie.home} big={big} />
+                <TieSide side={tie.away} big={big} />
+            </div>
+            {dt && (big || fullWidth) && (
+                <div className="text-center px-2 py-1 bg-black/20 border-t border-white/10 text-[9px] font-bold text-slate-400" dir="ltr">
+                    {dt.date} · {dt.time}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Bracket connector elbows between two rounds. `feed` is the direction the winners
+// advance: 'in-left' (matches on the right, bar on the left toward centre) or
+// 'in-right' (matches on the left, bar on the right). Geometry aligns with the
+// round columns' justify-around spacing, so elbows meet each flag row precisely.
+const Connector: React.FC<{ count: number; feed: 'in-left' | 'in-right'; labelH: string }> = ({ count, feed, labelH }) => (
+    <div className="hidden md:flex flex-col shrink-0 w-6">
+        <div className={labelH} />
+        <div className="flex-1 flex flex-col">
+            {Array.from({ length: count }).map((_, i) => (
+                <div key={i} className="relative flex-1">
+                    <div className="absolute inset-x-0 top-1/4 border-t border-amber-300/40" />
+                    <div className="absolute inset-x-0 top-3/4 border-t border-amber-300/40" />
+                    <div className={`absolute top-1/4 bottom-1/4 border-l border-amber-300/40 ${feed === 'in-left' ? 'left-0' : 'right-0'}`} />
+                    <div className={`absolute top-1/2 w-1/2 border-t border-amber-300/40 ${feed === 'in-left' ? 'left-0' : 'right-0'}`} />
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+// One round of the tree: gold label + date, then evenly-spaced tie cards.
+const RoundCol: React.FC<{ name: string; date?: string | null; ties: BracketTie[]; labelH: string }> = ({ name, date, ties, labelH }) => (
+    <div className="flex flex-col shrink-0">
+        <div className={`${labelH} flex flex-col items-center justify-center`}>
+            <span className="text-[11px] font-black text-amber-300 whitespace-nowrap">{name}</span>
+            {date && <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">{date}</span>}
+        </div>
+        <div className="flex-1 flex flex-col justify-around">
             {ties.map((tie, i) => <TieCard key={i} tie={tie} />)}
         </div>
     </div>
 );
 
-// Mobile bracket: FIFA-app style — one round at a time behind scrollable stage
-// pills, with full-width tie cards stacked vertically. The wide two-sided tree
-// needs ~1500px and is unusable at 375px.
-const KnockoutBracketMobile: React.FC<{ bracket: CompetitionBracket }> = ({ bracket }) => {
+// Mobile bracket: one round at a time behind scrollable stage pills.
+const KnockoutBracketMobile: React.FC<{ bracket: CompetitionBracket; logoUrl?: string }> = ({ bracket, logoUrl }) => {
     const stages = bracket.stages;
     const [activeNum, setActiveNum] = useState<number>(() => {
         const current = stages.find(s => s.isCurrent) || stages[0];
@@ -137,6 +206,7 @@ const KnockoutBracketMobile: React.FC<{ bracket: CompetitionBracket }> = ({ brac
     });
     const stage = stages.find(s => s.num === activeNum) || stages[0];
     if (!stage) return null;
+    const date = stageDate(stage);
 
     return (
         <div>
@@ -145,26 +215,25 @@ const KnockoutBracketMobile: React.FC<{ bracket: CompetitionBracket }> = ({ brac
                     <button
                         key={s.num}
                         onClick={() => setActiveNum(s.num)}
-                        className={`px-4 py-2 text-xs font-black rounded-full whitespace-nowrap flex-shrink-0 transition-all ${
+                        className={`px-3 py-1.5 text-[10px] sm:text-xs font-black rounded-full whitespace-nowrap flex-shrink-0 transition-all ${
                             s.num === stage.num
-                            ? 'bg-emerald-600 text-white shadow-md'
-                            : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+                            ? 'bg-amber-400 text-slate-900 shadow-md'
+                            : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
                         }`}
                     >
                         {s.name}
                     </button>
                 ))}
             </div>
-            {stage.isFinal && (
-                <div className="flex justify-center mb-2">
-                    <GoldTrophy className="w-12 h-12 drop-shadow-md" />
-                </div>
-            )}
+            <div className="flex flex-col items-center mb-3">
+                {stage.isFinal && <CompetitionCup logoUrl={logoUrl} className="w-14 h-14 mb-1" />}
+                {date && <span className="text-[10px] font-bold text-slate-400">{date}</span>}
+            </div>
             <div className="space-y-3">
                 {stage.ties.map((tie, i) => (
                     <div key={i}>
                         {stage.isFinal && stage.ties.length > 1 && (
-                            <div className="text-center text-[10px] font-black text-gray-400 uppercase mb-1.5">
+                            <div className="text-center text-[10px] font-black text-amber-300 mb-1.5">
                                 {i === 0 ? stage.name : 'تحديد المركز الثالث'}
                             </div>
                         )}
@@ -176,62 +245,113 @@ const KnockoutBracketMobile: React.FC<{ bracket: CompetitionBracket }> = ({ brac
     );
 };
 
-const KnockoutBracket: React.FC<{ bracket: CompetitionBracket }> = ({ bracket }) => {
-    // The final stage (which may also carry the third-place play-off as a second tie)
-    // and any single-tie stage go in the center column; multi-tie rounds are split in
-    // half and mirrored on both sides, so the bracket reads outside-in like the FIFA layout.
+const KnockoutBracket: React.FC<{ bracket: CompetitionBracket; logoUrl?: string }> = ({ bracket, logoUrl }) => {
+    const LABEL_H = 'h-12'; // shared header height so both halves + connectors align
+
+    // Final (and any single-tie stage) sit in the centre; multi-tie rounds split in
+    // half and mirror on both sides so the tree reads outside-in toward the trophy.
     const centerStages: BracketStage[] = [];
     const sideStages: BracketStage[] = [];
     bracket.stages.forEach(s => ((s.isFinal || s.ties.length <= 1) ? centerStages : sideStages).push(s));
 
-    const rightColumns = sideStages.map(s => ({ name: s.name, ties: s.ties.slice(0, Math.ceil(s.ties.length / 2)) }));
-    const leftColumns = [...sideStages].reverse().map(s => ({ name: s.name, ties: s.ties.slice(Math.ceil(s.ties.length / 2)) }));
+    // Physical left→centre order: earliest round outermost. Right side mirrors it.
+    const leftHalf = sideStages.map(s => ({ name: s.name, date: stageDate(s), ties: s.ties.slice(0, Math.ceil(s.ties.length / 2)) }));
+    const rightHalf = sideStages.map(s => ({ name: s.name, date: stageDate(s), ties: s.ties.slice(Math.ceil(s.ties.length / 2)) }));
 
     const finalStage = centerStages.find(s => s.isFinal) || centerStages[0];
+    const thirdPlace = finalStage?.ties.slice(1) || [];
     const otherCenter = centerStages.filter(s => s !== finalStage);
+
+    // Champion = the winning side of the final, shown in the trophy slot.
+    const champion = finalStage && finalStage.ties[0]
+        ? [finalStage.ties[0].home, finalStage.ties[0].away].find(s => s?.winner) || null
+        : null;
 
     return (
         <div className="mb-8">
             <div className="flex items-center gap-2 mb-4 px-1">
-                <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
-                <h4 className="text-gray-900 font-black text-lg">الأدوار الإقصائية</h4>
-            </div>
-            {/* Mobile: stage tabs + vertical list */}
-            <div className="md:hidden bg-white sm:rounded-2xl border-y sm:border border-gray-200 sm:shadow-sm p-3">
-                <KnockoutBracketMobile bracket={bracket} />
+                <div className="w-1.5 h-6 bg-amber-400 rounded-full"></div>
+                <h4 className="text-gray-900 font-black text-lg">الطريق إلى النهائي</h4>
             </div>
 
-            {/* Desktop: full two-sided tree */}
-            <div className="hidden md:block bg-white sm:rounded-2xl border-y sm:border border-gray-200 sm:shadow-sm p-4 overflow-x-auto no-scrollbar">
-                <div className="flex items-stretch gap-4 min-w-max mx-auto w-fit py-2">
-                    {rightColumns.map((col, i) => <StageColumn key={`r-${i}`} name={col.name} ties={col.ties} />)}
+            {/* Premium dark tree container (both mobile + desktop live inside it) */}
+            <div className="relative rounded-2xl border border-white/10 overflow-hidden shadow-xl"
+                 style={{ background: 'radial-gradient(1200px 500px at 50% -10%, #16346e 0%, transparent 60%), linear-gradient(160deg, #0b1c44 0%, #0a1636 55%, #081026 100%)' }}>
+                {/* soft glows */}
+                <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[560px] h-[560px] rounded-full bg-amber-400/10 blur-3xl" />
+                <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(90deg,#fff 0 1px,transparent 1px 44px)' }} />
 
-                    {/* Center: trophy + final (+ third-place play-off) */}
-                    <div className="flex flex-col items-center justify-center flex-shrink-0 px-2 gap-4">
-                        <GoldTrophy className="w-14 h-14 drop-shadow-md" />
-                        {finalStage && (
-                            <div className="flex flex-col gap-4">
-                                <div>
-                                    <div className="text-center text-[11px] font-black text-gray-500 uppercase mb-2">{finalStage.name}</div>
-                                    <TieCard tie={finalStage.ties[0]} big />
+                <div className="relative p-3 sm:p-5">
+                    {/* Header banner */}
+                    <div className="flex flex-col items-center text-center mb-4">
+                        <div className="flex items-center gap-2 text-amber-300">
+                            <span className="text-amber-400">✦</span>
+                            <span className="text-sm sm:text-lg font-black tracking-wide">الطريق إلى النهائي</span>
+                            <span className="text-amber-400">✦</span>
+                        </div>
+                    </div>
+
+                    {/* Mobile */}
+                    <div className="md:hidden">
+                        <KnockoutBracketMobile bracket={bracket} logoUrl={logoUrl} />
+                    </div>
+
+                    {/* Desktop two-sided tree, dir=ltr so elbows/borders stay physical while
+                        Arabic labels inside each cell still render RTL. */}
+                    <div className="hidden md:block overflow-x-auto no-scrollbar" dir="ltr">
+                        <div className="flex items-stretch justify-center gap-0 min-w-max w-fit mx-auto min-h-[520px]">
+                            {/* LEFT half feeds toward centre (bar on the right of each connector) */}
+                            {leftHalf.map((col, i) => (
+                                <React.Fragment key={`l-${i}`}>
+                                    <RoundCol name={col.name} date={col.date} ties={col.ties} labelH={LABEL_H} />
+                                    <Connector count={leftHalf[i + 1]?.ties.length ?? 1} feed="in-right" labelH={LABEL_H} />
+                                </React.Fragment>
+                            ))}
+
+                            {/* Centre: champion + trophy + final + third place */}
+                            <div className="flex flex-col items-center justify-center shrink-0 px-3 gap-3">
+                                <div className={`flex flex-col items-center rounded-2xl px-5 py-3 border ${champion ? 'border-amber-300/50 bg-amber-400/10' : 'border-white/10 bg-white/5'}`}>
+                                    {champion && champion.id > 0 && (
+                                        <span className="w-12 h-8 rounded-md overflow-hidden bg-white/95 shadow mb-1">
+                                            <OptimizedImage src={TEAM_CREST(champion.id)} alt={champion.name} width={48} className="w-full h-full object-cover" />
+                                        </span>
+                                    )}
+                                    <span className="text-[11px] font-black text-amber-300">{champion ? translateTeam(champion.name) : 'البطل'}</span>
+                                    {champion && <span className="text-[9px] font-black text-amber-400/80 tracking-widest">WIN</span>}
                                 </div>
-                                {finalStage.ties.slice(1).map((tie, i) => (
-                                    <div key={i}>
-                                        <div className="text-center text-[10px] font-black text-gray-400 uppercase mb-2">تحديد المركز الثالث</div>
+
+                                <CompetitionCup logoUrl={logoUrl} className="w-20 h-20 sm:w-24 sm:h-24" />
+
+                                {finalStage && finalStage.ties[0] && (
+                                    <div className="w-full">
+                                        <div className="text-center text-[11px] font-black text-amber-300 mb-2">{finalStage.name}</div>
+                                        <TieCard tie={finalStage.ties[0]} big />
+                                    </div>
+                                )}
+
+                                {thirdPlace.map((tie, i) => (
+                                    <div key={i} className="w-full">
+                                        <div className="text-center text-[10px] font-black text-slate-400 mb-1.5">المركز الثالث</div>
                                         <TieCard tie={tie} />
                                     </div>
                                 ))}
+                                {otherCenter.map((s, si) => (
+                                    <div key={si} className="w-full">
+                                        <div className="text-center text-[10px] font-black text-slate-400 mb-1.5">{s.name}</div>
+                                        {s.ties.map((tie, i) => <TieCard key={i} tie={tie} />)}
+                                    </div>
+                                ))}
                             </div>
-                        )}
-                        {otherCenter.map((s, si) => (
-                            <div key={si}>
-                                <div className="text-center text-[10px] font-black text-gray-400 uppercase mb-2">{s.name}</div>
-                                {s.ties.map((tie, i) => <TieCard key={i} tie={tie} />)}
-                            </div>
-                        ))}
-                    </div>
 
-                    {leftColumns.map((col, i) => <StageColumn key={`l-${i}`} name={col.name} ties={col.ties} />)}
+                            {/* RIGHT half mirrors the left (bar on the left of each connector) */}
+                            {[...rightHalf].reverse().map((col, i, arr) => (
+                                <React.Fragment key={`r-${i}`}>
+                                    <Connector count={arr[i - 1]?.ties.length ?? col.ties.length} feed="in-left" labelH={LABEL_H} />
+                                    <RoundCol name={col.name} date={col.date} ties={col.ties} labelH={LABEL_H} />
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -294,6 +414,8 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
     const [standingGroups, setStandingGroups] = useState<StandingGroup[]>([]);
     const [bracket, setBracket] = useState<CompetitionBracket | null>(null);
     const [scorers, setScorers] = useState<Scorer[]>([]);
+    const [assists, setAssists] = useState<Scorer[]>([]);
+    const [leagueMatches, setLeagueMatches] = useState<LeagueMatch[]>([]);
 
     // Loading States
     const [loadingData, setLoadingData] = useState(false);
@@ -359,6 +481,16 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
                 const data = await fetchWithCache(`scorers-${leagueId}`, () => fetchLeagueTopScorers(leagueId), TTL);
                 setScorers(data);
                 if (data.length === 0) setError('لا توجد قائمة هدافين متاحة');
+            } else if (tab === 'assists') {
+                const data = await fetchWithCache(`assists-${leagueId}`, () => fetchLeagueAssists(leagueId), TTL);
+                setAssists(data);
+                if (data.length === 0) setError('لا توجد قائمة صناع اللعب متاحة');
+            } else if (tab === 'upcoming' || tab === 'finished') {
+                // Both match tabs share one fetch; they just filter it differently.
+                const data = await fetchWithCache(`matches-${leagueId}`, () => fetchLeagueMatchList(leagueId), 120000);
+                setLeagueMatches(data);
+                const relevant = data.filter(m => tab === 'upcoming' ? m.state !== 'finished' : m.state === 'finished');
+                if (relevant.length === 0) setError(tab === 'upcoming' ? 'لا توجد مباريات قادمة' : 'لا توجد مباريات منتهية');
             }
         } catch (err) {
             setError('حدث خطأ أثناء جلب البيانات');
@@ -400,7 +532,9 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
                 }
 
                 if (!defaultLeague) {
-                    defaultLeague = allLeagues.find(l => l.id === '7' || l.name.includes('Premier League')) || allLeagues[0];
+                    // The list is ordered with currently/recently played competitions first,
+                    // so the top entry is the most relevant default.
+                    defaultLeague = allLeagues[0];
                 }
 
                 if (defaultLeague) {
@@ -477,7 +611,8 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
     // How many best-thirds advance: 8 in a 12-group World Cup format, 4 otherwise.
     const thirdsQualifyCount = standingGroups.length >= 12 ? 8 : 4;
 
-    const renderScorersTable = () => (
+    // Shared player-ranking table for both top scorers and top assist providers.
+    const renderPlayerStatTable = (list: Scorer[], valueLabel: string) => (
         <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 animate-fadeInUp">
              <div className="overflow-x-auto">
                 <table className="w-full text-right">
@@ -486,11 +621,11 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
                             <th className="px-3 py-3 text-center w-12">#</th>
                             <th className="px-3 py-3">اللاعب</th>
                             <th className="px-3 py-3">الفريق</th>
-                            <th className="px-3 py-3 text-center">الأهداف</th>
+                            <th className="px-3 py-3 text-center">{valueLabel}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                        {scorers.map((scorer) => (
+                        {list.map((scorer) => (
                             <tr key={`${scorer.player.id}-${scorer.rank}`} className="group hover:bg-gray-50 transition-colors">
                                 <td className="px-3 py-2 text-center">
                                     <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-[10px] font-black ${scorer.rank <= 3 ? 'bg-[#00bfa5] text-white' : 'text-gray-500 bg-gray-100'}`}>
@@ -499,8 +634,14 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
                                 </td>
                                 <td className="px-3 py-2">
                                     <div className="flex items-center gap-2">
-                                         <div className="w-7 h-7 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                                            <OptimizedImage src={scorer.player.imageUrl || ''} alt={scorer.player.name} width={28} className="w-full h-full object-cover" />
+                                         <div className="w-7 h-7 flex-shrink-0 rounded-full bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center">
+                                            <OptimizedImage
+                                                src={scorer.player.imageUrl || ''}
+                                                alt={scorer.player.name}
+                                                width={28}
+                                                className="w-full h-full object-cover"
+                                                fallbackElement={<span className="text-[11px] font-black text-gray-400 uppercase">{scorer.player.name?.trim().charAt(0) || '?'}</span>}
+                                            />
                                          </div>
                                          <span className="font-bold text-gray-800 text-xs">{scorer.player.name}</span>
                                     </div>
@@ -508,7 +649,7 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
                                 <td className="px-3 py-2">
                                     <div className="flex items-center gap-1">
                                          <OptimizedImage src={scorer.team.logoUrl} alt={scorer.team.name} width={16} className="w-4 h-4 object-contain" />
-                                         <span className="text-gray-600 text-[10px] font-bold">{scorer.team.name}</span>
+                                         <span className="text-gray-600 text-[10px] font-bold">{translateTeam(scorer.team.name)}</span>
                                     </div>
                                 </td>
                                 <td className="px-3 py-2 text-center">
@@ -521,6 +662,74 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
             </div>
         </div>
     );
+
+    // LeagueMatch (this tab's shape) → Match (what onMatchClick / the detail view expect).
+    const leagueMatchToMatch = (m: LeagueMatch): Match => ({
+        id: m.id,
+        channel: '',
+        league: translateLeague(selectedLeague?.name || ''),
+        leagueCode: '',
+        teamA: { name: m.home.name, logoUrl: TEAM_CREST(m.home.id) },
+        teamB: { name: m.away.name, logoUrl: TEAM_CREST(m.away.id) },
+        scoreA: m.homeScore ?? 0,
+        scoreB: m.awayScore ?? 0,
+        status: m.state === 'finished' ? MatchStatus.FINISHED : m.state === 'live' ? MatchStatus.LIVE : MatchStatus.UPCOMING,
+        statusText: m.statusText,
+        utcDate: m.startTime || new Date().toISOString(),
+        round: m.round,
+    });
+
+    // Fixture list for the upcoming/finished tabs. `finished` toggles score vs kickoff display.
+    const renderMatchList = (finished: boolean) => {
+        const list = leagueMatches
+            .filter(m => finished ? m.state === 'finished' : m.state !== 'finished')
+            .sort((a, b) => {
+                const ta = a.startTime ? new Date(a.startTime).getTime() : 0;
+                const tb = b.startTime ? new Date(b.startTime).getTime() : 0;
+                return finished ? tb - ta : ta - tb; // finished: newest first; upcoming: soonest first
+            });
+        return (
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 divide-y divide-gray-50 animate-fadeInUp">
+                {list.map((m) => {
+                    const dt = formatTieDateTime(m.startTime);
+                    return (
+                        <div
+                            key={m.id}
+                            onClick={onMatchClick ? () => onMatchClick(leagueMatchToMatch(m)) : undefined}
+                            className={`flex items-center gap-2 p-3 hover:bg-gray-50 transition-colors ${onMatchClick ? 'cursor-pointer' : ''}`}
+                        >
+                            {/* Home */}
+                            <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
+                                <span className="font-bold text-gray-800 text-xs sm:text-sm truncate text-left">{translateTeam(m.home.name)}</span>
+                                <OptimizedImage src={TEAM_CREST(m.home.id)} alt={m.home.name} width={24} className="w-6 h-6 object-contain flex-shrink-0" />
+                            </div>
+                            {/* Score / time */}
+                            <div className="flex-shrink-0 text-center min-w-[64px]">
+                                {m.state === 'finished' && m.homeScore != null ? (
+                                    <span className="inline-block font-black text-gray-900 text-sm bg-gray-100 rounded-lg px-2.5 py-1" dir="ltr">
+                                        {m.homeScore} - {m.awayScore}
+                                    </span>
+                                ) : m.state === 'live' ? (
+                                    <span className="inline-flex items-center gap-1 font-black text-red-500 text-sm" dir="ltr">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                        {m.homeScore != null ? `${m.homeScore} - ${m.awayScore}` : 'مباشر'}
+                                    </span>
+                                ) : (
+                                    <span className="inline-block font-black text-emerald-600 text-sm" dir="ltr">{dt?.time || '—'}</span>
+                                )}
+                                {dt && <span className="block text-[9px] font-bold text-gray-400 mt-0.5" dir="ltr">{dt.date}</span>}
+                            </div>
+                            {/* Away */}
+                            <div className="flex-1 flex items-center gap-2 min-w-0">
+                                <OptimizedImage src={TEAM_CREST(m.away.id)} alt={m.away.name} width={24} className="w-6 h-6 object-contain flex-shrink-0" />
+                                <span className="font-bold text-gray-800 text-xs sm:text-sm truncate">{translateTeam(m.away.name)}</span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
 
     const renderTableHead = (sortable: boolean, compact: boolean) => (
         <thead>
@@ -562,7 +771,7 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
     // FIFA-style tournament layout: knockout bracket, then group tables, then best-thirds.
     const renderCupLayout = () => (
         <div className="animate-fadeInUp">
-            {bracket && <KnockoutBracket bracket={bracket} />}
+            {bracket && <KnockoutBracket bracket={bracket} logoUrl={selectedLeague?.logoUrl} />}
 
             {standingGroups.length > 0 && (
                 <div className="mb-8">
@@ -650,7 +859,10 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
 
         switch (activeTab) {
             case 'standings': return isCupCompetition ? renderCupLayout() : renderLeagueTable();
-            case 'scorers': return renderScorersTable();
+            case 'scorers': return renderPlayerStatTable(scorers, 'الأهداف');
+            case 'assists': return renderPlayerStatTable(assists, 'صناعة');
+            case 'upcoming': return renderMatchList(false);
+            case 'finished': return renderMatchList(true);
             default: return null;
         }
     };
@@ -660,7 +872,7 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
     }
 
     return (
-        <div className="py-2 font-tajawal w-full mx-auto">
+        <div className="py-2 font-tajawal w-full max-w-[1600px] mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-start">
 
                 {/* Main Content (Left in RTL) */}
@@ -694,22 +906,28 @@ const StandingsView: React.FC<StandingsViewProps> = ({ initialLeagueId, onMatchC
                             </div>
                         </div>
 
-                        {/* Navigation Tabs - Optimized for Mobile Scroll */}
-                        <div className="mt-4 flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-2 sm:gap-3 border-t border-gray-200 pt-4 justify-start sm:justify-end pb-1">
+                        {/* Underline tab bar — anchored to the right (RTL start). Five Arabic
+                            labels (two are long) can't fit one readable line on a phone, so the
+                            bar wraps on mobile to keep every tab visible; single line from sm up. */}
+                        <div className="mt-4 flex flex-wrap sm:flex-nowrap sm:overflow-x-auto no-scrollbar items-center gap-x-3.5 gap-y-2.5 sm:gap-8 border-t border-gray-200 pt-3 justify-start">
                             {[
                                 { id: 'standings', label: 'الترتيب' },
-                                { id: 'scorers', label: 'الهدافين' }
+                                { id: 'scorers', label: 'الهدافين' },
+                                { id: 'assists', label: 'صناع اللعب' },
+                                { id: 'upcoming', label: 'المباريات القادمة' },
+                                { id: 'finished', label: 'المباريات المنتهية' },
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => handleTabChange(tab.id as TabType)}
-                                    className={`px-4 py-2 text-sm font-bold transition-all rounded-full whitespace-nowrap flex-shrink-0 ${
-                                        activeTab === tab.id
-                                        ? 'bg-emerald-600 text-white shadow-md'
-                                        : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-800'
+                                    className={`relative pb-2.5 text-[11px] sm:text-base font-bold whitespace-nowrap flex-shrink-0 transition-colors ${
+                                        activeTab === tab.id ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-800'
                                     }`}
                                 >
                                     {tab.label}
+                                    {activeTab === tab.id && (
+                                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full"></span>
+                                    )}
                                 </button>
                             ))}
                         </div>

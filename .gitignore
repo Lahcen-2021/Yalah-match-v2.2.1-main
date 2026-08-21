@@ -13,6 +13,22 @@ dist-ssr
 *.local
 .env
 
+# Stale scrape snapshots — regenerate with the fetch_*/test_* scripts if needed.
+# The live backend serves this data now, so they don't belong in the repo.
+# (bein_epg.json is intentionally NOT ignored — server.ts reads it as a runtime fallback.)
+all_competitions.json
+all_competitions_en.json
+espn_standings.json
+espn_stats.json
+comps.json
+m.json
+news.json
+ww.json
+ww2.json
+
+# Packaged WordPress theme zips (build artifacts)
+*.zip
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

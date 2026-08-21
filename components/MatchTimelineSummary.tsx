@@ -4,22 +4,74 @@ import { Match, TimelineEvent } from '../types';
 import { fetchKeyEvents } from '../services/api';
 import { motion, AnimatePresence } from 'motion/react';
 import OptimizedImage from './OptimizedImage';
-import { 
-  Trophy, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  AlertTriangle, 
-  XOctagon, 
+import {
+  Trophy,
+  ArrowUpRight,
+  ArrowDownLeft,
+  AlertTriangle,
+  XOctagon,
   Clock,
   Info,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  X,
+  Plus,
+  Footprints
 } from 'lucide-react';
 
 const SoccerBallIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c1.33 0 2.57.33 3.66.91l-1.39 2.14c-.16.25-.43.4-.72.4h-3.1c-.29 0-.56-.15-.72-.4L8.34 4.91C9.43 4.33 10.67 4 12 4zM4.91 8.34l2.14 1.39c.25.16.4.43.4.72v3.1c0 .29-.15.56-.4.72l-2.14 1.39C4.33 14.57 4 13.33 4 12s.33-2.57.91-3.66zM12 20c-1.33 0-2.57-.33-3.66-.91l1.39-2.14c.16-.25.43-.4.72-.4h3.1c.29 0 .56.15.72.4l1.39 2.14c-1.09.58-2.33.91-3.66.91zm7.09-4.34l-2.14-1.39c-.25-.16-.4-.43-.4-.72v-3.1c0-.29.15-.56.4-.72l2.14-1.39c.58 1.09.91 2.33.91 3.66s-.33 2.57-.91 3.66zM15.1 12l-1.55 2.38c-.16.25-.43.4-.72.4h-1.66c-.29 0-.56-.15-.72-.4L8.9 12l1.55-2.38c.16-.25.43-.4.72-.4h1.66c.29 0 .56.15.72.4L15.1 12z" />
   </svg>
+);
+
+// --- Legend (الدلالات) icons — a shared visual key for the event timeline. ---
+const BallGlyph = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <SoccerBallIcon className={className} />
+);
+
+// A small football with a coloured status badge (check = scored, X = missed).
+const BallBadge = ({ ballClass, badgeClass, badge }: { ballClass: string; badgeClass: string; badge: 'check' | 'x' }) => (
+  <span className="relative inline-flex items-center justify-center">
+    <SoccerBallIcon className={`w-4 h-4 ${ballClass}`} />
+    <span className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border border-white flex items-center justify-center ${badgeClass}`}>
+      {badge === 'check' ? <Check className="w-2 h-2 text-white" strokeWidth={3.5} /> : <X className="w-2 h-2 text-white" strokeWidth={3.5} />}
+    </span>
+  </span>
+);
+
+const CardGlyph = ({ color }: { color: 'yellow' | 'red' }) => (
+  <span className={`inline-block w-3 h-4 rounded-[2px] shadow-sm ${color === 'yellow' ? 'bg-yellow-400 border border-yellow-500 -rotate-6' : 'bg-red-500 border border-red-600 rotate-6'}`} />
+);
+
+const LEGEND_ITEMS: { label: string; icon: React.ReactNode }[] = [
+  { label: 'تمريرة حاسمة', icon: <Footprints className="w-4 h-4 text-gray-700" /> },
+  { label: 'ركلة جزاء ضائعة', icon: <BallBadge ballClass="text-gray-800" badgeClass="bg-red-500" badge="x" /> },
+  { label: 'ركلة جزاء مسجلة', icon: <BallBadge ballClass="text-emerald-600" badgeClass="bg-emerald-500" badge="check" /> },
+  { label: 'هدف عكسي', icon: <BallGlyph className="w-4 h-4 text-red-500" /> },
+  { label: 'هدف', icon: <BallGlyph className="w-4 h-4 text-emerald-600" /> },
+  { label: 'إصابة', icon: <Plus className="w-4 h-4 text-red-500" strokeWidth={4} /> },
+  { label: 'خروج لاعب', icon: <ArrowRight className="w-4 h-4 text-red-500" strokeWidth={3} /> },
+  { label: 'دخول لاعب', icon: <ArrowLeft className="w-4 h-4 text-emerald-600" strokeWidth={3} /> },
+  { label: 'بطاقة حمراء', icon: <CardGlyph color="red" /> },
+  { label: 'بطاقة صفراء', icon: <CardGlyph color="yellow" /> },
+];
+
+const EventLegend: React.FC = () => (
+  <div className="mb-8 rounded-2xl border border-gray-100 bg-gray-50/60 px-4 py-4" dir="rtl">
+    <h5 className="text-right font-black text-sm text-gray-900 mb-3">الدلالات</h5>
+    <div className="flex flex-wrap justify-center gap-x-5 gap-y-3">
+      {LEGEND_ITEMS.map(item => (
+        <span key={item.label} className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-gray-600">
+          <span className="w-5 h-5 flex items-center justify-center shrink-0">{item.icon}</span>
+          {item.label}
+        </span>
+      ))}
+    </div>
+  </div>
 );
 
 interface MatchTimelineSummaryProps {
@@ -68,12 +120,26 @@ const MatchTimelineSummary: React.FC<MatchTimelineSummaryProps> = ({ match, deta
     switch(event.type) {
       case 'goal':
         return (
-          <div className="w-10 h-10 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
-            {event.playerInImage ? (
-                <OptimizedImage src={event.playerInImage} alt="" className="w-full h-full object-cover" width={40} />
-            ) : (
-                <SoccerBallIcon className="w-6 h-6 text-emerald-600" />
-            )}
+          <div className="relative">
+            <div className={`w-10 h-10 rounded-full bg-white border-2 flex items-center justify-center shadow-lg overflow-hidden ${
+              event.isOwnGoal ? 'border-red-500 shadow-red-500/20' : 'border-emerald-500 shadow-emerald-500/20'
+            }`}>
+              {event.playerInImage ? (
+                  <OptimizedImage src={event.playerInImage} alt="" className="w-full h-full object-cover" width={40} />
+              ) : (
+                  <SoccerBallIcon className={`w-6 h-6 ${event.isOwnGoal ? 'text-red-500' : 'text-emerald-600'}`} />
+              )}
+            </div>
+            {/* Badge marks a penalty goal (green check) or an own goal (red). */}
+            {event.isOwnGoal ? (
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-red-500 border-2 border-white flex items-center justify-center">
+                <X className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
+              </span>
+            ) : event.isPenalty ? (
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
+                <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
+              </span>
+            ) : null}
           </div>
         );
       case 'yellow-card':
@@ -143,6 +209,7 @@ const MatchTimelineSummary: React.FC<MatchTimelineSummaryProps> = ({ match, deta
             
             {event.assist && (
               <div className={`flex items-center gap-1 text-[9px] sm:text-xs font-bold text-gray-500 px-1 ${!isTeamA ? 'justify-end' : 'justify-start'} w-full min-w-0`}>
+                <Footprints className="w-3 h-3 text-gray-500 flex-shrink-0" />
                 <span className="opacity-60 flex-shrink-0">صناعة:</span>
                 <span className="text-gray-700 leading-[1.4] sm:leading-tight whitespace-normal break-words min-w-0">{event.assist}</span>
               </div>
@@ -202,6 +269,7 @@ const MatchTimelineSummary: React.FC<MatchTimelineSummaryProps> = ({ match, deta
            style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
       
       <div className="relative z-10">
+        <EventLegend />
         <div className="flex items-start justify-between mb-12 px-4 relative">
           <div className="flex flex-col items-start flex-1">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">صاحب الأرض</span>

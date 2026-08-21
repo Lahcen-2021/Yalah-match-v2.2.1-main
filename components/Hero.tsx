@@ -74,6 +74,11 @@ const Hero: React.FC<HeroProps> = ({ onNewsClick, onOpenArticle }) => {
                                     src={slide.imageUrl}
                                     alt=""
                                     width={768}
+                                    height={288}
+                                    // The visible slide is the likely LCP element — load it eagerly
+                                    // at high priority; the pre-mounted next slide stays lazy.
+                                    loading={i === index ? 'eager' : 'lazy'}
+                                    fetchPriority={i === index ? 'high' : 'auto'}
                                     className="w-full h-full object-cover object-center"
                                 />
                             )}

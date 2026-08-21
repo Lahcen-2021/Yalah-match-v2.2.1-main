@@ -17,6 +17,8 @@ export const LEAGUE_TRANSLATIONS: { [key: string]: string } = {
     "Egyptian Premier League": "الدوري المصري الممتاز",
     "Moroccan Pro League": "الدوري المغربي",
     "AFC Champions League": "دوري أبطال آسيا",
+    // Women's Africa Cup of Nations — 365scores' current season for comp 8746 is "المغرب 2026".
+    "كأس أمم أفريقيا للسيدات": "كأس أمم إفريقيا للسيدات 2026",
     "Club World Cup": "كأس العالم للأندية",
     "UAE Pro League": "الدوري الإماراتي",
     "Moroccan Throne Cup": "كأس العرش المغربي",
@@ -167,6 +169,85 @@ export const TEAM_TRANSLATIONS: { [key: string]: string } = {
     'HNK Rijeka': 'رييكا',
     'Rijeka': 'رييكا',
 
+    // England (additional)
+    'Crystal Palace FC': 'كريستال بالاس',
+    'Crystal Palace': 'كريستال بالاس',
+    'Nottingham Forest FC': 'نوتنغهام فورست',
+    'Nottingham Forest': 'نوتنغهام فورست',
+    'Fulham FC': 'فولهام',
+    'Fulham': 'فولهام',
+    'Brentford FC': 'برينتفورد',
+    'Brentford': 'برينتفورد',
+    'AFC Bournemouth': 'بورنموث',
+    'Bournemouth': 'بورنموث',
+
+    // Italy (additional)
+    'Fiorentina': 'فيورنتينا',
+    'Bologna FC 1909': 'بولونيا',
+    'Bologna': 'بولونيا',
+    'Torino FC': 'تورينو',
+    'Torino': 'تورينو',
+    'Udinese Calcio': 'أودينيزي',
+    'Udinese': 'أودينيزي',
+
+    // Spain (additional)
+    'Rayo Vallecano de Madrid': 'رايو فايكانو',
+    'Rayo Vallecano': 'رايو فايكانو',
+    'CA Osasuna': 'أوساسونا',
+    'Osasuna': 'أوساسونا',
+    'RCD Mallorca': 'مايوركا',
+    'Mallorca': 'مايوركا',
+
+    // Netherlands (Eredivisie)
+    'AFC Ajax': 'أياكس',
+    'Ajax': 'أياكس',
+    'PSV Eindhoven': 'آيندهوفن',
+    'PSV': 'آيندهوفن',
+    'Feyenoord Rotterdam': 'فينورد',
+    'Feyenoord': 'فينورد',
+    'AZ Alkmaar': 'ألكمار',
+    'AZ': 'ألكمار',
+    'FC Twente': 'توينتي',
+    'FC Utrecht': 'أوتريخت',
+
+    // Turkey
+    'Samsunspor': 'سامسونسبور',
+    'Galatasaray SK': 'غلطة سراي',
+    'Galatasaray': 'غلطة سراي',
+    'Fenerbahçe SK': 'فنربخشة',
+    'Fenerbahce': 'فنربخشة',
+    'Beşiktaş JK': 'بشكتاش',
+    'Besiktas': 'بشكتاش',
+    'Trabzonspor': 'طرابزون سبور',
+
+    // Other continental clubs seen in AFC / Europa / Conference competitions
+    'FC Noah': 'نوح',
+    'Noah': 'نوح',
+    'FC Strasbourg': 'ستراسبورج',
+    'Fiorentina ACF': 'فيورنتينا',
+
+    // AFC clubs (Champions League Elite / Two)
+    'Al Wasl': 'الوصل',
+    'Al Wasl FC': 'الوصل',
+    'Esteghlal': 'استقلال طهران',
+    'Esteghlal FC': 'استقلال طهران',
+    'Al Muharraq': 'المحرق',
+    'Muharraq': 'المحرق',
+    'Al Wehdat': 'الوحدات',
+    'Al Ahli SC': 'الأهلي',
+    'Arkadag': 'أركاداغ',
+    'Khaldiya': 'الخالدية',
+    'Andijan': 'أنديجان',
+    'Al Ain': 'العين',
+    'Al Ain FC': 'العين',
+    'Al Sadd': 'السد',
+    'Al Sadd SC': 'السد',
+    'Al Duhail': 'الدحيل',
+    'Al Duhail SC': 'الدحيل',
+    'Al Shorta': 'الشرطة',
+    'Sharjah': 'الشارقة',
+    'Sharjah FC': 'الشارقة',
+
     // National Teams
     'Argentina': 'الأرجنتين',
     'Belgium': 'بلجيكا',
@@ -189,7 +270,46 @@ const translate = (translations: { [key: string]: string }, text: string | null 
     return translations[text] || text;
 };
 
-export const translateLeague = (name: string) => translate(LEAGUE_TRANSLATIONS, name);
+// English competition / stage / round fragments that show up inside otherwise-Arabic
+// league names (e.g. "دوري أبطال آسيا 2 - Preliminary Round"). Replaced in place so the
+// whole label reads Arabic. Order matters: longer / more specific patterns first so
+// "Round of 16" and "Semi-final" win before the bare "Round"/"Final".
+const COMPETITION_PHRASES: [RegExp, string][] = [
+    [/preliminary\s+round/gi, 'الدور التمهيدي'],
+    [/qualifying\s+round/gi, 'الدور التأهيلي'],
+    [/qualifiers?/gi, 'التصفيات'],
+    [/qualification/gi, 'التصفيات'],
+    [/play-?offs?/gi, 'الملحق'],
+    [/group\s+stage/gi, 'دور المجموعات'],
+    [/round\s+of\s+16/gi, 'دور الـ16'],
+    [/round\s+of\s+32/gi, 'دور الـ32'],
+    [/last\s+16/gi, 'دور الـ16'],
+    [/quarter[-\s]?finals?/gi, 'ربع النهائي'],
+    [/semi[-\s]?finals?/gi, 'نصف النهائي'],
+    [/third\s+place/gi, 'المركز الثالث'],
+    [/knockout(\s+stage)?/gi, 'الأدوار الإقصائية'],
+    [/regular\s+season/gi, 'الموسم المنتظم'],
+    [/group\s+([A-H])\b/gi, 'المجموعة $1'],
+    [/matchday/gi, 'الجولة'],
+    [/\bround\b/gi, 'الجولة'],
+    [/\bweek\b/gi, 'الأسبوع'],
+    [/\bfinal\b/gi, 'النهائي'],
+    [/\bapertura\b/gi, 'أبيرتورا'],
+    [/\bclausura\b/gi, 'كلاوسورا'],
+    [/\bfriendly\b/gi, 'ودية'],
+    [/\bfriendlies\b/gi, 'مباريات ودية'],
+];
+
+// Translate a league / competition label: exact-dictionary hit first, then in-place
+// translation of any English round/stage fragments, then tidy the separators left
+// behind (stray "-" or double spaces).
+export const translateLeague = (name?: string | null): string => {
+    if (!name) return '';
+    if (LEAGUE_TRANSLATIONS[name]) return LEAGUE_TRANSLATIONS[name];
+    let out = name;
+    for (const [re, ar] of COMPETITION_PHRASES) out = out.replace(re, ar);
+    return out.replace(/\s*-\s*$/,'').replace(/^\s*-\s*/,'').replace(/\s{2,}/g, ' ').trim();
+};
 export const translateTeam = (name: string) => translate(TEAM_TRANSLATIONS, name);
 
 
@@ -367,12 +487,16 @@ export const getChannelLogo = (channelName: any): string | undefined => {
     // Other channels
     if (normalized.includes('شاهد') || normalized.includes('shahid')) return CHANNEL_LOGOS['shahid'];
     if (normalized.includes('starzplay')) return CHANNEL_LOGOS['starzplay'];
-    if (normalized.includes('أبوظبي') || normalized.includes('ابوظبي') || normalized.includes('abu dhabi')) {
+    // Sources spell it both "أبوظبي" and "أبو ظبي", so match on a space-collapsed
+    // copy — otherwise the spaced form fell through to the Arryadia branch below
+    // and Abu Dhabi Sports rendered the Moroccan channel's logo.
+    const compact = normalized.replace(/\s+/g, '');
+    if (compact.includes('أبوظبي') || compact.includes('ابوظبي') || compact.includes('abudhabi') || normalized.includes('ad sports')) {
          if (normalized.includes('1') || normalized.includes('١')) return CHANNEL_LOGOS['abu1'];
          if (normalized.includes('2') || normalized.includes('٢')) return CHANNEL_LOGOS['abu2'];
          return CHANNEL_LOGOS['abu'];
     }
-    if (normalized.includes('arryadia') || normalized.includes('الرياضية المغربية') || normalized.includes('المغربية الرياضية') || (normalized.includes('الرياضية') && !normalized.includes('أبوظبي') && !normalized.includes('ابوظبي') && !normalized.includes('دبي') && !normalized.includes('الكأس') && !normalized.includes('السعودية'))) return CHANNEL_LOGOS['arryadia'];
+    if (normalized.includes('arryadia') || normalized.includes('الرياضية المغربية') || normalized.includes('المغربية الرياضية') || (normalized.includes('الرياضية') && !compact.includes('أبوظبي') && !compact.includes('ابوظبي') && !normalized.includes('دبي') && !normalized.includes('الكأس') && !normalized.includes('السعودية'))) return CHANNEL_LOGOS['arryadia'];
     if (normalized.includes('أون تايم') || normalized.includes('on time')) return CHANNEL_LOGOS['on'];
     if (normalized.includes('دبي') || normalized.includes('dubai')) return CHANNEL_LOGOS['dubai'];
     if (normalized.includes('mbc')) {
@@ -392,9 +516,9 @@ export const generateMatchSlug = (home: string, away: string, date: string): str
     // Remove characters that might interfere with URL parsing (like / or ?)
     // Keep Arabic chars, letters, numbers, spaces, and hyphens
     const clean = (s: string) => s ? s.trim()
-        .replace(/[^\w\u0600-\u06FF\s-]/g, '') 
+        .replace(/[^\w\u0600-\u06FF\s-]/g, '')
         .replace(/\s+/g, '-') : 'unknown';
-    
+
     let d = '0000-00-00';
     if (date && typeof date === 'string' && date.includes('T')) {
         try {
@@ -406,8 +530,8 @@ export const generateMatchSlug = (home: string, away: string, date: string): str
         // Fallback if date is just YYYY-MM-DD
         d = date;
     }
-    
-    return `/${clean(home)}-vs-${clean(away)}/${d}`;
+
+    return `/\u0645\u0628\u0627\u0631\u0627\u0629-\u0627\u0644\u064A\u0648\u0645/${clean(home)}-\u0636\u062F-${clean(away)}-${d}`;
 };
 
 export const NATIONAL_TEAM_TO_CODE: { [key: string]: string } = {
@@ -461,7 +585,19 @@ export const MAJOR_TOURNAMENT_NAMES_AR = new Set([
     'تصفيات أمم أفريقيا',
     'تصفيات أمم أوروبا',
     'تصفيات كأس آسيا',
-    'مباريات ودية'
+    'مباريات ودية',
+    // South American clubs + the English League Cup. Each competition is listed
+    // under every spelling the sources use — the match feed writes
+    // "كوبا ليبيرتادورس" / "كوبا سود امريكا" / "كأس الكاراباو" while winwin writes
+    // "كوبا ليبرتادوريس" / "كوبا سود أمريكانا" / "كأس رابطة الأندية الإنجليزية",
+    // and this list is matched by substring so both forms must be present.
+    'كوبا ليبرتادوريس',
+    'كوبا ليبيرتادورس',
+    'كوبا سود أمريكانا',
+    'كوبا سود امريكا',
+    'كأس رابطة الأندية الإنجليزية',
+    'كأس الكاراباو',
+    'كاراباو'
 ]);
 
 const _normalizeArabic = (text: string) => {
@@ -469,6 +605,18 @@ const _normalizeArabic = (text: string) => {
         .replace(/[أإآ]/g, 'ا')
         .replace(/ة/g, 'ه')
         .replace(/ى/g, 'ي');
+};
+
+// Women's competitions are filtered out wholesale by UNWANTED_KEYWORDS ('سيدات'/'women'),
+// but the Women's Africa Cup of Nations is explicitly wanted on both the matches and
+// standings pages — detect it so it can be whitelisted before that filter runs.
+export const isWomensAfcon = (leagueName: string): boolean => {
+    if (!leagueName) return false;
+    const n = leagueName.toLowerCase();
+    const norm = _normalizeArabic(leagueName);
+    return norm.includes('افريقيا للسيدات') || norm.includes('امم افريقيا للسيدات')
+        || (n.includes('women') && n.includes('africa') && n.includes('cup'))
+        || n.includes('wafcon') || n.includes('caf.w.nations');
 };
 
 const UNWANTED_KEYWORDS = [
@@ -563,14 +711,15 @@ export const isStandingLeague = (leagueName: string): boolean => {
     
     const name = leagueName.toLowerCase();
     const normalizedName = _normalizeArabic(leagueName);
-    
+
     if (normalizedName.includes('امم افريقيا تحت 17') || normalizedName.includes('إفريقيا تحت 17') || normalizedName.includes('افريقيا تحت 17') || name.includes('u17 africa') || name.includes('u-17 africa')) return true;
+    if (isWomensAfcon(leagueName)) return true;
 
     // 1. إزالة الدوريات والكؤوس النسائية والدرجات الدنيا والشباب أولاً
     for (const keyword of UNWANTED_KEYWORDS) {
         if (name.includes(keyword) || normalizedName.includes(_normalizeArabic(keyword))) return false;
     }
-    
+
     for (const major of STANDINGS_MAJOR_TOURNAMENTS) {
         const normMajor = _normalizeArabic(major);
         // Direct inclusion
@@ -592,12 +741,13 @@ export const isMajorLeague = (leagueName: string): boolean => {
     const normalizedName = _normalizeArabic(leagueName);
     
     if (normalizedName.includes('امم افريقيا تحت 17') || normalizedName.includes('إفريقيا تحت 17') || normalizedName.includes('افريقيا تحت 17') || name.includes('u17 africa') || name.includes('u-17 africa')) return true;
+    if (isWomensAfcon(leagueName)) return true;
 
     // 1. إزالة الدوريات والكؤوس النسائية والدرجات الدنيا والشباب أولاً
     for (const keyword of UNWANTED_KEYWORDS) {
         if (name.includes(keyword) || normalizedName.includes(_normalizeArabic(keyword))) return false;
     }
-    
+
     // 2. Check direct set first (fast)
     if (MAJOR_TOURNAMENT_NAMES_AR.has(leagueName)) return true;
     

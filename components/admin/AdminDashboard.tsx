@@ -5,14 +5,18 @@ import CacheTab from './tabs/CacheTab';
 import SourcesTab from './tabs/SourcesTab';
 import MatchesTab from './tabs/MatchesTab';
 import SettingsTab from './tabs/SettingsTab';
+import LiveTab from './tabs/LiveTab';
+import ChannelsTab from './tabs/ChannelsTab';
 
-type TabId = 'overview' | 'cache' | 'sources' | 'matches' | 'settings';
+type TabId = 'overview' | 'cache' | 'sources' | 'matches' | 'live' | 'channels' | 'settings';
 
 const TABS: { id: TabId; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'cache', label: 'Cache' },
     { id: 'sources', label: 'Sources' },
     { id: 'matches', label: 'Matches' },
+    { id: 'live', label: 'Live' },
+    { id: 'channels', label: 'Channels' },
     { id: 'settings', label: 'Settings' },
 ];
 
@@ -82,6 +86,8 @@ function AdminDashboard({ onLogout, onUnauthorized }: Props) {
                 {tab === 'cache' && <CacheTab status={status} onRefresh={refreshStatus} onUnauthorized={onUnauthorized} />}
                 {tab === 'sources' && <SourcesTab onUnauthorized={onUnauthorized} />}
                 {tab === 'matches' && <MatchesTab status={status} onRefresh={refreshStatus} onUnauthorized={onUnauthorized} />}
+                {tab === 'live' && <LiveTab onUnauthorized={onUnauthorized} />}
+                {tab === 'channels' && <ChannelsTab onUnauthorized={onUnauthorized} />}
                 {tab === 'settings' && <SettingsTab status={status} onRefresh={refreshStatus} onUnauthorized={onUnauthorized} />}
             </main>
         </div>

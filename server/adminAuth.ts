@@ -38,9 +38,28 @@ export function checkPassword(candidate: string): boolean {
     return safeCompare(candidate, getPassword());
 }
 
+// Token generation. A leaked token was otherwise valid for its full 12h with no way
+// to revoke it short of changing the password (which also changes every other
+// operator's session and the derived signing secret). Bumping ADMIN_TOKEN_VERSION
+// invalidates every outstanding token immediately, without touching the password.
+function getTokenVersion(): number {
+    return Number(process.env.ADMIN_TOKEN_VERSION) || 1;
+}
+
+interface AdminTokenPayload {
+    /** Expiry, ms since epoch. */
+    exp: number;
+    /** Issued-at, ms since epoch. Lets a leaked token be spotted in logs by age. */
+    iat: number;
+    /** Generation counter; see getTokenVersion(). */
+    v: number;
+}
+
 export function createAdminToken(): { token: string; expiresAt: number } {
-    const expiresAt = Date.now() + TOKEN_TTL_MS;
-    const payloadB64 = Buffer.from(JSON.stringify({ exp: expiresAt })).toString("base64url");
+    const now = Date.now();
+    const expiresAt = now + TOKEN_TTL_MS;
+    const payload: AdminTokenPayload = { exp: expiresAt, iat: now, v: getTokenVersion() };
+    const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
     return { token: `${payloadB64}.${sign(payloadB64)}`, expiresAt };
 }
 
@@ -51,7 +70,15 @@ export function verifyAdminToken(token: string | undefined | null): boolean {
     if (!safeCompare(sig, sign(payloadB64))) return false;
     try {
         const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString());
-        return typeof payload.exp === "number" && Date.now() < payload.exp;
+        if (typeof payload.exp !== "number" || Date.now() >= payload.exp) return false;
+        // Tokens issued before this field existed have no `v` and are rejected, which
+        // is the intended behaviour: they predate revocation support.
+        if (payload.v !== getTokenVersion()) return false;
+        // Reject a token claiming to be issued in the future, or one whose lifetime
+        // exceeds the configured TTL — both indicate a forged or replayed payload.
+        if (typeof payload.iat !== "number" || payload.iat > Date.now() + 60_000) return false;
+        if (payload.exp - payload.iat > TOKEN_TTL_MS) return false;
+        return true;
     } catch {
         return false;
     }

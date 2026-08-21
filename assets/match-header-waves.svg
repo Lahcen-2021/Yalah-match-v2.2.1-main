@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 900" preserveAspectRatio="xMidYMid slice" fill="none">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#f7f8f9"/>
+      <stop offset="1" stop-color="#e9ecef"/>
+    </linearGradient>
+    <linearGradient id="veil" x1="0" y1="0" x2="1" y2="0.6">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#d9dee3" stop-opacity="0.65"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c9d0d7" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#c9d0d7" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#c9d0d7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="2000" height="900" fill="url(#base)"/>
+
+  <!-- broad silk ribbons -->
+  <g fill="url(#veil)">
+    <path d="M0 260C420 40 700 520 1080 420 1460 320 1700 -40 2000 60L2000 -20 0 -20Z" opacity="0.55"/>
+    <path d="M0 700C380 560 620 860 1020 760 1420 660 1720 900 2000 780L2000 920 0 920Z" opacity="0.5"/>
+    <path d="M180 900C300 560 760 520 900 240 1010 20 1320 -40 1560 20L1560 -40 60 -40 60 900Z" opacity="0.35"/>
+  </g>
+
+  <!-- hairline weave -->
+  <g stroke="url(#hair)" stroke-width="1.1" fill="none">
+    <path d="M760 900C880 620 1180 620 1360 400 1520 200 1760 140 2000 180"/>
+    <path d="M800 900C920 640 1220 640 1400 420 1560 220 1790 165 2000 205"/>
+    <path d="M840 900C960 660 1260 660 1440 440 1600 240 1820 190 2000 230"/>
+    <path d="M880 900C1000 680 1300 680 1480 460 1640 260 1850 215 2000 255"/>
+    <path d="M920 900C1040 700 1340 700 1520 480 1680 280 1880 240 2000 280"/>
+    <path d="M960 900C1080 720 1380 720 1560 500 1720 300 1910 265 2000 305"/>
+    <path d="M1000 900C1120 740 1420 740 1600 520 1760 320 1940 290 2000 330"/>
+  </g>
+
+  <!-- soft top-left light -->
+  <ellipse cx="240" cy="140" rx="620" ry="360" fill="#ffffff" opacity="0.85"/>
+</svg>

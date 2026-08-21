@@ -70,14 +70,14 @@ const reportPlaybackError = (data: {
 };
 
 // --- HLS Player Component ---
-export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-full", onError }: { src: string, autoPlay?: boolean, className?: string, onError?: () => void }) => {
+export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-full", onError, hideNativeFullscreen }: { src: string, autoPlay?: boolean, className?: string, onError?: () => void, hideNativeFullscreen?: boolean }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [dynamicSrc, setDynamicSrc] = useState<string | null>(() => 
         src.includes('/api/stream') ? null : src
     );
     
     // Detect if source is HLS stream or Embed
-    const isStream = src.includes('.m3u8') || src.includes('.ts') || src.includes('/api/stream');
+    const isStream = (src.includes('.m3u8') || src.includes('/api/hls')) || src.includes('.ts') || src.includes('/api/stream');
     
     const [isLoading, setIsLoading] = useState(() => isStream);
     const [error, setError] = useState<string | null>(null);
@@ -133,7 +133,12 @@ export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-
 
         const video = videoRef.current;
         if (!video) return;
-        
+
+        // Autoplay is only permitted while muted, so start muted for a NEW source. Set on
+        // the element rather than as a React prop, so an unmute by the viewer sticks
+        // instead of being reverted by the next render.
+        if (autoPlay) video.muted = true;
+
         const onVideoReady = () => {
             if (isMounted) {
                 setIsLoading(false);
@@ -242,11 +247,15 @@ export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-
 
     if (!isStream) {
         return (
-            <iframe 
-                src={src} 
+            <iframe
+                src={src}
                 className={className}
-                frameBorder="0" 
-                allowFullScreen 
+                frameBorder="0"
+                // NOTE: intentionally NO `allowFullScreen` and no `fullscreen` in `allow`.
+                // An embed's own fullscreen button (YouTube's, for one) takes only the IFRAME
+                // fullscreen, and our logo/caption/ad overlays live outside it — so they'd
+                // vanish for the whole time fullscreen lasts. Blocking it routes viewers to
+                // our own button, which fullscreens the wrapper and keeps the branding on.
                 allow="autoplay; encrypted-media"
             />
         );
@@ -254,12 +263,20 @@ export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-
 
     return (
         <div className={`relative bg-black overflow-hidden shadow-2xl ${className}`}>
-            <video 
+            <video
                 ref={videoRef}
                 className="w-full h-full"
                 controls
+                // The browser's native fullscreen only shows the <video> element itself, dropping
+                // our logo/text/ad overlays which are siblings — steer viewers to the player's own
+                // fullscreen button (LiveStreamHub) instead, which fullscreens the whole wrapper.
+                controlsList={hideNativeFullscreen ? 'nofullscreen' : undefined}
                 playsInline
-                muted={autoPlay}
+                // NOT `muted={autoPlay}`: as a controlled prop React re-asserts muted on every
+                // render, so the moment anything re-rendered this component the viewer's unmute
+                // was silently undone and the audio could never be turned up. Autoplay only
+                // needs muted to be true when playback STARTS, so it's set once on the element
+                // (see the ref effect) and left alone afterwards.
                 poster="https://static.vecteezy.com/system/resources/previews/000/550/535/original/soccer-stadium-field-with-bright-lights-vector.jpg"
             />
             
@@ -294,7 +311,7 @@ export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-
 });
 
 // --- Video.js Player Component ---
-export const VideoJSPlayer = memo(({ src, poster, className, onError }: { src: string, poster?: string, className?: string, onError?: () => void }) => {
+export const VideoJSPlayer = memo(({ src, poster, className, onError, disableFullscreen }: { src: string, poster?: string, className?: string, onError?: () => void, disableFullscreen?: boolean }) => {
     const videoRef = useRef<HTMLDivElement>(null);
     const playerRef = useRef<any>(null);
     const checkIntervalRef = useRef<any>(null);
@@ -322,7 +339,10 @@ export const VideoJSPlayer = memo(({ src, poster, className, onError }: { src: s
                         responsive: true,
                         fluid: true,
                         noReferrer: true,
-                        sources: [{ src, type: src.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' }],
+                        // Hide Video.js's own fullscreen button when our wrapper owns fullscreen —
+                        // its native fullscreen covers only the video and drops our overlays.
+                        ...(disableFullscreen ? { controlBar: { fullscreenToggle: false } } : {}),
+                        sources: [{ src, type: (src.includes('.m3u8') || src.includes('/api/hls')) ? 'application/x-mpegURL' : 'video/mp4' }],
                         poster: poster || "https://static.vecteezy.com/system/resources/previews/000/550/535/original/soccer-stadium-field-with-bright-lights-vector.jpg",
                         playbackRates: [1],
                         html5: {
@@ -353,7 +373,7 @@ export const VideoJSPlayer = memo(({ src, poster, className, onError }: { src: s
             } else {
                 // Update existing player with new source
                 const player = playerRef.current;
-                player.src({ src, type: src.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' });
+                player.src({ src, type: (src.includes('.m3u8') || src.includes('/api/hls')) ? 'application/x-mpegURL' : 'video/mp4' });
                 if (poster) {
                     player.poster(poster);
                 }
@@ -383,7 +403,7 @@ export const VideoJSPlayer = memo(({ src, poster, className, onError }: { src: s
             if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
             // DO NOT DISPOSE HERE, dispose only on unmount via the other useEffect
         };
-    }, [src, poster, onError]);
+    }, [src, poster, onError, disableFullscreen]);
 
     // Dispose the Video.js player when the functional component unmounts
     useEffect(() => {
@@ -550,7 +570,7 @@ export const ClapprPlayer = memo(({ src, className = "w-full h-full", onError }:
 import Plyr from 'plyr';
 import 'plyr/dist/plyr.css';
 
-export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-full", poster, onError }: { src: string, autoPlay?: boolean, className?: string, poster?: string, onError?: () => void }) => {
+export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-full", poster, onError, disableFullscreen }: { src: string, autoPlay?: boolean, className?: string, poster?: string, onError?: () => void, disableFullscreen?: boolean }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const plyrRef = useRef<Plyr | null>(null);
     const [dynamicSrc, setDynamicSrc] = useState<string | null>(() => 
@@ -594,13 +614,17 @@ export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-fu
         plyrRef.current = new Plyr(video, {
             autoplay: autoPlay,
             muted: autoPlay,
+            // When our wrapper owns fullscreen (LiveStreamHub), hide Plyr's own fullscreen button:
+            // its native fullscreen only covers the <video>/.plyr element and drops our logo/text/ad
+            // overlays. Our button fullscreens the whole wrapper instead.
+            fullscreen: disableFullscreen ? { enabled: false } : { enabled: true, fallback: true, iosNative: false },
         });
 
         plyrRef.current.on('ready', () => {
             if (isMounted.current) setIsLoading(false);
         });
 
-        const needsHls = (dynamicSrc.includes('.m3u8') || dynamicSrc.includes('.ts'))
+        const needsHls = (dynamicSrc.includes('.m3u8') || dynamicSrc.includes('.ts') || dynamicSrc.includes('/api/hls'))
             && !video.canPlayType('application/vnd.apple.mpegurl');
 
         const attachSource = () => {
@@ -646,15 +670,19 @@ export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-fu
                 plyrRef.current.destroy();
             }
         };
-    }, [dynamicSrc, autoPlay, onError]);
+    }, [dynamicSrc, autoPlay, onError, disableFullscreen]);
 
-    if (!src.includes('.m3u8') && !src.includes('.ts') && !src.includes('/api/stream') && !src.endsWith('.mp4')) {
+    if (!(src.includes('.m3u8') || src.includes('/api/hls')) && !src.includes('.ts') && !src.includes('/api/stream') && !src.endsWith('.mp4')) {
         return (
-            <iframe 
-                src={src} 
+            <iframe
+                src={src}
                 className={className}
-                frameBorder="0" 
-                allowFullScreen 
+                frameBorder="0"
+                // NOTE: intentionally NO `allowFullScreen` and no `fullscreen` in `allow`.
+                // An embed's own fullscreen button (YouTube's, for one) takes only the IFRAME
+                // fullscreen, and our logo/caption/ad overlays live outside it — so they'd
+                // vanish for the whole time fullscreen lasts. Blocking it routes viewers to
+                // our own button, which fullscreens the wrapper and keeps the branding on.
                 allow="autoplay; encrypted-media"
             />
         );

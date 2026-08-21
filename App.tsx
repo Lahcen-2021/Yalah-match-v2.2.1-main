@@ -12,7 +12,8 @@ import { Match, MatchStatus, NewsItem } from './types';
 import { fetchMatchesByDate, fetchLiveMatches, mapStingMatchToMatch, getMoroccanDateString, preloadKoooraData, syncWithServer } from './services/api';
 import SkeletonCard from './components/SkeletonCard';
 import LazyLoadWrapper from './components/LazyLoadWrapper';
-import { generateMatchSlug, isMajorLeague } from './utils/translations';
+import { generateMatchSlug, isMajorLeague, translateLeague } from './utils/translations';
+import { setPageMeta, setMatchJsonLd, removeMatchJsonLd } from './utils/seo';
 import { useCache } from './context/CacheContext';
 
 // Lazy load view components
@@ -20,7 +21,6 @@ const MatchDetailView = React.lazy(() => import('./components/MatchDetailView'))
 const TournamentsView = React.lazy(() => import('./components/TournamentsView'));
 const StandingsView = React.lazy(() => import('./components/StandingsView'));
 const ContactUsView = React.lazy(() => import('./components/ContactUsView'));
-const ChannelsView = React.lazy(() => import('./components/ChannelsView'));
 const PrivacyPolicyView = React.lazy(() => import('./components/PrivacyPolicyView'));
 const TermsView = React.lazy(() => import('./components/TermsView'));
 const NewsView = React.lazy(() => import('./components/NewsView'));
@@ -216,7 +216,7 @@ const AppContent: React.FC = () => {
         const state = window.history.state;
 
         // Reset direct match if going back to root or non-match page
-        if (path === '/' || !path.includes('-vs-')) {
+        if (path === '/' || (!path.includes('-ضد-') && !path.includes('-vs-'))) {
              setDirectMatch(null);
         }
 
@@ -248,19 +248,17 @@ const AppContent: React.FC = () => {
             return;
         }
 
-        // 2. Check for friendly slug format: /Home-vs-Away/YYYY-MM-DD
-        const slugMatch = path.match(/^\/.+-vs-.+\/\d{4}-\d{2}-\d{2}$/);
-        if (slugMatch) {
-            const foundSlug = slugMatch[0]; 
-            setTargetSlug(foundSlug);
-            
-            const parts = foundSlug.split('/');
-            const dateStr = parts[parts.length - 1];
-            
+        // 2. Current format: /مباراة-اليوم/Home-ضد-Away-YYYY-MM-DD (trailing slash tolerated)
+        const newSlugMatch = path.match(/^\/مباراة-اليوم\/.+-ضد-.+-(\d{4}-\d{2}-\d{2})\/?$/);
+        // 2b. Legacy two-segment format: /Home-vs-Away/YYYY-MM-DD (trailing slash tolerated)
+        const slugMatch = !newSlugMatch && path.match(/^\/.+-vs-.+\/\d{4}-\d{2}-\d{2}\/?$/);
+        // 2c. Legacy/shared single-segment format: /Home-vs-Away-DD-MM-YYYY (with or without trailing slash)
+        const legacySlugMatch = !newSlugMatch && !slugMatch && path.match(/^\/(.+)-vs-(.+)-(\d{2})-(\d{2})-(\d{4})\/?$/);
+
+        const applyDateTab = (dateStr: string) => {
             const today = new Date();
             const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
             const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
-            
             const toDateStr = (d: Date) => d.toISOString().split('T')[0];
 
             if (dateStr === toDateStr(today)) {
@@ -270,6 +268,31 @@ const AppContent: React.FC = () => {
             } else if (dateStr === toDateStr(tomorrow)) {
                 if (activeTab !== 'tomorrow') setActiveTab('tomorrow');
             }
+        };
+
+        if (newSlugMatch) {
+            const foundSlug = newSlugMatch[0].replace(/\/$/, '');
+            setTargetSlug(foundSlug);
+            applyDateTab(newSlugMatch[1]);
+        } else if (slugMatch) {
+            const foundSlug = slugMatch[0].replace(/\/$/, '');
+
+            const parts = foundSlug.split('/');
+            const dateStr = parts[parts.length - 1];
+            // Reconstruct the canonical current-format slug so it matches generateMatchSlug() output.
+            const [, home, away] = foundSlug.match(/^\/(.+)-vs-(.+)$/) || [];
+            const teams = (home && away) ? `${home}-vs-${away}` : parts[0].slice(1);
+            const [teamHome, teamAway] = teams.split('-vs-');
+            setTargetSlug(teamHome && teamAway ? `/مباراة-اليوم/${teamHome}-ضد-${teamAway}-${dateStr}` : foundSlug);
+
+            applyDateTab(dateStr);
+        } else if (legacySlugMatch) {
+            // Reconstruct the canonical current-format slug from the legacy DD-MM-YYYY link
+            const [, home, away, dd, mm, yyyy] = legacySlugMatch;
+            const dateStr = `${yyyy}-${mm}-${dd}`;
+            setTargetSlug(`/مباراة-اليوم/${home}-ضد-${away}-${dateStr}`);
+
+            applyDateTab(dateStr);
         } else {
             // Only reset if we are not explicitly in a different view (handled by state)
             // But if URL is root, we generally want to clear match selection
@@ -385,7 +408,8 @@ const AppContent: React.FC = () => {
                     fetchMatches(false);
                 }
             }
-        }, 15000); 
+        }, 60000); // backend edge-caches 30s + upstream relay refreshes every 10min, so a
+                   // faster poll returns identical bytes and burns the 120 req/min/IP limit
     };
 
     const handleVisibilityChange = () => {
@@ -409,7 +433,9 @@ const AppContent: React.FC = () => {
   }, [activeTab, view, targetSlug]);
 
   const sortedMatches = useMemo(() => {
-    const matchesToSort = matches.filter(m => isMajorLeague(m.league));
+    // Admin-created and admin force-shown matches always show, even if their
+    // competition isn't a "major" league.
+    const matchesToSort = matches.filter(m => m.isCustom || m.adminShown || isMajorLeague(m.league));
 
     const getStatusPriority = (match: Match) => {
         // Order: Live, Half Time, Upcoming, Finished, Postponed
@@ -465,6 +491,34 @@ const AppContent: React.FC = () => {
     if (!selectedMatchId) return null;
     return matches.find(m => m.id === selectedMatchId) || null;
   }, [selectedMatchId, matches, directMatch]);
+
+  // Per-route SEO metadata: a match page gets its own title/description/canonical +
+  // SportsEvent JSON-LD; every other view gets a distinct title so Google stops
+  // indexing them all as the homepage.
+  useEffect(() => {
+    if (selectedMatch) {
+      const slug = generateMatchSlug(selectedMatch.teamA?.name || '', selectedMatch.teamB?.name || '', selectedMatch.utcDate || '');
+      const league = selectedMatch.league ? translateLeague(selectedMatch.league) : '';
+      const title = `${selectedMatch.teamA?.name} ضد ${selectedMatch.teamB?.name}${league ? ' - ' + league : ''}`;
+      const description = `مباراة ${selectedMatch.teamA?.name} و${selectedMatch.teamB?.name}${league ? ' في ' + league : ''}: الموعد، القناة الناقلة والمعلق، التشكيلات والنتيجة المباشرة.`;
+      const keywords = [selectedMatch.teamA?.name, selectedMatch.teamB?.name, league, `${selectedMatch.teamA?.name} ضد ${selectedMatch.teamB?.name}`, 'بث مباشر', 'يلا شوت', 'كورة لايف'].filter(Boolean).join(', ');
+      setPageMeta({ title, description, path: slug, keywords });
+      setMatchJsonLd(selectedMatch, slug);
+      return () => removeMatchJsonLd();
+    }
+    removeMatchJsonLd();
+    const META: Record<AppView, { title?: string; path?: string; description?: string }> = {
+      matches: { path: '/' },
+      tournaments: { title: 'الدوريات والبطولات', path: '/tournaments' },
+      standings: { title: 'ترتيب الدوريات والبطولات', path: '/standings' },
+      news: { title: 'آخر أخبار كرة القدم', path: '/news' },
+      contact: { title: 'اتصل بنا', path: '/contact' },
+      privacy: { title: 'سياسة الخصوصية', path: '/privacy' },
+      terms: { title: 'الشروط والأحكام', path: '/terms' },
+    };
+    const m = META[view] || {};
+    setPageMeta({ title: m.title, description: m.description, path: m.path });
+  }, [selectedMatch, view]);
 
   const navigateToRoot = useCallback(() => {
       // Explicitly clear state first to ensure UI update even if pushState fails
@@ -649,8 +703,6 @@ const AppContent: React.FC = () => {
           return selectedNews
             ? <NewsArticleView key={selectedNews.id} item={selectedNews} onBack={handleNewsBack} />
             : <NewsView onOpenArticle={handleNewsClick} />;
-        case 'channels':
-          return <ChannelsView />;
         case 'contact':
           return <ContactUsView />;
         case 'privacy':
