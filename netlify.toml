@@ -6,6 +6,11 @@
 #   connect-src is now an explicit allowlist (was `*`): the app's own backend, the
 #     Firebase/Firestore endpoints, and the few third-party data hosts the client
 #     still calls directly. This is the key anti-exfiltration control.
+#     webws.365scores.com and www.messisporat.com were dropped: the browser no longer
+#     fetches either directly — every such call now goes through same-origin /api/proxy
+#     or /api/*, so listing them only widened where injected script could exfiltrate to.
+#     (Their IMAGES still load; that is img-src, not connect-src.) site.api.espn.com
+#     stays — services/espnService.ts is the one remaining direct cross-origin fetch.
 #     NOTE: `hls`-type live-stream servers (hls.js) fetch segments from their own
 #     host — a direct-HLS stream from a host not listed here will be blocked. Most
 #     admin streams are the `iframe` type (covered by frame-src), so this is rare;
@@ -22,7 +27,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     Cross-Origin-Opener-Policy = "same-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://vjs.zencdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://vjs.zencdn.net; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; media-src 'self' https: blob:; connect-src 'self' https://yallamatchapi-jdwel.pages.dev https://*.googleapis.com https://*.firebaseio.com https://site.api.espn.com https://webws.365scores.com https://www.messisporat.com; frame-src https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://vjs.zencdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://vjs.zencdn.net; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; media-src 'self' https: blob:; connect-src 'self' https://yallamatchapi-jdwel.pages.dev https://*.googleapis.com https://*.firebaseio.com https://site.api.espn.com; frame-src https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
 
 # Vite emits hashed filenames under /assets, so they can be cached forever.
 [[headers]]
@@ -34,6 +39,24 @@
   for = "/hero.webp"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+
+# One canonical host. Everything in the app (index.html canonical/og:url, utils/seo.ts,
+# robots.txt, both dynamic sitemaps) uses the www form; this makes the apex agree
+# instead of serving a duplicate copy of the whole site on a second hostname.
+[[redirects]]
+  from = "https://yallamatch.online/*"
+  to = "https://www.yallamatch.online/:splat"
+  status = 301
+  force = true
+
+# Dynamic sitemap. Match slugs are date-stamped and rotate daily, so this cannot be a
+# static file — the one in public/ listed only the homepage. Mirrors the Node server's
+# /sitemap.xml route and the WordPress theme's.
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/api/*"
