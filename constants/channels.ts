@@ -250,9 +250,9 @@ export const CHANNELS = [
         id: 'thmanyah1', 
         name: 'ثمانية 1', 
         logo: 'https://tv.asc.vg/thmanayh.ksa.png', 
-        url: 'https://c2nvdxq.fubohd.com/foxdeportes/mono.m3u8?token=81008b8118237a161cd368d8c10b19d1b29ae475-e-1778021088-1778003088',
+        url: 'https://cup.kora-live-live.com/albaplayer/sports-8/?serv=1',
         servers: [
-            { name: 'سيرفر أساسي', url: 'https://c2nvdxq.fubohd.com/foxdeportes/mono.m3u8?token=81008b8118237a161cd368d8c10b19d1b29ae475-e-1778021088-1778003088' },
+            { name: 'سيرفر أساسي', url: 'https://cup.kora-live-live.com/albaplayer/sports-8/?serv=1' },
             { name: 'سيرفر 2', url: 'https://ar.kora-top.zip/frame.php?ch=thman9&p=12' },
             { name: 'سيرفر 3', url: 'https://ag9wzq.fubohd.com:443/foxdeportes/mono.m3u8?token=1e3f65253954a79e1dc24346d8862deca24cf4aa-e6-1767895119-1767877119' },
             { name: 'سيرفر 4', url: 'https://rm8zcvk3.fubohd.com:443/espndeportes/mono.m3u8?token=f19a8c5c629043365488e1a06289ecc32c42a0d0-87-1767895312-1767877312' },

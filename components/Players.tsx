@@ -279,12 +279,11 @@ export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-
                 src={src}
                 className={className}
                 frameBorder="0"
-                // NOTE: intentionally NO `allowFullScreen` and no `fullscreen` in `allow`.
-                // An embed's own fullscreen button (YouTube's, for one) takes only the IFRAME
-                // fullscreen, and our logo/caption/ad overlays live outside it — so they'd
-                // vanish for the whole time fullscreen lasts. Blocking it routes viewers to
-                // our own button, which fullscreens the wrapper and keeps the branding on.
-                allow="autoplay; encrypted-media"
+                // Fullscreen IS permitted. Blocking it left the embed's own fullscreen
+                // button doing nothing at all. Overlays are still kept: useWrapperFullscreen
+                // redirects a descendant's fullscreen onto the wrapper that holds them.
+                allow="autoplay; encrypted-media; fullscreen"
+                allowFullScreen
                 // Sandboxed: the embed keeps what a video player needs (its own scripts,
                 // its own origin, casting) but LOSES the two capabilities stream hosts
                 // abuse — `allow-top-navigation` (silently redirecting the whole tab) and
@@ -292,7 +291,7 @@ export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-
                 // denylist and only catches hosts already known; this is the structural
                 // control that does not need to know the host. If a provider ever needs
                 // popups to play, that is the token to add back — deliberately, per host.
-                sandbox="allow-scripts allow-same-origin allow-presentation"
+                sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
                 // Don't leak the match page URL (teams, date) to the stream host.
                 referrerPolicy="no-referrer"
             />
@@ -684,12 +683,11 @@ export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-fu
                 src={src}
                 className={className}
                 frameBorder="0"
-                // NOTE: intentionally NO `allowFullScreen` and no `fullscreen` in `allow`.
-                // An embed's own fullscreen button (YouTube's, for one) takes only the IFRAME
-                // fullscreen, and our logo/caption/ad overlays live outside it — so they'd
-                // vanish for the whole time fullscreen lasts. Blocking it routes viewers to
-                // our own button, which fullscreens the wrapper and keeps the branding on.
-                allow="autoplay; encrypted-media"
+                // Fullscreen IS permitted. Blocking it left the embed's own fullscreen
+                // button doing nothing at all. Overlays are still kept: useWrapperFullscreen
+                // redirects a descendant's fullscreen onto the wrapper that holds them.
+                allow="autoplay; encrypted-media; fullscreen"
+                allowFullScreen
                 // Sandboxed: the embed keeps what a video player needs (its own scripts,
                 // its own origin, casting) but LOSES the two capabilities stream hosts
                 // abuse — `allow-top-navigation` (silently redirecting the whole tab) and
@@ -697,7 +695,7 @@ export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-fu
                 // denylist and only catches hosts already known; this is the structural
                 // control that does not need to know the host. If a provider ever needs
                 // popups to play, that is the token to add back — deliberately, per host.
-                sandbox="allow-scripts allow-same-origin allow-presentation"
+                sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
                 // Don't leak the match page URL (teams, date) to the stream host.
                 referrerPolicy="no-referrer"
             />

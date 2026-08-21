@@ -348,7 +348,7 @@ const ChannelsView: React.FC = () => {
                         loading="lazy"
                         // No `allow-top-navigation` / `allow-popups`: a third-party embed
                         // must not be able to redirect the tab or open popunders.
-                        sandbox="allow-scripts allow-same-origin allow-presentation"
+                        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
                         referrerPolicy="no-referrer"
                     />
                 </div>
