@@ -2,7 +2,7 @@
 import { Match, MatchStatus, MatchDetails, GoalEvent, TimelineEvent, Standing, Player, MatchStatistic, GoalInfo, H2HMatch, MatchInfo, Scorer, StandingGroup, Coach, ChannelInfo, CompetitionBracket, NewsItem, NewsArticle, LeagueMatch, Broadcast, BeinGuideChannel } from '../types';
 import { translateLeague, translateTeam, isMajorLeague, isStandingLeague } from '../utils/translations';
 import { API_BASE } from './config';
-import { fetchJson } from './http';
+import { fetchJson, parseJson } from './http';
 
 type DateString = 'yesterday' | 'today' | 'tomorrow';
 
@@ -247,7 +247,7 @@ const koooraDataPromise: Record<string, Promise<any> | null> = {};
 
 const fetchKoooraData = async (date?: string) => {
     const targetDate = date ? date.split('T')[0] : getMoroccanDateString(0);
-    
+
     if (koooraDataPromise[targetDate]) {
         return koooraDataPromise[targetDate];
     }
@@ -258,129 +258,39 @@ const fetchKoooraData = async (date?: string) => {
         return { success: true, data: cached };
     }
 
+    // Both hops are OUR backend: the same-origin route (Node server / WordPress
+    // theme) scrapes kooora + LiveOnSat server-side, with its own dedupe, source
+    // tracking and Firestore cache. The browser no longer touches kooora.com or
+    // liveonsat directly — that leaked the visitor's IP to third parties, ran the
+    // HTML/__NEXT_DATA__ parse per client, and was never edge-cached.
     koooraDataPromise[targetDate] = (async () => {
-        try {
-            // Try local server API first to benefit from server-side caching and proxy rotation
-            const apiUrl = `/api/kooora/channels?date=${targetDate}`;
+        const endpoints = [
+            () => fetch(`/api/kooora/channels?date=${targetDate}`),
+            () => fetchWithRetry(`${API_BASE}/api/kooora/channels?date=${targetDate}`, 8000),
+        ];
+
+        for (const call of endpoints) {
             try {
-                const res = await fetch(apiUrl);
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json.success && json.data) {
-                        setStorageItem(`kooora_data_${targetDate}`, json.data, 30 * 60 * 1000);
-                        return json;
-                    }
+                const res = await call();
+                if (!res.ok) continue;
+                const json = await res.json();
+                if (json?.success && json.data) {
+                    setStorageItem(`kooora_data_${targetDate}`, json.data, 30 * 60 * 1000);
+                    return json;
                 }
             } catch (e) {
-                console.warn("Local server Kooora API fetch failed, falling back to absolute URL", e);
+                console.debug(`[API] kooora channels lookup failed for ${targetDate}`, e);
             }
-
-            // Fallback to absolute yallamatch API via proxy if local server failed
-            const fallbackApiUrl = `${API_BASE}/api/kooora/channels?date=${targetDate}`;
-            try {
-                const res = await fetchWithRetry(fallbackApiUrl, 8000);
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json.success && json.data) {
-                        setStorageItem(`kooora_data_${targetDate}`, json.data, 30 * 60 * 1000);
-                        return json;
-                    }
-                }
-            } catch (e) {
-                console.warn("Kooora absolute API fetch failed, falling back to other sources", e);
-            }
-
-            const allMatches: any[] = [];
-
-            // Try LiveOnSat absolute API
-            try {
-                const losUrl = `${API_BASE}/api/liveonsat/channels?date=${targetDate}`;
-                const res = await fetchWithRetry(losUrl, 5000);
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json.success && json.matches) {
-                        const losMatches = json.matches.map((m: any) => ({
-                            name: m.match,
-                            channels: (m.channels || []).map((c: any) => ({ name: typeof c === 'string' ? c : c.name }))
-                        }));
-                        allMatches.push(...losMatches);
-                    }
-                }
-            } catch (e) {
-                console.warn("LiveOnSat direct API fetch failed in KoooraData", e);
-            }
-
-            const isToday = targetDate === getMoroccanDateString(0);
-            
-            const urlsToScrape = [];
-            if (isToday) {
-                urlsToScrape.push('https://www.kooora.com/%D8%A3%D8%AD%D8%AF%D8%A7%D8%AB-%D8%B1%D9%8A%D8%A7%D8%B6%D9%8A%D8%A9/%D9%83%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%AF%D9%85');
-                urlsToScrape.push('https://www.kooora.com/%D9%83%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%AF%D9%85/%D9%85%D8%A8%D8%A7%D8%B1%D9%8A%D8%A7%D8%AA-%D8%A7%D9%84%D9%8A%D9%88%D9%85');
-            } else {
-                const [year, month, day] = targetDate.split('-');
-                urlsToScrape.push(`https://www.kooora.com/default.aspx?region=-1&area=0&dd=${parseInt(day)}&mm=${parseInt(month)}&yy=${year}`);
-            }
-
-            // Parallelize scraping if multiple URLs
-            await Promise.all(urlsToScrape.map(async (koooraUrl) => {
-                try {
-                    const res = await fetchWithRetry(koooraUrl, 5000);
-                    const html = await res.text();
-                    const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
-                    if (match) {
-                        const data = JSON.parse(match[1]);
-                        const pageData = data.props?.pageProps?.data || {};
-                        
-                        // Structure 1: scheduleGroups
-                        const scheduleGroups = pageData.scheduleGroups || [];
-                        scheduleGroups.forEach((group: any) => {
-                            (group.events || []).forEach((m: any) => {
-                                allMatches.push({
-                                    name: m.name,
-                                    url: m.urlLink?.url,
-                                    channels: (m.schedule || []).map((s: any) => ({ name: s.name }))
-                                });
-                            });
-                        });
-
-                        // Structure 2: indexed data
-                        Object.keys(pageData).forEach(key => {
-                            const group = pageData[key];
-                            if (group && group.matches && Array.isArray(group.matches)) {
-                                group.matches.forEach((m: any) => {
-                                    let matchName = m.name;
-                                    if (!matchName && m.teamA && m.teamB) {
-                                        matchName = `${m.teamA.name} ضد ${m.teamB.name}`;
-                                    }
-                                    allMatches.push({
-                                        name: matchName,
-                                        url: m.urlLink?.url || m.url,
-                                        channels: (m.tvChannels || m.broadcasts || m.schedule || []).map((s: any) => ({ name: s.name || s }))
-                                    });
-                                });
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.warn(`Direct fetch failed for ${koooraUrl}`, e);
-                }
-            }));
-            
-            if (allMatches.length > 0) {
-                setStorageItem(`kooora_data_${targetDate}`, allMatches, 30 * 60 * 1000); // 30 min persistent cache
-                return { success: true, data: allMatches };
-            }
-        } catch (e) {
-            console.warn("Kooora data fetch failed", e);
-        } finally {
-            // Clear promise after some time to allow refresh if needed
-            setTimeout(() => { koooraDataPromise[targetDate] = null; }, 10000);
         }
         return null;
     })();
 
-    // Handle background rejections to avoid unhandledrejection
-    koooraDataPromise[targetDate]?.catch(() => {});
+    koooraDataPromise[targetDate]
+        ?.catch(() => {})
+        .finally(() => {
+            // Release the in-flight promise so a later pass can refresh.
+            setTimeout(() => { koooraDataPromise[targetDate] = null; }, 10000);
+        });
 
     return koooraDataPromise[targetDate];
 };
@@ -392,13 +302,10 @@ export const preloadKoooraData = async () => {
             getMoroccanDateString(0),
             getMoroccanDateString(1)
         ];
-        console.log("Preloading Kooora data for:", dates);
-        
-        // Multi-layered preloading for reliability
-        return await Promise.allSettled(dates.flatMap(date => [
-            fetchKoooraData(date),
-            fetch(`/api/kooora/channels?date=${date}`).then(res => res.json()).catch(() => null)
-        ]));
+        // One request per date — fetchKoooraData already hits /api/kooora/channels
+        // and dedupes via koooraDataPromise, so the old second bare fetch() per date
+        // only doubled the load for an identical response.
+        return await Promise.allSettled(dates.map(date => fetchKoooraData(date)));
     } catch (e) {
         console.warn("Preload failed", e);
         return [];
@@ -500,6 +407,30 @@ const fetchWithRetry = async (targetUrl: string, timeout = 15000): Promise<Respo
 
     console.warn(`[API] All proxies failed for URL: ${targetUrl}`, lastError);
     throw lastError || new Error('Failed to fetch data from all proxies');
+};
+
+/**
+ * GET one of OUR OWN /api/* routes as JSON, same-origin first.
+ *
+ * Hop 1 is the site's own route (Node server in dev, the WordPress theme's PHP
+ * API in the theme build) — it caches and normalises. Hop 2 is the public
+ * backend called DIRECTLY: its CORS already allows this origin, so the old
+ * `fetchWithRetry` route (which wrapped it in `/api/proxy?url=`) only added a
+ * needless second hop through our own proxy for a request the browser can make
+ * itself. `parseJson` rejects the SPA-shell soft-404 both hosts serve for an
+ * unimplemented path, so a missing route fails loudly instead of parsing as {}.
+ */
+const fetchBackendJson = async <T>(path: string, fallback: T): Promise<T> => {
+    for (const url of [`${getApiBase()}${path}`, `${API_BASE}${path}`]) {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) continue;
+            return await parseJson<T>(res);
+        } catch (e) {
+            console.debug(`[API] ${url} failed`, e);
+        }
+    }
+    return fallback;
 };
 
 // Endpoints
@@ -894,35 +825,23 @@ const enrichWithWinwinChannels = async (matches: Match[], dateString: string): P
 };
 
 const fetchFromMessisporatInternal = async (dateString: string): Promise<Match[]> => {
-    try {
-        // Try local server API first (which has deduplication and caching)
-        const response = await fetch(`/api/matches?date=${dateString}`);
-        if (response.ok) {
-            const data = await response.json();
-            const rawMatches = data["STING-WEB-Matches"] || [];
-            const matches = rawMatches.map((m: any) => mapStingMatchToMatch(m)).filter((match: Match) => {
-                if (match.isCustom || match.adminShown) return true; // admin-created / force-shown always pass
-                if (!match.league) return false;
-                return isMajorLeague(match.league);
-            });
-            return await enrichWithWinwinChannels(matches, dateString);
-        }
-        throw new Error(`Local API returned ${response.status}`);
-    } catch (e) {
-        // Fallback to absolute URL via proxy
-        const url = `${API_BASE}/api/matches?date=${dateString}`;
-        const response = await fetchWithRetry(url);
-        const data = await response.json();
-        const rawMatches = data["STING-WEB-Matches"] || [];
-        const matches = rawMatches.map((m: any) => mapStingMatchToMatch(m)).filter((match: Match) => {
-            if (match.isCustom || match.adminShown) return true;
-            if (!match.league) return false;
-            return isMajorLeague(match.league);
-        });
-        return await enrichWithWinwinChannels(matches, dateString);
-    }
+    const data = await fetchBackendJson<any>(`/api/matches?date=${dateString}`, null);
+    const rawMatches = data?.["STING-WEB-Matches"];
+    if (!Array.isArray(rawMatches)) throw new Error(`No matches payload for ${dateString}`);
+
+    const matches = rawMatches.map((m: any) => mapStingMatchToMatch(m)).filter((match: Match) => {
+        if (match.isCustom || match.adminShown) return true; // admin-created / force-shown always pass
+        if (!match.league) return false;
+        return isMajorLeague(match.league);
+    });
+    return await enrichWithWinwinChannels(matches, dateString);
 };
 
+// TODO(api): last-resort day list, still read from 365scores through our /api/proxy.
+// The backend's /api/jdwel/matches covers the same fixtures but keys them by jdwel
+// matchId, while every other part of this app (channels lookup, match details,
+// admin overrides) is keyed by the messisporat/365scores id. Switching sources here
+// needs an id cross-walk on the backend first — do not swap it blind.
 const fetch365ScoresInternal = async (offset: number): Promise<Match[]> => {
     const dateStr365 = get365DateString(offset);
     const url = `${SCORES365_GAMES_BASE}&startDate=${dateStr365}&endDate=${dateStr365}`;
@@ -937,21 +856,14 @@ const fetch365ScoresInternal = async (offset: number): Promise<Match[]> => {
 };
 
 export const fetchLiveMatches = async (): Promise<Match[]> => {
-    try {
-        const url = `${API_BASE}/api/live`;
-        const response = await fetchWithRetry(url);
-        const data = await response.json();
-        const rawMatches = data["STING-WEB-Matches"] || [];
-        return rawMatches.map((m: any) => mapStingMatchToMatch(m));
-    } catch { 
-        try {
-            const response = await fetch(`${getApiBase()}/api/live`);
-            if (!response.ok) return [];
-            const data = await response.json();
-            const rawMatches = data["STING-WEB-Matches"] || [];
-            return rawMatches.map((m: any) => mapStingMatchToMatch(m));
-        } catch { return []; }
-    }
+    // Two shapes are in the wild for this route: the legacy messisporat envelope
+    // (`STING-WEB-Matches`) that the Node server and the WordPress theme emit, and
+    // the public backend's `{ live: [...] }`. Reading only the first meant the
+    // backend's response silently produced an empty live list.
+    const data = await fetchBackendJson<any>('/api/live', null);
+    const rawMatches = data?.["STING-WEB-Matches"] || data?.live || [];
+    if (!Array.isArray(rawMatches)) return [];
+    return rawMatches.map((m: any) => mapStingMatchToMatch(m));
 };
 
 // Simple global cache for channels to avoid redundant heavy fetches
@@ -1161,6 +1073,8 @@ const fetchMatchChannelFromSources = async (matchId: number, teamA?: string, tea
                 } return null;
             })(),
             // Source 3: Messisporat
+            // TODO(api): our /api/match-info exposes no stadium/referee/attendance yet, so the
+            // Match-Info block is still read from messisporat through /api/proxy.
             (async () => {
                 try {
                     const res = await fetchWithRetry(`https://www.messisporat.com/matches/npm/events/?MatchID=${matchId}&lang=27&time=%2B00%3A00`, 4000);
@@ -1249,200 +1163,98 @@ export const fetchLiveScoreUpdates = async (matchIds: number[]): Promise<Partial
     } catch { return []; }
 };
 
+// Flatten kooora's __NEXT_DATA__ match payload into one deduplicated event list.
+// The feed spreads the same timeline over keyEvents / events / goals / timeline and
+// hides substitutions inside each lineup player, so all five are merged.
+const parseKoooraNextData = (nextData: any): any[] | null => {
+    const match = nextData?.props?.pageProps?.data?.match;
+    if (!match) return null;
+
+    const allEvents: any[] = [];
+    if (Array.isArray(match.keyEvents)) allEvents.push(...match.keyEvents);
+    if (Array.isArray(match.events)) allEvents.push(...match.events);
+    if (Array.isArray(match.goals)) allEvents.push(...match.goals.map((g: any) => ({ ...g, type: 'GOAL' })));
+    if (Array.isArray(match.timeline)) allEvents.push(...match.timeline);
+
+    const extractSubs = (team: any, side: string) => {
+        if (!Array.isArray(team?.lineup)) return;
+        for (const player of team.lineup) {
+            if (!Array.isArray(player?.events)) continue;
+            allEvents.push(...player.events
+                .filter((e: any) => e.type === 'SUBSTITUTION')
+                .map((e: any) => ({ ...e, side })));
+        }
+    };
+    extractSubs(match.lineups?.teamA, 'TEAM_A');
+    extractSubs(match.lineups?.teamB, 'TEAM_B');
+
+    if (allEvents.length === 0) return null;
+
+    const uniqueEvents: any[] = [];
+    const seen = new Set<string>();
+    for (const ev of allEvents) {
+        const key = [
+            ev.side || ev.team || '',
+            ev.period?.minute || ev.minute || 0,
+            String(ev.type || '').toUpperCase(),
+            ev.player?.name || ev.playerName || ev.playerIn?.name || '',
+        ].join('-');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        uniqueEvents.push(ev);
+    }
+    return uniqueEvents;
+};
+
+// Find the kooora fixture matching this pairing inside the per-date channel dump.
+const findKoooraMatch = (rows: any[], teamA: string, teamB: string) => {
+    const normTeamA = normalizeArabic(teamA);
+    const normTeamB = normalizeArabic(teamB);
+
+    return rows.find((m: any) => {
+        if (!m?.name) return false;
+        const normName = normalizeArabic(m.name);
+        const [rawA, rawB] = normName.split(/\s+(?:ضد|vs)\s+/);
+        const koooraTeamA = rawA ? normalizeArabic(rawA) : '';
+        const koooraTeamB = rawB ? normalizeArabic(rawB) : '';
+
+        const hit = (team: string, side: string) =>
+            isFuzzyMatch(normName, team) || (!!side && isFuzzyMatch(team, side));
+
+        const forward = hit(normTeamA, koooraTeamA) && hit(normTeamB, koooraTeamB);
+        const reversed = hit(normTeamB, koooraTeamA) && hit(normTeamA, koooraTeamB);
+        return forward || reversed;
+    });
+};
+
 export const fetchKoooraEvents = async (teamA: string, teamB: string, date?: string): Promise<any[] | null> => {
     try {
         const koooraData = await fetchKoooraData(date);
-        if (koooraData && koooraData.success && koooraData.data) {
-            const normTeamA = normalizeArabic(teamA);
-            const normTeamB = normalizeArabic(teamB);
+        if (!koooraData?.success || !Array.isArray(koooraData.data)) return null;
 
-            const koooraMatch = koooraData.data.find((m: any) => {
-                if (!m.name) return false;
-                const normName = normalizeArabic(m.name);
-                
-                // Split by " ضد " or " vs "
-                const parts = normName.split(/\s+(?:ضد|vs)\s+/);
-                const koooraTeamA = parts[0] ? normalizeArabic(parts[0]) : '';
-                const koooraTeamB = parts[1] ? normalizeArabic(parts[1]) : '';
-                
-                const matchA = isFuzzyMatch(normName, normTeamA) || (koooraTeamA && isFuzzyMatch(normTeamA, koooraTeamA));
-                const matchB = isFuzzyMatch(normName, normTeamB) || (koooraTeamB && isFuzzyMatch(normTeamB, koooraTeamB));
-                
-                const matchARev = isFuzzyMatch(normName, normTeamB) || (koooraTeamA && isFuzzyMatch(normTeamB, koooraTeamA));
-                const matchBRev = isFuzzyMatch(normName, normTeamA) || (koooraTeamB && isFuzzyMatch(normTeamA, koooraTeamB));
-                
-                return (matchA && matchB) || (matchARev && matchBRev);
-            });
-            
-            if (koooraMatch && koooraMatch.url) {
-                const fetchEvents = async () => {
-                    const url = koooraMatch.url.startsWith('/') ? `https://www.kooora.com${koooraMatch.url}` : koooraMatch.url;
-                    
-                    // 1. Try our high-efficiency backend JSON API first
-                    try {
-                        const backendUrl = `${getApiBase()}/api/kooora/events?url=${encodeURIComponent(url)}`;
-                        const response = await fetch(backendUrl);
-                        if (response.ok) {
-                            const json = await response.json();
-                            if (json && json.success) {
-                                // Extract from nextData if returned from server, which has the complete dataset
-                                const nextData = json.nextData;
-                                if (nextData) {
-                                    const allEvents: any[] = [];
-                                    
-                                    const keyEvents = nextData?.props?.pageProps?.data?.match?.keyEvents;
-                                    if (Array.isArray(keyEvents)) allEvents.push(...keyEvents);
-                                    
-                                    const matchEvents = nextData?.props?.pageProps?.data?.match?.events;
-                                    if (Array.isArray(matchEvents)) allEvents.push(...matchEvents);
-                                    
-                                    const matchGoals = nextData?.props?.pageProps?.data?.match?.goals;
-                                    if (Array.isArray(matchGoals)) allEvents.push(...matchGoals.map((g: any) => ({ ...g, type: 'GOAL' })));
-                                    
-                                    const matchTimeline = nextData?.props?.pageProps?.data?.match?.timeline;
-                                    if (Array.isArray(matchTimeline)) allEvents.push(...matchTimeline);
-                                    
-                                    const lineups = nextData?.props?.pageProps?.data?.match?.lineups;
-                                    if (lineups) {
-                                        const extractFromTeam = (team: any, side: string) => {
-                                            if (!team) return;
-                                            const processPlayer = (player: any) => {
-                                                if (Array.isArray(player.events)) {
-                                                    const subs = player.events
-                                                        .filter((e: any) => e.type === 'SUBSTITUTION')
-                                                        .map((e: any) => ({ ...e, side }));
-                                                    allEvents.push(...subs);
-                                                }
-                                            };
-                                            if (Array.isArray(team.lineup)) team.lineup.forEach(processPlayer);
-                                        };
-                                        extractFromTeam(lineups.teamA, 'TEAM_A');
-                                        extractFromTeam(lineups.teamB, 'TEAM_B');
-                                    }
+        const koooraMatch = findKoooraMatch(koooraData.data, teamA, teamB);
+        if (!koooraMatch?.url) return null;
 
-                                    if (allEvents.length > 0) {
-                                        const uniqueEvents = [];
-                                        const seen = new Set();
-                                        for (const ev of allEvents) {
-                                            const side = ev.side || ev.team || '';
-                                            const minute = ev.period?.minute || ev.minute || 0;
-                                            const type = String(ev.type || '').toUpperCase();
-                                            const player = ev.player?.name || ev.playerName || ev.playerIn?.name || '';
-                                            
-                                            const key = `${side}-${minute}-${type}-${player}`;
-                                            if (!seen.has(key)) {
-                                                seen.add(key);
-                                                uniqueEvents.push(ev);
-                                            }
-                                        }
-                                        return uniqueEvents;
-                                    }
-                                }
+        // Always via our own /api/kooora/events: the server fetches and parses the
+        // match page (with proxy rotation + caching). The browser used to scrape
+        // kooora.com itself as a fallback, re-implementing this same parse — that
+        // duplicate has been removed rather than kept as a second code path.
+        const url = koooraMatch.url.startsWith('/') ? `https://www.kooora.com${koooraMatch.url}` : koooraMatch.url;
+        const response = await fetch(`${getApiBase()}/api/kooora/events?url=${encodeURIComponent(url)}`);
+        if (!response.ok) return null;
 
-                                // Fallback to json.data which has the pre-selected basic events if nextData is missing
-                                if (Array.isArray(json.data) && json.data.length > 0) {
-                                    return json.data;
-                                }
-                            }
-                        }
-                    } catch (err) {
-                        console.warn("[API] Backend kooora events api failed, trying direct scraper fallback:", err);
-                    }
+        const json = await response.json();
+        if (!json?.success) return null;
 
-                    // 2. Direct Scraper Fallback (Client-side proxying if backend failed)
-                    try {
-                        const res = await fetchWithRetry(url);
-                        const html = await res.text();
-                        const matchScript = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
-                        if (matchScript) {
-                            const data = JSON.parse(matchScript[1]);
-                            
-                            const allEvents: any[] = [];
-                            
-                            // 1. Get keyEvents (goals, cards)
-                            const keyEvents = data?.props?.pageProps?.data?.match?.keyEvents;
-                            if (Array.isArray(keyEvents)) {
-                                allEvents.push(...keyEvents);
-                            }
+        const parsed = parseKoooraNextData(json.nextData);
+        if (parsed) return parsed;
 
-                            // 2. Get all events if keyEvents is incomplete
-                            const matchEvents = data?.props?.pageProps?.data?.match?.events;
-                            if (Array.isArray(matchEvents)) {
-                                allEvents.push(...matchEvents);
-                            }
-
-                            // 3. Get goals specifically
-                            const matchGoals = data?.props?.pageProps?.data?.match?.goals;
-                            if (Array.isArray(matchGoals)) {
-                                allEvents.push(...matchGoals.map((g: any) => ({ ...g, type: 'GOAL' })));
-                            }
-
-                            // 4. Get timeline events
-                            const matchTimeline = data?.props?.pageProps?.data?.match?.timeline;
-                            if (Array.isArray(matchTimeline)) {
-                                allEvents.push(...matchTimeline);
-                            }
-                            
-                            // 5. Get substitutions from lineups
-                            const lineups = data?.props?.pageProps?.data?.match?.lineups;
-                            if (lineups) {
-                                const extractFromTeam = (team: any, side: string) => {
-                                    if (!team) return;
-                                    const processPlayer = (player: any) => {
-                                        if (Array.isArray(player.events)) {
-                                            const subs = player.events
-                                                .filter((e: any) => e.type === 'SUBSTITUTION')
-                                                .map((e: any) => ({ ...e, side })); // Add side to substitution events
-                                            allEvents.push(...subs);
-                                        }
-                                    };
-                                    if (Array.isArray(team.lineup)) team.lineup.forEach(processPlayer);
-                                };
-                                extractFromTeam(lineups.teamA, 'TEAM_A');
-                                extractFromTeam(lineups.teamB, 'TEAM_B');
-                            }
-                            
-                            if (allEvents.length > 0) {
-                                // Deduplicate events with a more robust key
-                                const uniqueEvents = [];
-                                const seen = new Set();
-                                for (const ev of allEvents) {
-                                    // Create a unique key based on core properties
-                                    const side = ev.side || ev.team || '';
-                                    const minute = ev.period?.minute || ev.minute || 0;
-                                    const type = String(ev.type || '').toUpperCase();
-                                    const player = ev.player?.name || ev.playerName || ev.playerIn?.name || '';
-                                    
-                                    const key = `${side}-${minute}-${type}-${player}`;
-                                    if (!seen.has(key)) {
-                                        seen.add(key);
-                                        uniqueEvents.push(ev);
-                                    }
-                                }
-                                
-                                return uniqueEvents;
-                            }
-                        }
-                        
-                        // Fallback: Try a different parser or return null
-                        console.warn("Could not find __NEXT_DATA__ in Kooora HTML or it was empty");
-                        return null;
-                    } catch (e) {
-                        console.error("Error parsing Kooora events", e);
-                    }
-                    return null;
-                };
-
-                const eventsData = await fetchEvents();
-                if (eventsData) {
-                    return Array.isArray(eventsData) ? eventsData : (eventsData as any).data || null;
-                }
-            }
-        }
+        // The server pre-selects a basic event list when it can't ship nextData.
+        return Array.isArray(json.data) && json.data.length > 0 ? json.data : null;
     } catch (e) {
         console.warn("Failed to fetch Kooora events", e);
+        return null;
     }
-    return null;
 };
 
 // messisporat team-logo ids double as 365scores competitor ids, so we can read a
@@ -1457,6 +1269,9 @@ const extractTeamId = (logoUrl?: string): string | null => {
 // never carries per-team recent matches, so this fills "آخر مباريات الفريقين". Cached
 // per team (30 min) so detail-view polling doesn't refetch. Routed through the app
 // proxy (fetchWithRetry) to avoid the webws.365scores.com CORS wall.
+// TODO(api): no backend route exposes a team's recent results yet
+// (/api/jdwel/season gives fixtures per competition, not per team), so this stays
+// on 365scores via /api/proxy.
 export const fetchTeamRecentMatches = async (teamId: string): Promise<H2HMatch[]> => {
     const cacheKey = `recent365_${teamId}`;
     const cached = getStorageItem(cacheKey);
@@ -1494,6 +1309,8 @@ export const fetchTeamRecentMatches = async (teamId: string): Promise<H2HMatch[]
 // Direct meetings between two teams, mined from teamA's 365scores results (the games
 // whose other side is teamB). Fallback for "سجل المواجهات المباشرة" when the messisporat
 // feed carries no head-to-head. Returns every meeting found (1..5), never padded.
+// TODO(api): same gap as fetchTeamRecentMatches — mined client-side from teamA's
+// 365scores results because no backend endpoint returns direct meetings.
 export const fetchHeadToHead = async (idA: string, idB: string): Promise<H2HMatch[]> => {
     const cacheKey = `h2h365_${idA}_${idB}`;
     const cached = getStorageItem(cacheKey);
@@ -1544,11 +1361,11 @@ export const fetchMatchDetails = async (match: Match): Promise<MatchDetails> => 
             new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500))
         ]);
 
-        const detailsUrl = `${API_BASE}/api/match-details?id=${matchId}`;
-        const h2hUrl = `${API_BASE}/api/h2h?id=${matchId}`;
-        // The yallamatch match-details API serves lineup/events/info but carries NO statistics, so the
-        // "الإحصائيات" tab must come from the dedicated messisporat stats endpoint, whose payload puts
-        // Statistics-1/Statistics-2 at the top level. Fetched alongside the others below.
+        // The match-details API serves lineup/events/info but carries NO statistics, so the
+        // "الإحصائيات" tab still comes from the dedicated messisporat stats endpoint (via our
+        // own /api/proxy), whose payload puts Statistics-1/Statistics-2 at the top level.
+        // TODO(api): the public backend has no /api/stats — it answers with the SPA shell.
+        // Once it exposes Match-Stats, drop this last third-party URL from the client.
         const statsUrl = `${MESSISPORAT_STATS_BASE}?MatchID=${matchId}`;
 
         // True when a payload actually carries head-to-head rows — either the dedicated endpoint's
@@ -1567,54 +1384,27 @@ export const fetchMatchDetails = async (match: Match): Promise<MatchDetails> => 
 
         // h2hResult feeds "أخر المواجهات المباشرة" and statsResult feeds "الإحصائيات". Both used to be
         // tied to match-details succeeding, so the common match-details-only response (which has H2H
-        // and stats in neither) left both sections empty. Track the best of each independently.
-        let bestH2h: any = null;
-        let bestStats: any = null;
+        // and stats in neither) left both sections empty. Each is tracked independently.
+        //
+        // The details/H2H hops used to run twice — once wrapped in /api/proxy and once same-origin.
+        // fetchBackendJson does that ordering itself (same-origin first, then the backend direct),
+        // so one pass now covers both hosts.
+        const [detailsRes, h2hRes, statsRes] = await Promise.all([
+            fetchBackendJson<any>(`/api/match-details?id=${matchId}`, null),
+            fetchBackendJson<any>(`/api/h2h?id=${matchId}`, null),
+            fetchWithRetry(statsUrl, 5000).then(r => r.json()).catch(() => null),
+        ]);
 
-        try {
-            // Try absolute yallamatch API first, plus the messisporat stats endpoint it doesn't cover.
-            const [detailsRes, h2hRes, statsRes] = await Promise.all([
-                fetchWithRetry(detailsUrl, 5000).then(r => r.json()).catch(() => null),
-                fetchWithRetry(h2hUrl, 5000).then(r => r.json()).catch(() => null),
-                fetchWithRetry(statsUrl, 5000).then(r => r.json()).catch(() => null)
-            ]);
+        const bestH2h = hasH2HData(h2hRes) ? h2hRes : null;
+        const bestStats = hasStatsData(statsRes) ? statsRes : null;
 
-            if (hasH2HData(h2hRes)) bestH2h = h2hRes;
-            if (hasStatsData(statsRes)) bestStats = statsRes;
-
-            if (detailsRes && detailsRes["STING-WEB-Match-Details"]) {
-                return {
-                    eventsResult: detailsRes,
-                    statsResult: bestStats || detailsRes,
-                    h2hResult: bestH2h || detailsRes,
-                    koooraEvents: await koooraEventsPromise
-                };
-            }
-        } catch (e) {
-            console.warn("Direct details fetch failed, trying local proxy", e);
-        }
-
-        try {
-            // Fallback: match details + H2H via the local server proxy; stats still from messisporat.
-            const [detailsRes, h2hRes, statsRes] = await Promise.all([
-                fetch(`/api/match-details?id=${matchId}`).then(r => r.ok ? r.json() : null).catch(() => null),
-                fetch(`/api/h2h?id=${matchId}`).then(r => r.ok ? r.json() : null).catch(() => null),
-                fetchWithRetry(statsUrl, 5000).then(r => r.json()).catch(() => null)
-            ]);
-
-            if (!bestH2h && hasH2HData(h2hRes)) bestH2h = h2hRes;
-            if (!bestStats && hasStatsData(statsRes)) bestStats = statsRes;
-
-            if (detailsRes && detailsRes["STING-WEB-Match-Details"]) {
-                return {
-                    eventsResult: detailsRes,
-                    statsResult: bestStats || detailsRes,
-                    h2hResult: bestH2h || detailsRes,
-                    koooraEvents: await koooraEventsPromise
-                };
-            }
-        } catch (e) {
-            console.warn("Local match-details fetch failed", e);
+        if (detailsRes && detailsRes["STING-WEB-Match-Details"]) {
+            return {
+                eventsResult: detailsRes,
+                statsResult: bestStats || detailsRes,
+                h2hResult: bestH2h || detailsRes,
+                koooraEvents: await koooraEventsPromise
+            };
         }
 
         // match-details was unavailable everywhere, but still surface any H2H / stats we fetched so
@@ -1935,6 +1725,9 @@ export const fetchMatchDetails = async (match: Match): Promise<MatchDetails> => 
         let side365Away = emptySide();
         const normPlayerName = (s: string) => (s || '').trim().toLowerCase();
         try {
+            // TODO(api): per-player ratings + jersey numbers. No backend route carries them
+            // (/api/jdwel/match?full=1 has lineups with ratings but is keyed by jdwel matchId,
+            // not this app's 365scores game id), so this stays on 365scores via /api/proxy.
             const gameRes = await fetchWithRetry(`https://webws.365scores.com/web/game/?appTypeId=5&langId=27&timezoneName=${USER_TIMEZONE}&gameId=${match.id}`, 6000);
             const game = (await gameRes.json())?.game;
             const athletes = new Map<number, { name: string; jerseyNumber?: number }>();
@@ -2057,6 +1850,11 @@ export const fetchKeyEvents = async (match: Match): Promise<TimelineEvent[]> => 
     return details.timeline;
 }
 
+// TODO(api): competition list still comes from 365scores via /api/proxy. The
+// backend's /api/jdwel/competitions has richer coverage (275 competitions) but keys
+// them by slug, while /api/standings, /api/scorers, /api/assists, /api/bracket and
+// /api/league-matches all take the numeric 365scores competition id. Moving this
+// needs slug→id mapping on the backend.
 export const fetchYanb8Leagues = async (): Promise<Yanb8League[]> => {
     try {
         const response = await fetchWithRetry(SCORES365_COMPETITIONS_URL, 6000);
@@ -2299,14 +2097,6 @@ export const fetchNewsArticle = async (id: string): Promise<NewsArticle | null> 
 
 export const fetchFootballNews = async (): Promise<NewsItem[]> =>
     fetchJson<NewsItem[]>('/api/news', []);
-
-export const fetchLeagueMatches = async (leagueId: string): Promise<Match[]> => {
-    try {
-        const response = await fetchWithRetry(`${SCORES365_GAMES_BASE}&competitions=${leagueId}`);
-        const data = await response.json();
-        return ((data && Array.isArray(data.games)) ? data.games : []).map(map365MatchToMatch);
-    } catch { return []; }
-};
 
 // --- Admin-managed live stream section (watch servers + promo banner) ---
 
