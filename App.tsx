@@ -9,7 +9,7 @@ import Footer from './components/Footer';
 import LoadingIndicator from './components/LoadingIndicator';
 import LiveMatchBanner from './components/LiveMatchBanner';
 import { Match, MatchStatus, NewsItem } from './types';
-import { fetchMatchesByDate, fetchLiveMatches, mapStingMatchToMatch, getMoroccanDateString, preloadKoooraData, syncWithServer } from './services/api';
+import { fetchMatchesByDate, fetchLiveMatches, mapStingMatchToMatch, getMoroccanDateString, preloadKoooraData, syncWithServer, fetchMatchBySlug } from './services/api';
 import SkeletonCard from './components/SkeletonCard';
 import LazyLoadWrapper from './components/LazyLoadWrapper';
 import { generateMatchSlug, isMajorLeague, translateLeague } from './utils/translations';
@@ -339,19 +339,38 @@ const AppContent: React.FC = () => {
   }, [activeTab]);
 
   useEffect(() => {
-      if (targetSlug && matches.length > 0) {
-          const match = matches.find(m => {
-              const slug = generateMatchSlug(m.teamA.name, m.teamB.name, m.utcDate);
-              return slug === targetSlug;
-          });
-          
-          if (match) {
-              setTimeout(() => {
-                  setSelectedMatchId(match.id);
-                  setTargetSlug(null); 
-              }, 0);
-          }
+      if (!targetSlug || matches.length === 0) return;
+
+      const match = matches.find(m => generateMatchSlug(m.teamA.name, m.teamB.name, m.utcDate) === targetSlug);
+
+      if (match) {
+          setTimeout(() => {
+              setSelectedMatchId(match.id);
+              setTargetSlug(null);
+          }, 0);
+          return;
       }
+
+      // Not in the visible list. The list is filtered to major competitions, but the
+      // sitemap is built from the UNFILTERED feed — so roughly half the advertised
+      // match URLs used to land here, fall through, and render the homepage while
+      // stamping the HOMEPAGE canonical on themselves. Google reads that as "this page
+      // is the homepage" and refuses to index it; Search Console showed 265 pages
+      // discovered and none indexed.
+      //
+      // Fetch the fixture directly instead. `directMatch` is the same channel
+      // StandingsView already uses to open a match that isn't in the current day.
+      let cancelled = false;
+      fetchMatchBySlug(targetSlug)
+          .then(found => {
+              if (cancelled || !found) return;
+              setDirectMatch(found);
+              setSelectedMatchId(found.id);
+              setTargetSlug(null);
+          })
+          .catch(err => console.debug('[App] slug lookup failed', err));
+
+      return () => { cancelled = true; };
   }, [matches, targetSlug]);
   
   useEffect(() => {

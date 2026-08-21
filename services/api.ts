@@ -1,6 +1,6 @@
 
 import { Match, MatchStatus, MatchDetails, GoalEvent, TimelineEvent, Standing, Player, MatchStatistic, GoalInfo, H2HMatch, MatchInfo, Scorer, StandingGroup, Coach, ChannelInfo, CompetitionBracket, NewsItem, NewsArticle, LeagueMatch, Broadcast, BeinGuideChannel } from '../types';
-import { translateLeague, translateTeam, isMajorLeague, isStandingLeague } from '../utils/translations';
+import { translateLeague, translateTeam, isMajorLeague, isStandingLeague, generateMatchSlug } from '../utils/translations';
 import { API_BASE } from './config';
 import { fetchJson, parseJson } from './http';
 
@@ -835,6 +835,54 @@ const fetchFromMessisporatInternal = async (dateString: string): Promise<Match[]
         return isMajorLeague(match.league);
     });
     return await enrichWithWinwinChannels(matches, dateString);
+};
+
+/**
+ * Resolve a single match from its URL slug, ignoring the major-league filter.
+ *
+ * Why this exists: the match list is deliberately filtered to major competitions
+ * (isMajorLeague), but the sitemap is generated server-side from the UNFILTERED
+ * feed. That mismatch meant roughly half of the advertised match URLs could never
+ * open — the slug was simply not in the array the resolver searched, so the app
+ * fell back to the homepage and, worse, stamped the HOMEPAGE canonical on it.
+ * Google reads that as "this page is the homepage" and drops it.
+ *
+ * Hiding a minor fixture from the day's list is an editorial choice. Refusing to
+ * open it when someone follows a direct link to it is a bug, so this path applies
+ * no league filter at all.
+ *
+ * The slug carries the kickoff's UTC date while the day buckets are Morocco days,
+ * so a late kickoff can sit in the neighbouring bucket — hence the ±1 day sweep.
+ */
+export const fetchMatchBySlug = async (slug: string): Promise<Match | null> => {
+    const dateMatch = /(\d{4}-\d{2}-\d{2})\/?$/.exec(slug);
+    if (!dateMatch) return null;
+
+    const slugDate = dateMatch[1];
+    const shift = (days: number) => {
+        const d = new Date(`${slugDate}T12:00:00Z`);
+        d.setUTCDate(d.getUTCDate() + days);
+        return d.toISOString().split('T')[0];
+    };
+
+    for (const date of [slugDate, shift(1), shift(-1)]) {
+        try {
+            const data = await fetchBackendJson<any>(`/api/matches?date=${date}`, null);
+            const raw = data?.["STING-WEB-Matches"];
+            if (!Array.isArray(raw)) continue;
+
+            const all = raw.map((m: any) => mapStingMatchToMatch(m));
+            const hit = all.find(m => generateMatchSlug(m.teamA?.name || '', m.teamB?.name || '', m.utcDate) === slug);
+            if (hit) {
+                // Channels are what this page is for — enrich just the one match.
+                await enrichWithWinwinChannels([hit], date);
+                return hit;
+            }
+        } catch (e) {
+            console.debug(`[API] slug lookup failed for ${date}`, e);
+        }
+    }
+    return null;
 };
 
 // TODO(api): last-resort day list, still read from 365scores through our /api/proxy.
