@@ -4,7 +4,12 @@
 // SPAs) and, for match pages, emit a SportsEvent JSON-LD block for rich results.
 import type { Match } from '../types';
 
-const SITE = 'https://www.yallamatch.online';
+// Apex, NOT www. www.yallamatch.online returns Cloudflare 526: the edge cert covers
+// it, but the origin-pull fails certificate validation there, so only the apex is
+// actually reachable. WordPress's own home_url() is the apex too, and it renders the
+// correct canonical server-side — which this file then OVERWROTE with the broken host
+// on every route change. Keep these in step with index.html and robots.txt.
+const SITE = 'https://yallamatch.online';
 const DEFAULT_TITLE = 'يلا ماتش | مباريات اليوم بث مباشر - Yalla Match';
 const DEFAULT_DESC =
     'يلا ماتش: مواعيد مباريات اليوم، النتائج المباشرة، القنوات الناقلة والمعلقين، ترتيب الدوريات والبطولات وآخر أخبار كرة القدم.';
