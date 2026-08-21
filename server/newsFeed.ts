@@ -121,7 +121,7 @@ const parseFeed = (xml: string, feed: FeedConfig): (NewsItem & { lang: string })
 
 // Preferred: the site's own Netlify Function (netlify/functions/translate-news.mts),
 // which calls Gemini through the Netlify AI Gateway — no API key to provision here.
-// TRANSLATE_ENDPOINT e.g. https://www.yallamatch.online/translate-news
+// TRANSLATE_ENDPOINT e.g. https://yallamatch.online/translate-news
 const translateViaGateway = async (payload: TranslatePayloadItem[]): Promise<any[] | null> => {
     const endpoint = process.env.TRANSLATE_ENDPOINT;
     if (!endpoint) return null;

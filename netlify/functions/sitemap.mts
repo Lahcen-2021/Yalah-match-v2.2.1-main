@@ -12,7 +12,7 @@
 // build-time artifact.
 import { generateMatchSlug } from "../../utils/translations";
 
-const SITE = "https://www.yallamatch.online";
+const SITE = "https://yallamatch.online";
 const API_BASE = process.env.VITE_API_BASE || "https://yallamatchapi-jdwel.pages.dev";
 
 // Only routes App.tsx actually resolves. Competition pages are deliberately absent:

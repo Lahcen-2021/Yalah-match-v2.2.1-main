@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /admin
 
-Sitemap: https://www.yallamatch.online/sitemap.xml
+Sitemap: https://yallamatch.online/sitemap.xml

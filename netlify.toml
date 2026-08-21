@@ -40,12 +40,15 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
-# One canonical host. Everything in the app (index.html canonical/og:url, utils/seo.ts,
-# robots.txt, both dynamic sitemaps) uses the www form; this makes the apex agree
-# instead of serving a duplicate copy of the whole site on a second hostname.
+# One canonical host: the APEX. This redirect used to point the other way, which was
+# backwards — www.yallamatch.online returns Cloudflare 526 (its origin-pull fails
+# certificate validation), so sending apex traffic to www would have redirected every
+# visitor to a hostname that does not resolve. Everything else (index.html, utils/seo.ts,
+# robots.txt, server.ts and the sitemap function) uses the apex, as does WordPress's
+# home_url() on the live site.
 [[redirects]]
-  from = "https://yallamatch.online/*"
-  to = "https://www.yallamatch.online/:splat"
+  from = "https://www.yallamatch.online/*"
+  to = "https://yallamatch.online/:splat"
   status = 301
   force = true
 

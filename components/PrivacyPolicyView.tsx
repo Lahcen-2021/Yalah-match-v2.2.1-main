@@ -12,7 +12,7 @@ const PrivacyPolicyView: React.FC = () => {
             <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-gray-100 space-y-8 text-gray-700 leading-relaxed text-sm sm:text-base">
                 <section>
                     <p className="mb-4">
-                        مرحباً بكم في موقع <strong>يلا ماتش</strong> (<a href="https://www.yallamatch.online" className="text-emerald-600 hover:underline font-bold dir-ltr">www.yallamatch.online</a>). 
+                        مرحباً بكم في موقع <strong>يلا ماتش</strong> (<a href="https://yallamatch.online" className="text-emerald-600 hover:underline font-bold dir-ltr">yallamatch.online</a>). 
                         نحن في "يلا ماتش" نولي أهمية قصوى لخصوصية زوارنا. توضح هذه الوثيقة الخطوط العريضة لأنواع المعلومات الشخصية التي يتلقاها ويجمعها موقعنا وكيفية استخدامها، لضمان تجربة تصفح آمنة وموثوقة لمتابعة <strong>مباريات اليوم بث مباشر</strong> وآخر أخبار الكرة العالمية.
                     </p>
                 </section>

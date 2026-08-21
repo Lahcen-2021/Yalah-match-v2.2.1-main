@@ -12,7 +12,7 @@ const TermsView: React.FC = () => {
             <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-gray-100 space-y-8 text-gray-700 leading-relaxed text-sm sm:text-base">
                 <section>
                     <p className="mb-4">
-                        أهلاً بك في موقع <strong>يلا ماتش</strong> (<a href="https://www.yallamatch.online" className="text-emerald-600 hover:underline font-bold dir-ltr">www.yallamatch.online</a>). 
+                        أهلاً بك في موقع <strong>يلا ماتش</strong> (<a href="https://yallamatch.online" className="text-emerald-600 hover:underline font-bold dir-ltr">yallamatch.online</a>). 
                         يرجى قراءة هذه الشروط والأحكام بعناية قبل استخدام الموقع. باستخدامك لهذا الموقع، فإنك توافق على الالتزام بهذه الشروط. إذا كنت لا توافق على أي جزء من هذه الشروط، فلا يحق لك استخدام الموقع.
                     </p>
                 </section>
@@ -47,7 +47,7 @@ const TermsView: React.FC = () => {
                         3. الاستخدام المقبول
                     </h2>
                     <p>
-                        يُحظر استخدام موقع <strong>www.yallamatch.online</strong> لأي أغراض غير قانونية أو تسبب ضرراً للموقع أو للمستخدمين الآخرين. يشمل ذلك، على سبيل المثال لا الحصر، محاولات الاختراق، نشر البرمجيات الخبيثة، أو جمع البيانات بطرق غير مشروعة.
+                        يُحظر استخدام موقع <strong>yallamatch.online</strong> لأي أغراض غير قانونية أو تسبب ضرراً للموقع أو للمستخدمين الآخرين. يشمل ذلك، على سبيل المثال لا الحصر، محاولات الاختراق، نشر البرمجيات الخبيثة، أو جمع البيانات بطرق غير مشروعة.
                     </p>
                 </section>
 

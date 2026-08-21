@@ -6,13 +6,15 @@
     
     <!-- SEO Meta Tags -->
     <title>يلا ماتش | مباريات اليوم بث مباشر - Yalla Match</title>
-    <meta name="description" content="يلا ماتش (Yalla Match) يقدم لك جدول مباريات اليوم، القنوات الناقلة، البث المباشر، ونتائج المباريات للدوريات العالمية والمحلية. تابع كورة لايف عبر www.yallamatch.online." />
+    <meta name="description" content="يلا ماتش (Yalla Match) يقدم لك جدول مباريات اليوم، القنوات الناقلة، البث المباشر، ونتائج المباريات للدوريات العالمية والمحلية. تابع كورة لايف عبر yallamatch.online." />
     <meta name="keywords" content="يلا ماتش, yalla match, يلا شوت, yalla shoot, كورة لايف, kora live, koora live, فابور تي في, fabor tv, يلا كورة, yalla kora, كووورة, kooora, مباريات اليوم, بث مباشر, كورة, يلاماتش, جدول المباريات, القنوات الناقلة, الدوري السعودي, الدوري الانجليزي, دوري ابطال اوروبا, بث مباشر مباريات اليوم, مشاهدة المباريات" />
     <meta name="author" content="Yalla Match" />
     <meta name="robots" content="index, follow" />
-    <!-- Trailing slash kept in step with og:url/twitter:url below: canonical and og:url
-         disagreeing on the same page is a self-inflicted duplicate-URL signal. -->
-    <link rel="canonical" href="https://www.yallamatch.online/" />
+    <!-- Apex host, trailing slash, matching og:url/twitter:url below. NOT www:
+         www.yallamatch.online returns Cloudflare 526 (the origin-pull fails cert
+         validation for that hostname), so a canonical pointing there sends crawlers
+         to a URL that does not resolve. WordPress's home_url() is the apex too. -->
+    <link rel="canonical" href="https://yallamatch.online/" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#059669" />
 
@@ -20,20 +22,20 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ar_MA" />
     <meta property="og:site_name" content="يلا ماتش - Yalla Match" />
-    <meta property="og:url" content="https://www.yallamatch.online/" />
+    <meta property="og:url" content="https://yallamatch.online/" />
     <meta property="og:title" content="يلا ماتش | مباريات اليوم بث مباشر" />
     <meta property="og:description" content="تابع أهم مباريات اليوم بث مباشر ونتائج حية على يلا ماتش. المصدر الأول لأخبار الكرة العربية والعالمية." />
     <!-- og-image.jpg: 1200x630 export of the hero artwork (see public/hero.webp) -->
-    <meta property="og:image" content="https://www.yallamatch.online/og-image.jpg" />
+    <meta property="og:image" content="https://yallamatch.online/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://www.yallamatch.online/" />
+    <meta property="twitter:url" content="https://yallamatch.online/" />
     <meta property="twitter:title" content="يلا ماتش | مباريات اليوم بث مباشر" />
     <meta property="twitter:description" content="تابع أهم مباريات اليوم بث مباشر ونتائج حية على يلا ماتش." />
-    <meta property="twitter:image" content="https://www.yallamatch.online/og-image.jpg" />
+    <meta property="twitter:image" content="https://yallamatch.online/og-image.jpg" />
 
     <!-- Structured data: helps Google show the site name, search box and org logo -->
     <script type="application/ld+json">
@@ -42,8 +44,8 @@
       "@graph": [
         {
           "@type": "WebSite",
-          "@id": "https://www.yallamatch.online/#website",
-          "url": "https://www.yallamatch.online/",
+          "@id": "https://yallamatch.online/#website",
+          "url": "https://yallamatch.online/",
           "name": "يلا ماتش - Yalla Match",
           "alternateName": ["Yalla Match", "يلاماتش"],
           "description": "جدول مباريات اليوم، القنوات الناقلة، النتائج المباشرة، ترتيب الدوريات وأخبار كرة القدم",
@@ -51,9 +53,9 @@
         },
         {
           "@type": "Organization",
-          "@id": "https://www.yallamatch.online/#organization",
+          "@id": "https://yallamatch.online/#organization",
           "name": "Yalla Match",
-          "url": "https://www.yallamatch.online/",
+          "url": "https://yallamatch.online/",
           "logo": "https://cdn-icons-png.flaticon.com/128/53/53283.png"
         }
       ]

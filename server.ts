@@ -434,7 +434,7 @@ async function resolveMatchesPayload(date: string): Promise<any> {
 // Dynamic sitemap: static pages + every match page for yesterday/today/tomorrow, so
 // Google can discover and index the individual match-detail URLs.
 app.get("/sitemap.xml", async (_req, res) => {
-    const SITE = "https://www.yallamatch.online";
+    const SITE = "https://yallamatch.online";
     const staticPaths = ["/", "/standings", "/tournaments", "/news", "/contact", "/privacy", "/terms"];
     const urls = new Set(staticPaths.map(p => SITE + p));
     try {
