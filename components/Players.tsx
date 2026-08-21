@@ -69,55 +69,83 @@ const reportPlaybackError = (data: {
     console.groupEnd();
 };
 
-// --- HLS Player Component ---
-export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-full", onError, hideNativeFullscreen }: { src: string, autoPlay?: boolean, className?: string, onError?: () => void, hideNativeFullscreen?: boolean }) => {
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [dynamicSrc, setDynamicSrc] = useState<string | null>(() => 
+// --- Dynamic stream source ---
+// Admin-configured servers may point at /api/stream, which answers with a short-lived
+// {stream} URL rather than the media itself. All three players below carried their own
+// copy of this effect (10s, 15s and 15s intervals). One implementation now serves them:
+//
+//  - 60s instead of 10-15s. The refresh exists to renew a token, not to follow the
+//    broadcast, so four to six requests per minute per open player bought nothing.
+//  - Paused while the tab is hidden, and refreshed immediately on return, so a
+//    backgrounded stream stops issuing requests instead of polling forever.
+//
+// `src` values that are already a media URL skip the whole thing.
+const useDynamicStreamSrc = (src: string) => {
+    const [dynamicSrc, setDynamicSrc] = useState<string | null>(() =>
         src.includes('/api/stream') ? null : src
     );
-    
-    // Detect if source is HLS stream or Embed
-    const isStream = (src.includes('.m3u8') || src.includes('/api/hls')) || src.includes('.ts') || src.includes('/api/stream');
-    
-    const [isLoading, setIsLoading] = useState(() => isStream);
-    const [error, setError] = useState<string | null>(null);
-    const [reloadTrigger, setReloadTrigger] = useState(0);
-    const [forceHlsJs, setForceHlsJs] = useState(false);
-    const retryCountRef = useRef(0);
-    const hlsRef = useRef<any>(null);
-    const MAX_RETRIES = 5; 
+    const [streamError, setStreamError] = useState<string | null>(null);
 
-    // Handle dynamic stream fetching
     useEffect(() => {
         if (!src.includes('/api/stream')) {
+            setDynamicSrc(src);
             return;
         }
+
+        let isMounted = true;
 
         const fetchStream = async () => {
             try {
                 const res = await fetch(src);
                 if (!res.ok) throw new Error(`Stream metadata fetch failed: ${res.status}`);
                 const data = await res.json();
-                if (data.stream) {
+                if (data.stream && isMounted) {
                     setDynamicSrc(data.stream);
+                    setStreamError(null);
                 }
             } catch (e) {
                 console.warn("Error fetching dynamic stream:", e);
-                setError("تعذر جلب رابط البث.");
+                if (isMounted) setStreamError("تعذر جلب رابط البث.");
             }
         };
 
-        fetchStream().catch(() => {});
-        const refreshTimer = setInterval(() => {
-            fetchStream().catch(() => {});
-        }, 10000);
+        fetchStream();
+        const refreshTimer = setInterval(() => { if (!document.hidden) fetchStream(); }, 60000);
+        const onVisible = () => { if (!document.hidden) fetchStream(); };
+        document.addEventListener('visibilitychange', onVisible);
 
-        return () => clearInterval(refreshTimer);
+        return () => {
+            isMounted = false;
+            clearInterval(refreshTimer);
+            document.removeEventListener('visibilitychange', onVisible);
+        };
     }, [src]);
+
+    return { dynamicSrc, streamError };
+};
+
+// --- HLS Player Component ---
+export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-full", onError, hideNativeFullscreen }: { src: string, autoPlay?: boolean, className?: string, onError?: () => void, hideNativeFullscreen?: boolean }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const { dynamicSrc, streamError } = useDynamicStreamSrc(src);
+
+    // Detect if source is HLS stream or Embed
+    const isStream = (src.includes('.m3u8') || src.includes('/api/hls')) || src.includes('.ts') || src.includes('/api/stream');
+    
+    const [isLoading, setIsLoading] = useState(() => isStream);
+    // A failed /api/stream lookup and this player's own playback errors share one
+    // display slot; deriving beats mirroring the hook's error into local state.
+    const [ownError, setOwnError] = useState<string | null>(null);
+    const error = ownError ?? streamError;
+    const [reloadTrigger, setReloadTrigger] = useState(0);
+    const [forceHlsJs, setForceHlsJs] = useState(false);
+    const retryCountRef = useRef(0);
+    const hlsRef = useRef<any>(null);
+    const MAX_RETRIES = 5; 
 
     const handleRetry = () => {
         setIsLoading(true);
-        setError(null);
+        setOwnError(null);
         retryCountRef.current = 0;
         setForceHlsJs(false);
         setReloadTrigger(prev => prev + 1);
@@ -142,13 +170,13 @@ export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-
         const onVideoReady = () => {
             if (isMounted) {
                 setIsLoading(false);
-                setError(null);
+                setOwnError(null);
             }
         };
 
         const onVideoError = () => {
             if (isMounted) {
-                setError("حدث خطأ أثناء تشغيل الفيديو. يرجى المحاولة مرة أخرى.");
+                setOwnError("حدث خطأ أثناء تشغيل الفيديو. يرجى المحاولة مرة أخرى.");
                 setIsLoading(false);
                 if (onError) onError();
                 
@@ -257,6 +285,16 @@ export const InlinePlayer = memo(({ src, autoPlay = true, className = "w-full h-
                 // vanish for the whole time fullscreen lasts. Blocking it routes viewers to
                 // our own button, which fullscreens the wrapper and keeps the branding on.
                 allow="autoplay; encrypted-media"
+                // Sandboxed: the embed keeps what a video player needs (its own scripts,
+                // its own origin, casting) but LOSES the two capabilities stream hosts
+                // abuse — `allow-top-navigation` (silently redirecting the whole tab) and
+                // `allow-popups` (popunders). streamSanitizer's ad-host blocklist is a
+                // denylist and only catches hosts already known; this is the structural
+                // control that does not need to know the host. If a provider ever needs
+                // popups to play, that is the token to add back — deliberately, per host.
+                sandbox="allow-scripts allow-same-origin allow-presentation"
+                // Don't leak the match page URL (teams, date) to the stream host.
+                referrerPolicy="no-referrer"
             />
         );
     }
@@ -430,36 +468,20 @@ export const VideoJSPlayer = memo(({ src, poster, className, onError, disableFul
 export const ClapprPlayer = memo(({ src, className = "w-full h-full", onError }: { src: string, className?: string, onError?: () => void }) => {
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const clapprInstance = useRef<any>(null);
-    const [dynamicSrc, setDynamicSrc] = useState<string | null>(() => 
-        src.includes('/api/stream') ? null : src
-    );
+    const { dynamicSrc, streamError } = useDynamicStreamSrc(src);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // A failed /api/stream lookup and this player's own playback errors share one
+    // display slot; deriving beats mirroring the hook's error into local state.
+    const [ownError, setOwnError] = useState<string | null>(null);
+    const error = ownError ?? streamError;
 
     const isMounted = useRef(true);
 
     useEffect(() => {
         isMounted.current = true;
-        if (!src.includes('/api/stream')) return;
+        return () => { isMounted.current = false; };
+    }, []);
 
-        const fetchStream = async () => {
-            try {
-                const res = await fetch(src);
-                const data = await res.json();
-                if (data.stream && isMounted.current) setDynamicSrc(data.stream);
-            } catch (e) {
-                console.error("Error fetching dynamic stream for Clappr:", e);
-                if (isMounted.current) setError("تعذر جلب رابط البث.");
-            }
-        };
-
-        fetchStream();
-        const refreshTimer = setInterval(fetchStream, 15000);
-        return () => {
-            isMounted.current = false;
-            clearInterval(refreshTimer);
-        };
-    }, [src]);
 
     useEffect(() => {
         let isActuallyMounted = true; 
@@ -504,7 +526,7 @@ export const ClapprPlayer = memo(({ src, className = "w-full h-full", onError }:
                             onError: (e: any) => {
                                 console.error("Clappr Playback Error:", e);
                                 if (isActuallyMounted) {
-                                    setError("حدث خطأ في مشغل Clappr. جرب مشغل آخر.");
+                                    setOwnError("حدث خطأ في مشغل Clappr. جرب مشغل آخر.");
                                     if (onError) onError();
                                 }
                             }
@@ -514,7 +536,7 @@ export const ClapprPlayer = memo(({ src, className = "w-full h-full", onError }:
             } catch (err) {
                 console.error("Error creating Clappr instance:", err);
                 if (isActuallyMounted) {
-                    setError("فشل في تشغيل Clappr.");
+                    setOwnError("فشل في تشغيل Clappr.");
                     setIsLoading(false);
                 }
             }
@@ -534,7 +556,7 @@ export const ClapprPlayer = memo(({ src, className = "w-full h-full", onError }:
             script.addEventListener('load', initPlayer);
             script.addEventListener('error', () => {
                 if (isActuallyMounted) {
-                    setError("فشل تحميل مشغل Clappr.");
+                    setOwnError("فشل تحميل مشغل Clappr.");
                     setIsLoading(false);
                 }
             });
@@ -573,36 +595,20 @@ import 'plyr/dist/plyr.css';
 export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-full", poster, onError, disableFullscreen }: { src: string, autoPlay?: boolean, className?: string, poster?: string, onError?: () => void, disableFullscreen?: boolean }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const plyrRef = useRef<Plyr | null>(null);
-    const [dynamicSrc, setDynamicSrc] = useState<string | null>(() => 
-        src.includes('/api/stream') ? null : src
-    );
+    const { dynamicSrc, streamError } = useDynamicStreamSrc(src);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // A failed /api/stream lookup and this player's own playback errors share one
+    // display slot; deriving beats mirroring the hook's error into local state.
+    const [ownError, setOwnError] = useState<string | null>(null);
+    const error = ownError ?? streamError;
 
     const isMounted = useRef(true);
 
     useEffect(() => {
         isMounted.current = true;
-        if (!src.includes('/api/stream')) return;
+        return () => { isMounted.current = false; };
+    }, []);
 
-        const fetchStream = async () => {
-            try {
-                const res = await fetch(src);
-                const data = await res.json();
-                if (data.stream && isMounted.current) setDynamicSrc(data.stream);
-            } catch (e) {
-                console.error("Error fetching dynamic stream for Plyr:", e);
-                if (isMounted.current) setError("تعذر جلب رابط البث.");
-            }
-        };
-
-        fetchStream();
-        const refreshTimer = setInterval(fetchStream, 15000);
-        return () => {
-            isMounted.current = false;
-            clearInterval(refreshTimer);
-        };
-    }, [src]);
 
     useEffect(() => {
         if (!dynamicSrc || !videoRef.current) return;
@@ -644,12 +650,12 @@ export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-fu
                     });
                     hls.on(window.Hls.Events.ERROR, (_: any, data: any) => {
                         if (data.fatal && isMounted.current) {
-                            setError("حدث خطأ أثناء تشغيل الفيديو.");
+                            setOwnError("حدث خطأ أثناء تشغيل الفيديو.");
                             if (onError) onError();
                         }
                     });
                 } else if (isMounted.current) {
-                    setError("المتصفح لا يدعم هذا النوع من الفيديو.");
+                    setOwnError("المتصفح لا يدعم هذا النوع من الفيديو.");
                 }
             } else {
                 video.src = dynamicSrc;
@@ -684,6 +690,16 @@ export const PlyrPlayer = memo(({ src, autoPlay = true, className = "w-full h-fu
                 // vanish for the whole time fullscreen lasts. Blocking it routes viewers to
                 // our own button, which fullscreens the wrapper and keeps the branding on.
                 allow="autoplay; encrypted-media"
+                // Sandboxed: the embed keeps what a video player needs (its own scripts,
+                // its own origin, casting) but LOSES the two capabilities stream hosts
+                // abuse — `allow-top-navigation` (silently redirecting the whole tab) and
+                // `allow-popups` (popunders). streamSanitizer's ad-host blocklist is a
+                // denylist and only catches hosts already known; this is the structural
+                // control that does not need to know the host. If a provider ever needs
+                // popups to play, that is the token to add back — deliberately, per host.
+                sandbox="allow-scripts allow-same-origin allow-presentation"
+                // Don't leak the match page URL (teams, date) to the stream host.
+                referrerPolicy="no-referrer"
             />
         );
     }

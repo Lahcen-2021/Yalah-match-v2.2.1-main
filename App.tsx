@@ -145,6 +145,18 @@ const MAJOR_LEAGUES_PRIORITY: Record<string, number> = {
 
 const MAJOR_LEAGUES_KEYS = Object.keys(MAJOR_LEAGUES_PRIORITY);
 
+// URL path → view. The single source of truth for which paths are real routes;
+// App's META map below keys the per-route <title>/canonical off the same views.
+const STATIC_ROUTES: Record<string, AppView> = {
+    '/': 'matches',
+    '/tournaments': 'tournaments',
+    '/standings': 'standings',
+    '/news': 'news',
+    '/contact': 'contact',
+    '/privacy': 'privacy',
+    '/terms': 'terms',
+};
+
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
@@ -239,6 +251,21 @@ const AppContent: React.FC = () => {
         }
         // Any other navigation leaves the article page.
         setSelectedNews(null);
+
+        // 0. Static routes. Without this, a direct hit or a crawl of /news, /standings,
+        //    /tournaments, /contact, /privacy or /terms fell through to the homepage:
+        //    the view stayed 'matches' AND setPageMeta then wrote the homepage's own
+        //    canonical, so six distinct URLs served identical content that pointed its
+        //    canonical somewhere else. Those URLs are in the sitemap, so search engines
+        //    were being handed the duplicate.
+        const staticRoute = STATIC_ROUTES[path.replace(/\/$/, '') || '/'];
+        if (staticRoute) {
+            setView(staticRoute);
+            setSelectedMatchId(null);
+            setDirectMatch(null);
+            setTargetSlug(null);
+            return;
+        }
 
         // 1. Check for legacy ID format: /match/123
         const matchIdMatch = path.match(/^\/match\/(\d+)$/);

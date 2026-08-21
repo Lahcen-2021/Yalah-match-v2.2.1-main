@@ -3,8 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
+export default defineConfig(() => {
     return {
       // Relative base: lazy-loaded chunks/CSS resolve against their own module URL
       // (import.meta.url) instead of the domain root. Required for the WordPress theme,
@@ -30,7 +29,10 @@ export default defineConfig(({ mode }) => {
       preview: {
         port: 4173,
         proxy: {
-          '/api': 'http://localhost:3100',
+          // Must match server.ts's PORT (3000). It pointed at 3100, where nothing listens,
+          // so every /api call under `vite preview` failed and the documented measurement
+          // workflow below measured an app with no data.
+          '/api': 'http://localhost:3000',
         },
       },
       plugins: [react(), tailwindcss()],
@@ -60,7 +62,9 @@ export default defineConfig(({ mode }) => {
               // Firebase is large and updates independently of the app — its own chunk keeps
               // a Firebase bump from invalidating MatchDetailView (which pulls in Firestore votes).
               if (/[\\/]node_modules[\\/]@?firebase[\\/]/.test(id)) return 'firebase';
-              // Plyr player (plyr-react + plyr) only mounts on a match page — separate chunk.
+              // Plyr only mounts on a match page — separate chunk. (plyr-react, video.js and
+              // hls.js were removed from dependencies: nothing imported them, the last two are
+              // loaded at runtime as CDN globals by components/Players.tsx.)
               if (id.includes('plyr')) return 'player';
               return undefined;
             },
@@ -70,11 +74,14 @@ export default defineConfig(({ mode }) => {
         cssMinify: true,
         sourcemap: false,
       },
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.VAPID_PUBLIC_KEY': JSON.stringify(env.VAPID_PUBLIC_KEY || '')
-      },
+      // No `define` block. It used to inline GEMINI_API_KEY into the client bundle as
+      // process.env.API_KEY / process.env.GEMINI_API_KEY. Nothing in the browser code
+      // reads either — the Gemini key belongs to server/newsFeed.ts, which runs under
+      // tsx and reads process.env directly — so the substitution was dead config that
+      // would have baked a secret into a public asset the moment a build environment
+      // set the variable. VAPID_PUBLIC_KEY went with it: also unread by client code.
+      // Anything the browser genuinely needs should be a VITE_-prefixed env var, which
+      // Vite exposes deliberately and which reads as public at the call site.
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

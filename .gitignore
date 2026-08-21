@@ -20,6 +20,14 @@ all_competitions.json
 all_competitions_en.json
 espn_standings.json
 espn_stats.json
+# espn_summary.json is fetch_espn.cjs's raw dump (~380 KB) and is only ever read
+# back by the parse_espn*.cjs scratch scripts — nothing in the app or the server
+# touches it.
+espn_summary.json
+# Derived from all_competitions.json by extract_names.js / extract_soccer_names.js;
+# regenerate rather than track.
+competition_names.json
+soccer_competitions.json
 comps.json
 m.json
 news.json

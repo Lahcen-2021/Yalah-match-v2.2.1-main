@@ -368,6 +368,11 @@ const LiveStreamHub: React.FC<Props> = ({ match, fallback }) => {
                         // Blocking it forces fullscreen through our own button, which fullscreens
                         // the whole wrapper (iframe + overlays together) so the branding stays on.
                         allow="autoplay; encrypted-media; picture-in-picture"
+                        // Sandboxed: keeps what a player needs, drops `allow-top-navigation`
+                        // (tab-hijacking redirects) and `allow-popups` (popunders) — the two
+                        // things stream hosts abuse. cleanStreamUrl + isAdHost above are a
+                        // denylist of known-bad hosts; this holds for the ones not on it.
+                        sandbox="allow-scripts allow-same-origin allow-presentation"
                         referrerPolicy="no-referrer"
                         title={`بث ${activeServer.label}`}
                     />

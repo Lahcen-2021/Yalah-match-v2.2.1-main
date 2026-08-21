@@ -10,7 +10,9 @@
     <meta name="keywords" content="يلا ماتش, yalla match, يلا شوت, yalla shoot, كورة لايف, kora live, koora live, فابور تي في, fabor tv, يلا كورة, yalla kora, كووورة, kooora, مباريات اليوم, بث مباشر, كورة, يلاماتش, جدول المباريات, القنوات الناقلة, الدوري السعودي, الدوري الانجليزي, دوري ابطال اوروبا, بث مباشر مباريات اليوم, مشاهدة المباريات" />
     <meta name="author" content="Yalla Match" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://www.yallamatch.online" />
+    <!-- Trailing slash kept in step with og:url/twitter:url below: canonical and og:url
+         disagreeing on the same page is a self-inflicted duplicate-URL signal. -->
+    <link rel="canonical" href="https://www.yallamatch.online/" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#059669" />
 
@@ -80,8 +82,17 @@
       that the match list never needs, so keeping them off the initial load speeds up first paint.
     -->
 
-    <!-- Non-blocking loading of CSS -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <!--
+      Plain stylesheet link, deliberately. This used to be the `media="print"
+      onload="this.media='all'"` async-CSS trick, which is an INLINE EVENT HANDLER — and
+      the production CSP (netlify.toml / the WordPress theme's functions.php) ships
+      script-src without 'unsafe-inline'. The browser blocked the onload, `media` stayed
+      "print", and the Cairo/Tajawal stylesheet never applied: the live site rendered in a
+      fallback font while looking correct in dev, where no CSP is set.
+      `display=swap` already keeps text visible while the font loads, and the
+      fonts.googleapis/gstatic preconnects above cover the connection cost.
+    -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="/index.css">
   </head>
