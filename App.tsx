@@ -526,9 +526,24 @@ const AppContent: React.FC = () => {
     if (selectedMatch) {
       const slug = generateMatchSlug(selectedMatch.teamA?.name || '', selectedMatch.teamB?.name || '', selectedMatch.utcDate || '');
       const league = selectedMatch.league ? translateLeague(selectedMatch.league) : '';
-      const title = `${selectedMatch.teamA?.name} ضد ${selectedMatch.teamB?.name}${league ? ' - ' + league : ''}`;
-      const description = `مباراة ${selectedMatch.teamA?.name} و${selectedMatch.teamB?.name}${league ? ' في ' + league : ''}: الموعد، القناة الناقلة والمعلق، التشكيلات والنتيجة المباشرة.`;
-      const keywords = [selectedMatch.teamA?.name, selectedMatch.teamB?.name, league, `${selectedMatch.teamA?.name} ضد ${selectedMatch.teamB?.name}`, 'بث مباشر', 'يلا شوت', 'كورة لايف'].filter(Boolean).join(', ');
+      // Title carries the two highest-intent modifiers people actually type alongside a
+      // fixture — "بث مباشر" first, then the competition. Search Console shows the site
+      // ranking only for brand terms today; per-match queries are where the volume is.
+      const a = selectedMatch.teamA?.name;
+      const b = selectedMatch.teamB?.name;
+      const title = `${a} ضد ${b} بث مباشر${league ? ' - ' + league : ''}`;
+      const description = `مشاهدة مباراة ${a} و${b} بث مباشر${league ? ' في ' + league : ''}: موعد المباراة، القنوات الناقلة والمعلق، التشكيلات، الأحداث والنتيجة المباشرة لحظة بلحظة على يلا ماتش.`;
+      // Long-tail phrasings of the same fixture — these mirror how the query is typed,
+      // not just the team names.
+      const keywords = [
+          a, b, league,
+          `${a} ضد ${b}`,
+          `مباراة ${a} و${b}`,
+          `مشاهدة مباراة ${a} ضد ${b} بث مباشر`,
+          `موعد مباراة ${a} و${b}`,
+          `القناة الناقلة لمباراة ${a} و${b}`,
+          'بث مباشر', 'مباريات اليوم', 'القنوات الناقلة', 'المعلق',
+      ].filter(Boolean).join(', ');
       setPageMeta({ title, description, path: slug, keywords });
       setMatchJsonLd(selectedMatch, slug);
       return () => removeMatchJsonLd();

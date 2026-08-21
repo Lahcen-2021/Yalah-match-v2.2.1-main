@@ -1,0 +1,10 @@
+name = "yallamatch-www-redirect"
+main = "src/index.js"
+compatibility_date = "2026-08-21"
+
+# EXACTLY the www hostname. Never widen this to "yallamatch.online/*" — that
+# pattern would put this Worker in front of the live site and redirect the apex
+# into a loop.
+[[routes]]
+pattern = "www.yallamatch.online/*"
+zone_name = "yallamatch.online"

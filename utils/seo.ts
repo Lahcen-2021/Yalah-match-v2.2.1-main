@@ -10,9 +10,12 @@ import type { Match } from '../types';
 // correct canonical server-side — which this file then OVERWROTE with the broken host
 // on every route change. Keep these in step with index.html and robots.txt.
 const SITE = 'https://yallamatch.online';
-const DEFAULT_TITLE = 'يلا ماتش | مباريات اليوم بث مباشر - Yalla Match';
+// Must match the <title> in index.html and the WordPress theme's index.php — this
+// overwrites the server-rendered one on mount, so a stale value here silently undoes
+// whatever those shells set.
+const DEFAULT_TITLE = 'يلا ماتش | مباريات اليوم بث مباشر والقنوات الناقلة - Yalla Match';
 const DEFAULT_DESC =
-    'يلا ماتش: مواعيد مباريات اليوم، النتائج المباشرة، القنوات الناقلة والمعلقين، ترتيب الدوريات والبطولات وآخر أخبار كرة القدم.';
+    'يلا ماتش (Yalla Match): مباريات اليوم بث مباشر، القنوات الناقلة والمعلقين، مواعيد المباريات، النتائج المباشرة، ترتيب الدوريات والبطولات وآخر أخبار كرة القدم.';
 const DEFAULT_OG_IMAGE = `${SITE}/og-image.jpg`;
 
 const setTag = (selector: string, create: () => HTMLElement, attr: string, value: string) => {
@@ -28,7 +31,21 @@ const setCanonical = (href: string) =>
     setTag('link[rel="canonical"]', () => { const l = document.createElement('link'); l.setAttribute('rel', 'canonical'); return l; }, 'href', href);
 
 // Base keyword set for every page — the popular Arabic football-streaming search terms.
-const BASE_KEYWORDS = 'يلا ماتش, yalla match, يلا شوت, yalla shoot, كورة لايف, kora live, فابور تي في, fabor tv, يلا كورة, yalla kora, كووورة, kooora, مباريات اليوم, بث مباشر, القنوات الناقلة, مشاهدة المباريات';
+// Base keyword set, kept in step with what Search Console actually shows.
+//
+// Three clusters, in the order they earn traffic:
+//   1. Brand + its misspellings — every query the site currently ranks for is one of
+//      these (يلا ماتش, yallamatch, يلاماتش, يلا ماتس, موقع يلا ماتش, يلا ماتش لايف).
+//   2. Category intent — the volume. "مباريات اليوم", "بث مباشر" and the
+//      "القنوات الناقلة / المعلقين" pair, which is the differentiator this site
+//      genuinely has and most competitors do not.
+//   3. Category brands people search instead of a generic term (يلا شوت, كورة لايف,
+//      يلا كورة, كووورة, بين ماتش). Already present before this change.
+//
+// Note: Google ignores <meta keywords> entirely. This earns nothing there — it is
+// kept for Bing/Yandex and because it costs a few bytes. The title, the H1 and the
+// on-page copy are what actually rank.
+const BASE_KEYWORDS = 'يلا ماتش, yalla match, yallamatch, يلاماتش, يلا ماتس, موقع يلا ماتش, يلا ماتش لايف, يلا شوت, yalla shoot, كورة لايف, kora live, koora live, يلا كورة, yalla kora, كووورة, kooora, بين ماتش, bein match, مباريات اليوم, مباريات اليوم بث مباشر, جدول مباريات اليوم, مشاهدة مباريات اليوم, بث مباشر, القنوات الناقلة, معلقين مباريات اليوم, القنوات الناقلة والمعلقين, نتائج المباريات, بث مباشر بدون تقطيع, مشاهدة المباريات بجودة عالية, كورة, الدوري السعودي, الدوري الانجليزي, الدوري الاسباني, دوري ابطال اوروبا'
 
 export interface PageMeta {
     title?: string;
