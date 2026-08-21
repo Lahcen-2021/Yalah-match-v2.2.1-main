@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { fetchMatchDetails, USER_TIMEZONE, parseUtcDate, fetchKoooraEvents, fetchMatchChannel, getServerNow } from '../services/api';
 import { Match, MatchDetails, Player, TimelineEvent, Standing, MatchStatistic, MatchStatus, ChannelInfo } from '../types';
 import { getLeagueLogo, translateTeam, getChannelLogo, translateLeague } from '../utils/translations';
+import { setMatchJsonLdLocation } from '../utils/seo';
 import OptimizedImage from './OptimizedImage';
 import H2HInsights from './H2HInsights';
 import SoccerLineup, { VisualPlayer } from './SoccerLineup';
@@ -1110,6 +1111,22 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // The poll below reads the live match object without re-subscribing to it. `match`
+  // is rebuilt by the parent on every list refresh, so keeping it in the dependency
+  // array tore the effect down and re-ran the FULL initial load (spinner included)
+  // once a minute, on top of the interval's own fetch.
+  // The SportsEvent JSON-LD is emitted by App.tsx from the LIST-level Match, which has
+  // no stadium. Feed the resolved one in so the block carries a `location`.
+  // This lives here, not in DetailsTabView: that sub-component only mounts when the
+  // "التفاصيل" tab is open, and the page opens on the live-stream tab — so the earlier
+  // placement there never ran for the default view.
+  useEffect(() => {
+    setMatchJsonLdLocation(match.id, details?.matchInfo?.stadium || match.stadium);
+  }, [match.id, match.stadium, details?.matchInfo?.stadium]);
+
+  const matchRef = useRef(match);
+  useEffect(() => { matchRef.current = match; }, [match]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -1119,7 +1136,7 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
         setError(null);
       }
       try {
-        const data = await fetchMatchDetails(match);
+        const data = await fetchMatchDetails(matchRef.current);
         if (isMounted) {
           setDetails(data);
           setLoading(false);
@@ -1135,21 +1152,32 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
     };
 
     loadDetails(true);
-    
-    // Smart polling: Faster for live matches, slower for others
-    const getPollInterval = () => {
-        if (match.status === MatchStatus.LIVE || match.status === MatchStatus.HALF_TIME) return 15000;
-        if (match.status === MatchStatus.FINISHED) return 120000; // 2 minutes for finished
-        return 60000; // 1 minute for upcoming
-    };
 
-    const intervalId = setInterval(() => loadDetails(false), getPollInterval());
+    // One pass costs four upstream requests (details + H2H + stats + kooora events).
+    // The old live interval was 15s = 16 req/min against a 120 req/min per-IP limit,
+    // for bytes that cannot change that fast: the edge caches 30s and the upstream
+    // relay only refreshes every 10 minutes. 60s is the floor everywhere; finished
+    // matches stay slower still.
+    const pollInterval = match.status === MatchStatus.FINISHED ? 120000 : 60000;
+
+    const tick = () => {
+      // A backgrounded tab cannot show an update — skip the request entirely and
+      // catch up on the visibilitychange below.
+      if (!document.hidden) loadDetails(false);
+    };
+    const intervalId = setInterval(tick, pollInterval);
+
+    // Returning to the tab should show current data immediately rather than after
+    // up to a full interval of staleness.
+    const onVisible = () => { if (!document.hidden) loadDetails(false); };
+    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [match.id, match]);
+  }, [match.id, match.status]);
 
   // Score update animation logic
   const [scoreChanged, setScoreChanged] = useState(false);
