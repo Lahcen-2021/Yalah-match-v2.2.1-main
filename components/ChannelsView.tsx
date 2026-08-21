@@ -346,6 +346,9 @@ const ChannelsView: React.FC = () => {
                         className="w-full h-[70vh] min-h-[420px] sm:min-h-[600px]"
                         allowFullScreen
                         loading="lazy"
+                        // No `allow-top-navigation` / `allow-popups`: a third-party embed
+                        // must not be able to redirect the tab or open popunders.
+                        sandbox="allow-scripts allow-same-origin allow-presentation"
                         referrerPolicy="no-referrer"
                     />
                 </div>
