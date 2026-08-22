@@ -1131,6 +1131,12 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
     let isMounted = true;
 
     const loadDetails = async (isInitial = false) => {
+      // A supplementary fixture has no id in the primary feed, so match-details, H2H,
+      // stats and kooora events would all miss. Skip the round trip entirely.
+      if (matchRef.current.isSupplementary) {
+        if (isMounted) { setDetails(null); setLoading(false); setError(null); }
+        return;
+      }
       if (isInitial && isMounted) {
         setLoading(true);
         setError(null);
@@ -1416,10 +1422,15 @@ const MatchDetailView: React.FC<MatchDetailViewProps> = ({ match, onBack }) => {
             <div className="border-b flex bg-gray-50/30 overflow-x-auto no-scrollbar">
                 {[
                     { id: 'liveStream', label: 'البث المباشر', available: isStreamAvailable },
+                    // Lineups, events and statistics all come from endpoints keyed by the
+                    // PRIMARY feed's match id. A supplementary fixture (merged in from
+                    // winwin because the primary feed omitted it) has no such id, so these
+                    // tabs would only ever render empty states — hide them rather than
+                    // offer four dead ends.
                     { id: 'details', label: 'التفاصيل', available: true },
-                    { id: 'rosters', label: 'التشكيلات', available: true },
-                    { id: 'highlights', label: 'الأحداث', available: true },
-                    { id: 'stats', label: 'الإحصائيات', available: true }
+                    { id: 'rosters', label: 'التشكيلات', available: !match.isSupplementary },
+                    { id: 'highlights', label: 'الأحداث', available: !match.isSupplementary },
+                    { id: 'stats', label: 'الإحصائيات', available: !match.isSupplementary }
                 ]
                 .filter(tab => tab.available)
                 .map(tab => (

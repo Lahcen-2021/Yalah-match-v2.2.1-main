@@ -824,6 +824,152 @@ const enrichWithWinwinChannels = async (matches: Match[], dateString: string): P
     return matches;
 };
 
+/**
+ * Fixtures winwin knows about for a date, in its own rich shape.
+ *
+ * Deliberately hits the backend directly rather than the same-origin route: the Node
+ * server and the WordPress theme both reshape /api/winwin/channels into rows keyed by
+ * OUR match ids for channel enrichment, which by construction drops every fixture the
+ * primary feed does not have — exactly the ones this function exists to find.
+ */
+interface WinwinFixture {
+    matchId: number;
+    competition?: { name?: string; logo?: string };
+    date?: string;
+    kickoff?: string;
+    status?: string;
+    stadium?: string;
+    homeTeam?: { name?: string; logo?: string };
+    awayTeam?: { name?: string; logo?: string };
+    score?: { home?: number; away?: number };
+    channels?: { name?: string; logo?: string }[];
+}
+
+const fetchWinwinFixtures = async (dateString: string): Promise<WinwinFixture[]> => {
+    const json = await fetchJson<any>(`${API_BASE}/api/winwin/channels?date=${dateString}`, null);
+    return Array.isArray(json?.matches) ? json.matches : [];
+};
+
+// winwin's `kickoff` is UTC, verified against jdwel's startUtc across several fixtures
+// on the same day (17:30/19:30/11:30/14:00 matched exactly). Treating it as local time
+// would shift every supplementary match by the Morocco offset.
+const mapWinwinToMatch = (f: WinwinFixture, dateString: string): Match | null => {
+    const home = f.homeTeam?.name?.trim();
+    const away = f.awayTeam?.name?.trim();
+    if (!home || !away || !f.kickoff) return null;
+
+    const utcDate = `${f.date || dateString}T${f.kickoff}:00Z`;
+    const kickoffMs = new Date(utcDate).getTime();
+    if (Number.isNaN(kickoffMs)) return null;
+
+    const raw = String(f.status || '').toLowerCase();
+    const now = getServerNow();
+    let status = MatchStatus.UPCOMING;
+    let statusText = formatToMoroccoTime(utcDate);
+    if (raw === 'ended' || raw === 'finished') { status = MatchStatus.FINISHED; statusText = 'انتهت'; }
+    else if (raw === 'live' || raw === 'playing') { status = MatchStatus.LIVE; statusText = 'جارية'; }
+    else if (kickoffMs + 2.5 * 60 * 60 * 1000 < now) { status = MatchStatus.FINISHED; statusText = 'انتهت'; }
+    else if (kickoffMs <= now) { status = MatchStatus.LIVE; statusText = 'جارية'; }
+
+    const channels: ChannelInfo[] = (f.channels || [])
+        .map(c => ({ name: String(c?.name || '').trim(), logo: c?.logo || undefined }))
+        .filter(c => !!c.name);
+
+    return {
+        id: f.matchId,
+        channel: channels.map(c => c.name).join(' - '),
+        channels: sortChannelsArabicFirst(channels),
+        league: (f.competition?.name || '').trim(),
+        leagueCode: '',
+        leagueLogoUrl: f.competition?.logo,
+        teamA: { name: home, logoUrl: f.homeTeam?.logo || '' },
+        teamB: { name: away, logoUrl: f.awayTeam?.logo || '' },
+        scoreA: status === MatchStatus.UPCOMING ? 0 : (f.score?.home ?? 0),
+        scoreB: status === MatchStatus.UPCOMING ? 0 : (f.score?.away ?? 0),
+        status,
+        statusText,
+        time: formatToMoroccoTime(utcDate),
+        utcDate,
+        stadium: f.stadium?.trim() || undefined,
+        isSupplementary: true,
+    };
+};
+
+// De-duplication across two sources that transliterate the same club differently.
+//
+// Exact normalised equality is far too strict here. Real pairs seen on one day:
+//   أتلتيك بلباو    / أتليتيكو بلباو        (long-vowel placement)
+//   سيلتا فيجو      / سيلتا فيغو            (ج vs غ for the same "g")
+//   بايرن ميونخ     / بايرن ميونيخ          (optional ي)
+//   توتنهام         / توتنهام هوتسبر        (short vs full club name)
+//   المصري          / المصري البورسعيدي     (ditto)
+//
+// The skeleton drops the letters that carry this variation — the long vowels/weak
+// letters ا و ي ه ء — and folds غ into ج, leaving a consonant spine that survives
+// transliteration differences. Names then match if the spines are equal, one contains
+// the other (short vs full name), or they share a 4+ character prefix.
+const skeleton = (s: string) =>
+    normalizeArabic(s).replace(/غ/g, 'ج').replace(/[اويهء]/g, '').replace(/\s+/g, '');
+
+const namesAlike = (a: string, b: string): boolean => {
+    const x = skeleton(a);
+    const y = skeleton(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+    // Require some length before trusting containment, or "ال" matches half the league.
+    if (x.includes(y) || y.includes(x)) return x.length >= 3 && y.length >= 3;
+    let i = 0;
+    while (i < Math.min(x.length, y.length) && x[i] === y[i]) i++;
+    return i >= 4;
+};
+
+// Same fixture regardless of which side each source calls "home".
+const isSameFixture = (aHome: string, aAway: string, bHome: string, bAway: string): boolean =>
+    (namesAlike(aHome, bHome) && namesAlike(aAway, bAway)) ||
+    (namesAlike(aHome, bAway) && namesAlike(aAway, bHome));
+
+/**
+ * Append fixtures winwin carries that the primary feed is missing.
+ *
+ * The primary feed is not complete. On 2026-08-22 it listed 73 fixtures and omitted
+ * إسبانيول vs ريال مدريد entirely, while winwin (125), jdwel (290) and kooora (89) all
+ * had it — so a Real Madrid league match simply did not exist on the site.
+ *
+ * Merged fixtures go through the same isMajorLeague gate as the rest, so this widens
+ * coverage without changing which competitions are considered worth showing.
+ */
+const mergeWinwinFixtures = async (matches: Match[], dateString: string): Promise<Match[]> => {
+    try {
+        const fixtures = await fetchWinwinFixtures(dateString);
+        if (fixtures.length === 0) return matches;
+
+        const added: Match[] = [];
+        // Compared against the growing list so two winwin rows for the same fixture
+        // cannot both slip through either.
+        const pool = [...matches];
+
+        for (const f of fixtures) {
+            const mapped = mapWinwinToMatch(f, dateString);
+            if (!mapped) continue;
+            if (!mapped.league || !isMajorLeague(mapped.league)) continue;
+            const dupe = pool.some(m => isSameFixture(
+                m.teamA?.name || '', m.teamB?.name || '', mapped.teamA.name, mapped.teamB.name));
+            if (dupe) continue;
+            pool.push(mapped);
+            added.push(mapped);
+        }
+
+        if (added.length > 0) {
+            console.debug(`[API] ${dateString}: +${added.length} fixture(s) from winwin missing from the primary feed`);
+        }
+        return [...matches, ...added];
+    } catch (e) {
+        // Supplementary by definition — never let it take down the day's list.
+        console.warn(`[API] winwin merge failed for ${dateString}`, e);
+        return matches;
+    }
+};
+
 const fetchFromMessisporatInternal = async (dateString: string): Promise<Match[]> => {
     const data = await fetchBackendJson<any>(`/api/matches?date=${dateString}`, null);
     const rawMatches = data?.["STING-WEB-Matches"];
@@ -834,7 +980,8 @@ const fetchFromMessisporatInternal = async (dateString: string): Promise<Match[]
         if (!match.league) return false;
         return isMajorLeague(match.league);
     });
-    return await enrichWithWinwinChannels(matches, dateString);
+    const merged = await mergeWinwinFixtures(matches, dateString);
+    return await enrichWithWinwinChannels(merged, dateString);
 };
 
 /**

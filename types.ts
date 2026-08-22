@@ -48,6 +48,13 @@ export interface Match {
   utcDate: string; // Added to calculate live match timer
   round?: string; // For detail view header
   isCustom?: boolean; // Admin-created match (bypasses the major-league display filter)
+  /**
+   * Sourced from winwin rather than the primary feed, because the primary feed does
+   * not carry this fixture. Card, kickoff and channels are complete; per-match
+   * details (lineups, events, statistics) are NOT available — those endpoints are
+   * keyed by the primary feed's match id, which this match does not have.
+   */
+  isSupplementary?: boolean;
 }
 
 // Added for match highlights feature
