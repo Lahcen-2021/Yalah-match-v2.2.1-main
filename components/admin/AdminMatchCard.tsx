@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { dayLabel } from '../../services/adminApi';
 import type { RawMatch, MatchOverrideFields, AdminChannel } from '../../services/adminApi';
 
 // Match-Status strings the client's mapStingMatchToMatch() understands.
 const STATUS_OPTIONS = ['لم تبدأ', 'مباشر', 'الإستراحة', 'انتهت', 'مؤجلة'];
 
-const DAY_LABEL: Record<string, string> = { yesterday: 'أمس', today: 'اليوم', tomorrow: 'غداً' };
+
 
 interface Props {
     match: RawMatch;
-    day: 'yesterday' | 'today' | 'tomorrow';
+    // A feed date (YYYY-MM-DD), not one of three fixed days: the admin now spans an
+    // arbitrary range, so the label is derived from the date itself.
+    date: string;
     override?: MatchOverrideFields;
     // Whether this match is currently visible on the public site (computed by the tab).
     onSite: boolean;
@@ -44,7 +47,7 @@ function parseTv(tv?: string): AdminChannel[] {
     return tv.split(/\s*\|\s*|\s+-\s+/).map(s => s.trim()).filter(Boolean).map(name => ({ name }));
 }
 
-function AdminMatchCard({ match, day, override, onSite, onSave, onClear, onShow, onHide }: Props) {
+function AdminMatchCard({ match, date, override, onSite, onSave, onClear, onShow, onHide }: Props) {
     const id = String(match['Match-id']);
     const home = match['Team-Right'] || {};
     const away = match['Team-Left'] || {};
@@ -143,7 +146,7 @@ function AdminMatchCard({ match, day, override, onSite, onSave, onClear, onShow,
                                 : <span className="text-base font-black text-gray-900" dir="ltr">{kickoff || '—'}</span>}
                         </div>
                         <span className="text-[9px] text-gray-500 mt-1 font-bold" dir="ltr">
-                            {DAY_LABEL[day]}{kickoff ? ` · ${kickoff}` : ''}
+                            {dayLabel(date)}{kickoff ? ` · ${kickoff}` : ''}
                         </span>
                     </div>
                     <div className="flex-1 flex flex-col items-center gap-1 min-w-0">

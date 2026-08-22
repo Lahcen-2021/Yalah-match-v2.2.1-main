@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    fetchThreeDayMatches, setMatchOverride, removeMatchOverride, setLeagueHidden, setLeagueShown,
+    fetchMatchesInRange, dayLabel, setMatchOverride, removeMatchOverride, setLeagueHidden, setLeagueShown,
     saveCustomMatch, deleteCustomMatch,
     AdminApiError, type AdminStatus, type CustomMatch, type DatedRawMatch,
 } from '../../../services/adminApi';
@@ -42,7 +42,11 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
     const [savedMsg, setSavedMsg] = useState('');
 
     // Feed filters
-    const [dayFilter, setDayFilter] = useState<'all' | 'yesterday' | 'today' | 'tomorrow'>('all');
+    // How far ahead to pull. The admin used to be locked to yesterday/today/tomorrow,
+    // so any fixture announced further out was invisible and could not be force-shown.
+    const [range, setRange] = useState<number>(7);
+    const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+    const [dayFilter, setDayFilter] = useState<string>('all');   // 'all' or a YYYY-MM-DD
     const [leagueFilter, setLeagueFilter] = useState<string>('all');
 
     // Custom-match editor
@@ -58,12 +62,17 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
 
     const loadFeed = useCallback(() => {
         let cancelled = false;
-        fetchThreeDayMatches()
+        // No setProgress here: loadFeed is called straight from an effect, and a
+        // synchronous setState there is a cascading render. The first onProgress
+        // callback below is async, so it is the one that seeds the counter.
+        // Always include yesterday: results posted late are the common reason to reach
+        // for an override right after a match ends.
+        fetchMatchesInRange(1, range, (done, total) => { if (!cancelled) setProgress({ done, total }); })
             .then(({ matches }) => { if (!cancelled) setRows(matches); })
             .catch(e => { if (!cancelled) handleErr(e, 'Failed to load matches'); })
-            .finally(() => { if (!cancelled) setLoading(false); });
+            .finally(() => { if (!cancelled) { setLoading(false); setProgress(null); } });
         return () => { cancelled = true; };
-    }, [handleErr]);
+    }, [handleErr, range]);
 
     // onUnauthorized is a stable useCallback in AdminApp, so handleErr and
     // loadFeed are stable too and this effect still runs once per mount.
@@ -137,6 +146,13 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
     };
 
     // Distinct league names present in the loaded feed (for the filter dropdown).
+    // Dates actually present in what loaded, so the filter never offers an empty day.
+    const dateOptions = useMemo(() => {
+        const set = new Set<string>();
+        for (const r of rows) set.add(r.date);
+        return [...set].sort();
+    }, [rows]);
+
     const leagueNames = useMemo(() => {
         const set = new Set<string>();
         for (const r of rows) set.add((r.match['Cup-Name'] || '—').trim() || '—');
@@ -146,19 +162,23 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
     // Filtered rows, then grouped by league (each group keeps its day order).
     const groups = useMemo(() => {
         const filtered = rows.filter(r => {
-            if (dayFilter !== 'all' && r.day !== dayFilter) return false;
+            if (dayFilter !== 'all' && r.date !== dayFilter) return false;
             const lg = (r.match['Cup-Name'] || '—').trim() || '—';
             if (leagueFilter !== 'all' && lg !== leagueFilter) return false;
             return true;
         });
         const map = new Map<string, DatedRawMatch[]>();
-        const order: ('yesterday' | 'today' | 'tomorrow')[] = ['yesterday', 'today', 'tomorrow'];
         for (const r of filtered) {
             const lg = (r.match['Cup-Name'] || '—').trim() || '—';
             if (!map.has(lg)) map.set(lg, []);
             map.get(lg)!.push(r);
         }
-        for (const list of map.values()) list.sort((a, b) => order.indexOf(a.day) - order.indexOf(b.day));
+        // Chronological within each league: by date, then by kickoff.
+        for (const list of map.values()) {
+            list.sort((a, b) =>
+                a.date.localeCompare(b.date) ||
+                String(a.match['Time-Start'] || '').localeCompare(String(b.match['Time-Start'] || '')));
+        }
         return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], 'ar'));
     }, [rows, dayFilter, leagueFilter]);
 
@@ -295,16 +315,29 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
             {/* ------------------------------------------------------------------ */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Edit feed matches (yesterday · today · tomorrow)</h3>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                        Edit feed matches — every league, {rows.length} fixtures across {dateOptions.length} days
+                    </h3>
                     <div className="flex flex-wrap items-center gap-2">
-                        <select value={dayFilter} onChange={e => setDayFilter(e.target.value as any)} className={input}>
-                            <option value="all">All days</option>
-                            <option value="yesterday">Yesterday</option>
-                            <option value="today">Today</option>
-                            <option value="tomorrow">Tomorrow</option>
+                        {/* How far ahead to pull. Fixtures are announced weeks out, so the old
+                            fixed yesterday/today/tomorrow window hid most of the calendar. */}
+                        <select
+                            value={range}
+                            onChange={e => { setLoading(true); setRange(Number(e.target.value)); }}
+                            className={input}
+                            title="How far ahead to load"
+                        >
+                            <option value={1}>أمس · اليوم · غداً</option>
+                            <option value={7}>الأسبوع القادم (7 أيام)</option>
+                            <option value={14}>أسبوعان (14 يوم)</option>
+                            <option value={30}>شهر كامل (30 يوم)</option>
+                        </select>
+                        <select value={dayFilter} onChange={e => setDayFilter(e.target.value)} className={input}>
+                            <option value="all">كل الأيام ({dateOptions.length})</option>
+                            {dateOptions.map(d => <option key={d} value={d}>{dayLabel(d)}</option>)}
                         </select>
                         <select value={leagueFilter} onChange={e => setLeagueFilter(e.target.value)} className={`${input} max-w-[220px]`}>
-                            <option value="all">All leagues ({leagueNames.length})</option>
+                            <option value="all">كل الدوريات ({leagueNames.length})</option>
                             {leagueNames.map(lg => <option key={lg} value={lg}>{lg}</option>)}
                         </select>
                         <button onClick={reloadFeed} className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-3 py-2">Reload</button>
@@ -312,7 +345,9 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
                 </div>
 
                 {loading ? (
-                    <p className="text-sm text-gray-400">Loading…</p>
+                    <p className="text-sm text-gray-400">
+                        {progress ? `جاري التحميل… ${progress.done}/${progress.total} يوم` : 'جاري التحميل…'}
+                    </p>
                 ) : groups.length === 0 ? (
                     <p className="text-sm text-gray-400">No matches found for these days.</p>
                 ) : (
@@ -346,13 +381,13 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
                                         )}
                                     </div>
                                     <div className="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                                        {list.map(({ match, day }) => {
+                                        {list.map(({ match, date }) => {
                                             const id = String(match['Match-id']);
                                             return (
                                                 <AdminMatchCard
-                                                    key={`${id}-${day}`}
+                                                    key={`${id}-${date}`}
                                                     match={match}
-                                                    day={day}
+                                                    date={date}
                                                     override={overrides[id]}
                                                     onSite={isMatchOnSite(id, league)}
                                                     onSave={(fields) => apply(id, fields)}
