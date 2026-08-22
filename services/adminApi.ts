@@ -258,8 +258,13 @@ export async function fetchRawMatches(date: string): Promise<RawMatch[]> {
     return body?.['STING-WEB-Matches'] || [];
 }
 
-// A raw match tagged with which of the three days it belongs to.
-export interface DatedRawMatch { match: RawMatch; date: string; day: 'yesterday' | 'today' | 'tomorrow' }
+// A raw match tagged with the date it belongs to.
+//
+// This used to carry `day: 'yesterday' | 'today' | 'tomorrow'`, which hard-coded the
+// admin to a three-day window. Fixtures are announced weeks ahead, so an operator
+// looking for, say, a La Liga match ten days out simply could not see it — and
+// therefore could not force it onto the site. The date string is the general form.
+export interface DatedRawMatch { match: RawMatch; date: string }
 
 // Morocco-local date (Africa/Casablanca) for today +/- offset, matching the dates
 // the public feed is keyed by so the day tabs line up.
@@ -270,15 +275,60 @@ function isoOffset(days: number): string {
     return d.toISOString().slice(0, 10);
 }
 
-// Fetches yesterday + today + tomorrow in parallel, tagging each match with its day.
-export async function fetchThreeDayMatches(): Promise<{ dates: Record<'yesterday' | 'today' | 'tomorrow', string>; matches: DatedRawMatch[] }> {
-    const dates = { yesterday: isoOffset(-1), today: isoOffset(0), tomorrow: isoOffset(1) };
-    const days: ('yesterday' | 'today' | 'tomorrow')[] = ['yesterday', 'today', 'tomorrow'];
-    const results = await Promise.all(days.map(d => fetchRawMatches(dates[d])));
+export { isoOffset as adminIsoOffset };
+
+/**
+ * Arabic label for a feed date: أمس / اليوم / غداً for the three days either side of
+ * now, and a short weekday + date for anything further out — which is most of the
+ * range once the admin looks beyond tomorrow.
+ */
+export function dayLabel(date: string): string {
+    if (date === isoOffset(-1)) return 'أمس';
+    if (date === isoOffset(0)) return 'اليوم';
+    if (date === isoOffset(1)) return 'غداً';
+    try {
+        return new Intl.DateTimeFormat('ar', {
+            weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Africa/Casablanca',
+        }).format(new Date(`${date}T12:00:00Z`));
+    } catch {
+        return date;
+    }
+}
+
+/**
+ * Every fixture between `daysBack` before today and `daysForward` after it.
+ *
+ * One request per date, run through a small pool rather than all at once: a 30-day
+ * range is 31 requests, and firing those simultaneously would trip the backend's
+ * per-IP rate limit. Six at a time keeps a cold range comfortably under it while
+ * still finishing quickly, and each date is edge-cached, so a re-open is cheap.
+ *
+ * A single failed date resolves to an empty list inside fetchRawMatches, so one bad
+ * day cannot blank the whole range.
+ */
+export async function fetchMatchesInRange(
+    daysBack: number,
+    daysForward: number,
+    onProgress?: (done: number, total: number) => void,
+): Promise<{ dates: string[]; matches: DatedRawMatch[] }> {
+    const dates: string[] = [];
+    for (let i = -Math.abs(daysBack); i <= daysForward; i++) dates.push(isoOffset(i));
+
     const matches: DatedRawMatch[] = [];
-    results.forEach((list, i) => {
-        const day = days[i];
-        for (const match of list) matches.push({ match, date: dates[day], day });
-    });
+    let done = 0;
+    const POOL = 6;
+    let cursor = 0;
+
+    const worker = async () => {
+        while (cursor < dates.length) {
+            const date = dates[cursor++];
+            const list = await fetchRawMatches(date);
+            for (const match of list) matches.push({ match, date });
+            onProgress?.(++done, dates.length);
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(POOL, dates.length) }, worker));
+
+    matches.sort((a, b) => a.date.localeCompare(b.date));
     return { dates, matches };
 }
