@@ -1,3 +1,5 @@
+import { fetchWinwinFixtures, isSameFixture, type WinwinFixture } from './api';
+import { isMajorLeague } from '../utils/translations';
 // Client for the /api/admin/* routes (server.ts + server/adminAuth.ts). Always uses
 // relative paths: the admin panel is only reachable from the same origin that serves it
 // (the Express server in server.ts), unlike the public app which may fall back to the
@@ -293,6 +295,92 @@ export function dayLabel(date: string): string {
     } catch {
         return date;
     }
+}
+
+/**
+ * Fixtures winwin carries that the primary feed does not, as ready-to-save custom
+ * matches.
+ *
+ * Why the admin needs this: the public app merges these fixtures into the day's list
+ * client-side, because the primary feed omits them (إسبانيول vs ريال مدريد being the
+ * case that surfaced it). But admin overrides — hide, force-show, edit score, set
+ * channels — are applied by the BACKEND to the payload it serves. A fixture the
+ * backend never saw cannot be overridden, so those matches appeared on the site while
+ * being invisible and uncontrollable here.
+ *
+ * Saving one as a custom match is what closes that gap: it then lives in admin
+ * settings, the backend injects it into the payload, and every existing control works
+ * on it normally. The client-side merge de-duplicates by club name, so the winwin copy
+ * folds into the saved one rather than showing twice.
+ */
+export async function fetchSupplementaryFixtures(
+    dates: string[],
+    existing: DatedRawMatch[],
+): Promise<CustomMatch[]> {
+    const byDate = new Map<string, DatedRawMatch[]>();
+    for (const row of existing) {
+        if (!byDate.has(row.date)) byDate.set(row.date, []);
+        byDate.get(row.date)!.push(row);
+    }
+
+    const drafts: CustomMatch[] = [];
+    let cursor = 0;
+    const POOL = 6;
+
+    const worker = async () => {
+        while (cursor < dates.length) {
+            const date = dates[cursor++];
+            let fixtures: WinwinFixture[] = [];
+            try {
+                fixtures = await fetchWinwinFixtures(date);
+            } catch {
+                continue;   // supplementary: a bad day must not break the panel
+            }
+            const feed = byDate.get(date) || [];
+            for (const f of fixtures) {
+                const home = f.homeTeam?.name?.trim();
+                const away = f.awayTeam?.name?.trim();
+                const league = f.competition?.name?.trim();
+                if (!home || !away || !league || !f.kickoff) continue;
+                if (!isMajorLeague(league)) continue;
+
+                const already = feed.some(r => isSameFixture(
+                    String(r.match['Team-Right']?.Name || ''),
+                    String(r.match['Team-Left']?.Name || ''),
+                    home, away));
+                if (already) continue;
+                if (drafts.some(d => d.date === date && isSameFixture(d.homeName, d.awayName, home, away))) continue;
+
+                // winwin publishes kickoff in UTC; CustomMatch.time is Africa/Casablanca.
+                let time = f.kickoff;
+                try {
+                    time = new Intl.DateTimeFormat('en-GB', {
+                        timeZone: 'Africa/Casablanca', hour: '2-digit', minute: '2-digit', hour12: false,
+                    }).format(new Date(`${f.date || date}T${f.kickoff}:00Z`));
+                } catch { /* keep the raw value rather than dropping the fixture */ }
+
+                drafts.push({
+                    id: `winwin-${f.matchId}`,
+                    date,
+                    time,
+                    competition: league,
+                    competitionLogo: f.competition?.logo,
+                    homeName: home,
+                    homeLogo: f.homeTeam?.logo,
+                    homeScore: null,
+                    awayName: away,
+                    awayLogo: f.awayTeam?.logo,
+                    awayScore: null,
+                    status: 'لم تبدأ',
+                    tv: (f.channels || []).map(c => c?.name).filter(Boolean).join(' - '),
+                });
+            }
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(POOL, dates.length) }, worker));
+
+    drafts.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+    return drafts;
 }
 
 /**
