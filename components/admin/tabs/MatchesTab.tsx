@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    fetchMatchesInRange, dayLabel, setMatchOverride, removeMatchOverride, setLeagueHidden, setLeagueShown,
+    fetchMatchesInRange, fetchSupplementaryFixtures, dayLabel, setMatchOverride, removeMatchOverride, setLeagueHidden, setLeagueShown,
     saveCustomMatch, deleteCustomMatch,
     AdminApiError, type AdminStatus, type CustomMatch, type DatedRawMatch,
 } from '../../../services/adminApi';
@@ -46,6 +46,11 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
     // so any fixture announced further out was invisible and could not be force-shown.
     const [range, setRange] = useState<number>(7);
     const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+    // Fixtures the public site merges in from winwin because the primary feed omits
+    // them. They show on the site but the backend never sees them, so none of the
+    // override controls below can touch them until they are saved as custom matches.
+    const [supplementary, setSupplementary] = useState<CustomMatch[]>([]);
+    const [addingId, setAddingId] = useState<string | null>(null);
     const [dayFilter, setDayFilter] = useState<string>('all');   // 'all' or a YYYY-MM-DD
     const [leagueFilter, setLeagueFilter] = useState<string>('all');
 
@@ -68,7 +73,14 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
         // Always include yesterday: results posted late are the common reason to reach
         // for an override right after a match ends.
         fetchMatchesInRange(1, range, (done, total) => { if (!cancelled) setProgress({ done, total }); })
-            .then(({ matches }) => { if (!cancelled) setRows(matches); })
+            .then(({ dates, matches }) => {
+                if (cancelled) return;
+                setRows(matches);
+                // Second pass: what does winwin have that the feed does not?
+                return fetchSupplementaryFixtures(dates, matches)
+                    .then(list => { if (!cancelled) setSupplementary(list); })
+                    .catch(() => { if (!cancelled) setSupplementary([]); });
+            })
             .catch(e => { if (!cancelled) handleErr(e, 'Failed to load matches'); })
             .finally(() => { if (!cancelled) { setLoading(false); setProgress(null); } });
         return () => { cancelled = true; };
@@ -182,6 +194,22 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
         return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], 'ar'));
     }, [rows, dayFilter, leagueFilter]);
 
+    // Promote an auto-merged fixture into a real custom match, which is what makes
+    // every control on this page apply to it.
+    const adoptSupplementary = async (draft: CustomMatch) => {
+        setAddingId(draft.id);
+        try {
+            await saveCustomMatch(draft);
+            setSupplementary(prev => prev.filter(d => d.id !== draft.id));
+            flash(`تمت إضافة ${draft.homeName} ضد ${draft.awayName}`);
+            onRefresh();
+        } catch (e) {
+            handleErr(e, 'Failed to add match');
+        } finally {
+            setAddingId(null);
+        }
+    };
+
     const setField = (k: keyof CustomMatch, v: string) => {
         setForm(prev => ({
             ...prev,
@@ -285,6 +313,40 @@ function MatchesTab({ status, onRefresh, onUnauthorized }: Props) {
                     {editing ? 'Update match' : 'Create match'}
                 </button>
             </div>
+
+            {/* ------------------------------------------------------------------ */}
+            {/* Fixtures the site merges in from winwin but the backend cannot see   */}
+            {/* ------------------------------------------------------------------ */}
+            {supplementary.length > 0 && (
+                <div className="bg-amber-50 rounded-xl shadow-sm border border-amber-200 p-5">
+                    <h3 className="text-sm font-semibold text-amber-800 uppercase tracking-wide mb-1">
+                        مباريات من مصدر إضافي ({supplementary.length})
+                    </h3>
+                    <p className="text-xs text-amber-700 mb-3 leading-relaxed">
+                        هذه المباريات غير موجودة في التغذية الأساسية، والموقع يعرضها تلقائياً من winwin.
+                        لا يمكن التحكم بها (إخفاء، تعديل النتيجة، القنوات) حتى تضيفها كمباراة مخصصة.
+                        بعد الإضافة تصبح مثل أي مباراة أخرى، ولن تتكرر على الموقع.
+                    </p>
+                    <ul className="text-sm divide-y divide-amber-100">
+                        {supplementary.map(d => (
+                            <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                                <span className="text-gray-800">
+                                    {d.homeName} vs {d.awayName}
+                                    <span className="text-xs text-gray-500"> · {d.competition} · {dayLabel(d.date)} {d.time}</span>
+                                    {d.tv ? <span className="text-xs text-emerald-700"> · {d.tv.split(' - ').length} قناة</span> : null}
+                                </span>
+                                <button
+                                    onClick={() => adoptSupplementary(d)}
+                                    disabled={addingId === d.id}
+                                    className="text-xs rounded px-3 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold whitespace-nowrap"
+                                >
+                                    {addingId === d.id ? '...' : 'إضافة للتحكم'}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             {/* List of custom matches */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">

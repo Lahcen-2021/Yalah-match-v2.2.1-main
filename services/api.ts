@@ -832,7 +832,7 @@ const enrichWithWinwinChannels = async (matches: Match[], dateString: string): P
  * OUR match ids for channel enrichment, which by construction drops every fixture the
  * primary feed does not have — exactly the ones this function exists to find.
  */
-interface WinwinFixture {
+export interface WinwinFixture {
     matchId: number;
     competition?: { name?: string; logo?: string };
     date?: string;
@@ -845,7 +845,7 @@ interface WinwinFixture {
     channels?: { name?: string; logo?: string }[];
 }
 
-const fetchWinwinFixtures = async (dateString: string): Promise<WinwinFixture[]> => {
+export const fetchWinwinFixtures = async (dateString: string): Promise<WinwinFixture[]> => {
     const json = await fetchJson<any>(`${API_BASE}/api/winwin/channels?date=${dateString}`, null);
     return Array.isArray(json?.matches) ? json.matches : [];
 };
@@ -924,7 +924,7 @@ const namesAlike = (a: string, b: string): boolean => {
 };
 
 // Same fixture regardless of which side each source calls "home".
-const isSameFixture = (aHome: string, aAway: string, bHome: string, bAway: string): boolean =>
+export const isSameFixture = (aHome: string, aAway: string, bHome: string, bAway: string): boolean =>
     (namesAlike(aHome, bHome) && namesAlike(aAway, bAway)) ||
     (namesAlike(aHome, bAway) && namesAlike(aAway, bHome));
 
